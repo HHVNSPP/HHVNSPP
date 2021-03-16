@@ -1,13 +1,13 @@
-set term postscript eps font ",24" size 6, 9 color
+set term postscript eps font ",32" size 6, 9 color
 dx=50
 set datafile separator ","
 set key off
-set pointsize 1.2
+set pointsize 1.5
 set xrange [-200:5200]
 set xtics 0, 1000
 set yrange [100000:400000]
 set ytics 100000,100000
-set xlabel "Runtime (seconds)"
+set xlabel "Runtime"
 set ylabel "Objective"
 c1='#ff4500'
 c2='#009999'
@@ -19,9 +19,9 @@ c7='#a0522d'
 c8='#ff0000'
 c9='#0000dd'
 set output "objfuna.eps"
-#set title '20 projects with 4 objectives' font ",40"
+#set title '20 projects with 4 objectives' font ",36"
 set multiplot layout 3, 1
-set title 'B 20-4 1'
+set title 'B 20-4 1' font ",44"
 plot 'obj/2plt_b_20obj4_1_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b_20obj4_1_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b_20obj4_1_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
@@ -69,7 +69,6 @@ set xrange [-500:16500]
 set xtics 0, 2500
 set multiplot layout 3, 1
 set title 'B 30-9 1'
-set key at 15200, 480000 maxcols 1
 plot 'obj/2plt_b30obj9_1_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b30obj9_1_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b30obj9_1_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
@@ -80,7 +79,6 @@ plot 'obj/2plt_b30obj9_1_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with lin
      'obj/2plt_b30obj9_1_o8.csv' u ($1 + 7 * dx):3 every ::1 t "Obj. 8" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c8, \
      'obj/2plt_b30obj9_1_o9.csv' u ($1 + 8 * dx):3 every ::1 t "Obj. 9" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c9
 set title 'B 30-9 2'
-set key off 
 plot 'obj/2plt_b30obj9_2_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b30obj9_2_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b30obj9_2_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
@@ -102,7 +100,7 @@ plot 'obj/2plt_b30obj9_3_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with lin
      'obj/2plt_b30obj9_3_o9.csv' u ($1 + 8 * dx):3 every ::1 t "Obj. 9" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c9
 unset multiplot
 
-set term postscript eps font ",30" size 12, 15 color
+set term postscript eps font ",30" size 15, 15 color
 set output "objfund.eps"
 #set title '100 projects with 9 objectives'
 set multiplot layout 5, 1
@@ -151,6 +149,7 @@ plot 'obj/2plt_b100obj9_4_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with li
      'obj/2plt_b100obj9_4_o8.csv' u ($1 + 7 * dx):3 every ::1 t "Obj. 8" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c8, \
      'obj/2plt_b100obj9_4_o9.csv' u ($1 + 8 * dx):3 every ::1 t "Obj. 9" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c9
 set title 'B 100-9 5'
+set key at 11000, 1000000 maxrows 3 
 plot 'obj/2plt_b100obj9_5_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b100obj9_5_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b100obj9_5_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
