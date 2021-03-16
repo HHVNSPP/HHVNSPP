@@ -1,10 +1,10 @@
-set term postscript eps font ",30" size 12, 9 color
+set term postscript eps font ",24" size 6, 9 color
 dx=50
 set datafile separator ","
-set key outside Right
+set key off
 set pointsize 1.2
 set xrange [-200:5200]
-set xtics 0, 500
+set xtics 0, 1000
 set yrange [100000:400000]
 set ytics 100000,100000
 set xlabel "Runtime (seconds)"
@@ -42,8 +42,9 @@ set output "objfunb.eps"
 #set title '20 projects with 9 objectives'
 set multiplot layout 3, 1
 set xrange [-200:5700]
-set xtics 0, 500
+set xtics 0, 1000
 set title 'B 20-9 1'
+set key off
 plot 'obj/2plt_b20obj9_1_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b20obj9_1_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b20obj9_1_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
@@ -68,6 +69,7 @@ set xrange [-500:16500]
 set xtics 0, 2500
 set multiplot layout 3, 1
 set title 'B 30-9 1'
+set key at 15200, 480000 maxcols 1
 plot 'obj/2plt_b30obj9_1_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b30obj9_1_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b30obj9_1_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
@@ -78,6 +80,7 @@ plot 'obj/2plt_b30obj9_1_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with lin
      'obj/2plt_b30obj9_1_o8.csv' u ($1 + 7 * dx):3 every ::1 t "Obj. 8" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c8, \
      'obj/2plt_b30obj9_1_o9.csv' u ($1 + 8 * dx):3 every ::1 t "Obj. 9" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c9
 set title 'B 30-9 2'
+set key off 
 plot 'obj/2plt_b30obj9_2_o1.csv' u ($1 + 0 * dx):3 every ::1 t "Obj. 1" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c1, \
      'obj/2plt_b30obj9_2_o2.csv' u ($1 + 1 * dx):3 every ::1 t "Obj. 2" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c2, \
      'obj/2plt_b30obj9_2_o3.csv' u ($1 + 2 * dx):3 every ::1 t "Obj. 3" with linespoints pt 7 dt 2 lt -1 lw 3 lc rgb c3, \
