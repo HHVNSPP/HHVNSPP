@@ -1,0 +1,1 @@
+SwapRandom;SwapQuarter;SwapThird;SwapHalf;ShakeArea;ShakeRegion;Swap1;DrawHightBgt;AddRandom;AddLowBgt;DrawRandom;DrawHightBgt;DrawRandomPutLessBgt;AddMaxBgt; SwapArea;IncreseBgtArea;DecreaseBgtArea;SwapRegion;IncreseBgtRegion;DecreaseBgtRegion;UseBudgetAT 
