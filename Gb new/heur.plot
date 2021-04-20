@@ -6,7 +6,7 @@ set ytics 0, 1000
 set output 'heurShake.eps'
 set xlabel 'Heuristic'
 set ylabel 'Number of uses'
-set xtics ('SwapRandom' 1, 'SwapQuarter' 2, 'SwapThird' 3, 'SwapHalf' 4, 'ShakeArea' 5, 'ShakeRegion' 6, 'Swap1' 7, 'DrawHightBgt' 8, 'AddRandom' 9, 'AddLowBgt' 10, 'DrawRandom' 11, 'DrawHightBgt' 12, 'DrawRandomPutLessBgt' 13, 'AddMaxBgt' 14, 'SwapArea' 15, 'IncreseBgtArea' 16, 'DecreaseBgtArea' 17, 'SwapRegion' 18, 'IncreseBgtRegion' 19, 'DecreaseBgtRegion' 20)
+set xtics ('SwapRandom' 1, 'SwapQuarter' 2, 'SwapThird' 3, 'SwapHalf' 4, 'ShakeArea' 5, 'ShakeRegion' 6, 'Swap1' 7, 'DrawHightBgt' 8, 'AddRandom' 9, 'AddLowBgt' 10, 'DrawRandom' 11, 'DrawHightBgt' 12, 'DrawRPutLessBgt' 13, 'AddMaxBgt' 14, 'SwapArea' 15, 'IncrBgtArea' 16, 'DecrBgtArea' 17, 'SwapReg' 18, 'IncrBgtReg' 19, 'DecrBgtReg' 20)
 
 set multiplot layout 4, 1
 
