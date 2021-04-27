@@ -1,0 +1,25 @@
+shake='#ff0000'
+locs='#0000ff'
+plot (1):1 t 'SwapRandom' lc rgb shake 
+plot (1):2 t 'SwapQuarter'  lc rgb shake 
+:3 t 'SwapThird' lc rgb shake 
+:4 t 'SwapHalf' lc rgb shake 
+:5 t 'ShakeArea' lc rgb shake 
+:6 t 'ShakeRegion' lc rgb shake 
+
+:7 t 'Swap1' lc rgb locs
+:8 t 'DrawHightBgt' lc rgb locs
+:9 t 'AddRandom' lc rgb locs
+:10 t 'AddLowBgt' lc rgb locs
+:11 t 'DrawRandom' lc rgb locs
+:12 t 'DrawHightBgt' lc rgb locs
+:13 t 'DrawRandomPutLessBgt' lc rgb locs
+t 'AddMaxBgt' lc rgb locs
+t 'SwapArea' lc rgb locs
+t 'IncreseBgtArea' lc rgb locs
+t 'DecreaseBgtArea' lc rgb locs
+t 'SwapRegion' lc rgb locs
+t 'IncreseBgtRegion' lc rgb locs
+t 'DecreaseBgtRegion' lc rgb locs
+t 'UseBudgetAT;  lc rgb locs
+

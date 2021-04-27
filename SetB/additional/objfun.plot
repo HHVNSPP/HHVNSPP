@@ -1,4 +1,4 @@
-set term postscript eps font ",20" size 32, 16 color
+set term postscript eps font ",43" size 32, 16 color
 set key off
 set datafile separator ","
 set boxwidth 0.6 relative
@@ -80,7 +80,7 @@ plot 'sol_b20_4obj1.txt' u 1:28:27:31:30 notitle with candlesticks lt -1 lw 2 lc
      '' u 1:29:29:29:29 notitle with candlesticks lt -1 lw 3 lc rgb c4
 
 unset multiplot
-
+set term postscript eps font ",26" size 32, 12 color
 set output "objfunb.eps"
 set xrange [0.6:600]
 set xtics ("0" 1, "1" 2, "2" 4, "3" 8, "4" 16, "5" 32, "6" 64, "7" 128, "8" 256)
@@ -308,6 +308,7 @@ plot 'sol_b30_9obj3.txt' u 1:53:20:56:55 notitle with candlesticks lt -1 lw 2 lc
      '' u 1:54:54:54:54 notitle with candlesticks lt -1 lw 3 lc rgb c9
 
 unset multiplot
+set term postscript eps font ",26" size 32, 16 color
 set output "objfund.eps"
 
 set xrange [0.6:500]
