@@ -14,22 +14,20 @@ from adjustment import Adjustment
 from project import RProject
 from project import NProject
 from project import Activity
-# from project import Synergy
 from portfolio import NPortfolio
+from portfolio import Synergy
 import os
 import numpy as np
 import copy
-
 from datetime import datetime,datetime, date, time, timedelta
 
 
 
 
-
 class NProgram():
-    def __init__(self, addresses):
+    def __init__(self, addresses,Fer_Update=None):
         self.addresses = addresses
-
+        self.Fer_Update=Fer_Update
     def ReadNF(self, param, address):
 
         f = open(address)
@@ -106,7 +104,8 @@ class NProgram():
                     for char in aux:
                         if char in " <>}];\n":
                             aux = aux.replace(char, '')
-                            temp = aux.split(",")            
+                            temp = aux.split(",")
+                # print(temp[0]+" "+temp[1]+ " "+temp[2]+" "+temp[3]+" "+temp[4])
                 projects[int(temp[0]) - 1].activities.append(
                     Activity(int(temp[1]) - 1, float(temp[2]), float(temp[3]), float(temp[4]), 0, 0))
                 total = total - 1
@@ -131,8 +130,7 @@ class NProgram():
                     if char in " <>}];\n":
                         aux = aux.replace(char, '')
                         temp = aux.split(",")
-                synergies.append(
-                    Synergy(int(temp[0]), int(temp[1]), int(temp[2]), int(temp[3]), int(temp[4]), int(temp[5]),
+                synergies.append(Synergy(int(temp[0]), int(temp[1]), int(temp[2]), int(temp[3]), int(temp[4]), int(temp[5]),
                             int(temp[6])))
                 nsynergies = nsynergies - 1
             if nsynergies == 0:
@@ -182,7 +180,7 @@ class NProgram():
 
     def apply(self):
        
-       for runing_time in [0.5,1,3,5,10]:
+       for runing_time in [0.5]:
             for address in self.addresses:
                 
                 print(address)
@@ -206,58 +204,54 @@ class NProgram():
                 
                 
                    
-                    shake = [h0, h1, h2, h3, h4, h5]
-                    #local = [h5, h7, h9, h10, h11, h12, h14, h15, h16,h17]
+                    shake = [h0, h1, h2, h3, h4, h5]       
                     local = [h6,h7,h8,h9,h10,h11,h12,h13]
                     
-    #                print(i)
+  
                     counter=0
+                    iterate=1 #num iteracion
+                    stop=1
                     heuristics_data=""
-                             
                     starttime = datetime.now()
-                   
                     a = self.loadfromNfile(address)
-                
                     b = a.initial_solution()
-                    
-                    b.make_factible()
                    
+                    b.make_factible()       
                     adjustment = Adjustment(b, b, shake, [0.5, 0.5], [], 5, 0, counter, heuristics_data)
                   
                     
-                    while adjustment.nim > adjustment.nima and datetime.now()-starttime<timedelta (minutes=runing_time):
-                        lsearch = ls.LocalSearch(adjustment.shaked, 10, local)
+                    while adjustment.nim > adjustment.nima and datetime.now()-starttime<timedelta (minutes=runing_time)and stop<2049: 
+                        lsearch = ls.LocalSearch(adjustment.shaked, 20, local,self.Fer_Update)
                         lista = lsearch.apply()
                         adjustment.apply(lista)
-                        print(datetime.now())
-                   
+                        if stop==iterate:    
+                            adjustment.apply_electre()
+                            endtime = datetime.now() - starttime
+                         
+                            file = open("sol_" + address+".csv", "a+")
+                            for sol in adjustment.solutions:
+                                file.write("{0};{1};{2};{3};{4}".format( starttime, stop,str(self.Fer_Update), round(endtime.total_seconds()), sol.info()))                                          
+                            file.close()
+                            stop=stop*2                       
+                        iterate=iterate+1
                     adjustment.apply_electre()
                     endtime = datetime.now() - starttime
-                    file = open("sol_" + address+ ".csv", "a+")                
+                    file = open("sol_" + address+".csv", "a+")
                     for sol in adjustment.solutions:
-                        file.write("{0};{1};{2}".format(starttime, round(endtime.total_seconds()), sol.info()))                
-                    
-                    file.close()
+                        file.write("{0};{1};{2};{3};{4}".format( starttime, iterate,str(self.Fer_Update), round(endtime.total_seconds()), sol.info()))                                          
+                    file.close()  
                     to_save=""
-                    shake.sort(key=lambda x: x.ID, reverse=False)          
-                    
+                    shake.sort(key=lambda x: x.ID, reverse=False)
                     local.sort(key=lambda x: x.ID, reverse=False)
                     for h in shake:
-                        to_save= to_save+";" +  str(h.in_use) 
-                       
+                        to_save= to_save+"; " + str(h.in_use) 
                     for h in local:                 
-                        to_save= to_save+ ";"+ str(h.in_use)
-                      
-                    contador=0
-                    for i in adjustment.solutions:
-                        contador+=1
+                        to_save= to_save+ "; "+  str(h.in_use)
                     file1 = open("h_" + address+ ".csv", "a+") 
-                    file1.write(str(starttime)+ ";"+ str(contador)+ to_save + ";adj:"+ str (adjustment.nim) + "; " + "ls:" +str(lsearch.c)+ ";"+ str( runing_time)+" min"+ "\n" )
+                    file1.write(str(starttime)+ to_save+"\n" )
                     file1.close()
                 
             
-# a = NProgram(["P64T16A8S0.04p0.04D0.10_1.dat","P64T16A8S0.04p0.04D0.10_2.dat","P64T16A8S0.04p0.04D0.10_3.dat","P64T16A8S0.04p0.04D0.10_4.dat","P64T32A12S0.04p0.04D0.10_1.dat","P64T32A12S0.04p0.04D0.10_2.dat","P64T32A12S0.04p0.04D0.10_3.dat","P64T32A12S0.04p0.04D0.10_4.dat","P256T16A8S0.04p0.04D0.10_1.dat","P256T16A8S0.04p0.04D0.10_2.dat","P256T16A8S0.04p0.04D0.10_3.dat","P256T16A8S0.04p0.04D0.10_4.dat","P256T32A8S0.04p0.04D0.10_1.dat","P256T32A8S0.04p0.04D0.10_2.dat","P256T32A8S0.04p0.04D0.10_3.dat","P256T32A8S0.04p0.04D0.10_4.dat","P512T16A8S0.04p0.04D0.10_1.dat","P512T16A8S0.04p0.04D0.10_3.dat","P512T16A8S0.04p0.04D0.10_4.dat","P512T32A8S0.04p0.04D0.10_1.dat","P512T32A8S0.04p0.04D0.10_2.dat","P512T32A8S0.04p0.04D0.10_3.dat","P512T32A8S0.04p0.04D0.10_4.dat"])
-
-a = NProgram(["P100R5A2S5_1.dat"])
+a = NProgram(["P100R5A2S5_1.dat"], True)
 a.apply()
 

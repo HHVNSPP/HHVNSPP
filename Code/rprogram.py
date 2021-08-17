@@ -21,12 +21,12 @@ from datetime import datetime,datetime, date, time, timedelta
 
 
 class RProgram():
-    def __init__(self, addresses=[]):
+    def __init__(self, addresses=[],Fer_Update=None):
         self.addresses = addresses
-
+        self.Fer_Update=Fer_Update
     def load_from_Rfile(self, filename):
         print("Loading....")
-        f = open(filename)
+        f = open(filename+'.txt')
         cantpr = int(f.readline())
         pres = float(f.readline())
         pesos = f.readline()
@@ -36,6 +36,7 @@ class RProgram():
             i = int(i)
             pesos1.append(i)
         elemtomax = len(pesos1)
+        #        print(pesos1)
         projects = []
         for i in range(cantpr):
             proj = f.readline()
@@ -51,8 +52,7 @@ class RProgram():
 
     def apply(self):
 
-        for  runing_time in [160 ,200   
-                             ]:
+        for  runing_time in [0.5]:
             for address in self.addresses:
                 for i in range(1):
                     h1 = hr.SwapRandom(1, 1, 0, 5)
@@ -80,7 +80,7 @@ class RProgram():
                     h17 = hr.SwapRegion(17, 4, 0, 1)
                     h18 = hr.IncreseBgtRegion(18, 4, 0, 1)
                     h19 = hr.DecreaseBgtRegion(19, 4, 1, 1)
-                    h21=hr.UseBudgetAT(20, 2, 0, 1)   
+                    h21=hr.UseBudgetAT(21, 2, 0, 1)   
     
                     ######################################
             
@@ -89,29 +89,37 @@ class RProgram():
             
                     ################
                     counter=0
+                    iterate=1 #num iteracion
+                    stop=1
                     heuristics_data=""
                     starttime = datetime.now()
                     a = self.load_from_Rfile(address)
                     b = a.initial_solution()
                     #            b.print()
                     b.make_factible()
-                    adjustment = Adjustment(b, b, shake, a.weights, [], 5, 0,counter,heuristics_data)
-                    #                print("Into the while" + str(i))
-                    #            while adjustment.nim>0 and adjustment.check_rank():
-                   
-                    while adjustment.nim > adjustment.nima and datetime.now()-starttime<timedelta (minutes=runing_time):              
-                        lsearch = ls.LocalSearch(adjustment.shaked, 40, local)
+                    adjustment = Adjustment(b, b, shake, a.weights, [], 4, 0,counter,heuristics_data)
+            
+                    
+                    while adjustment.nim > adjustment.nima and datetime.now()-starttime<timedelta (minutes=runing_time)and stop<2049: 
+                        lsearch = ls.LocalSearch(adjustment.shaked, 20, local,self.Fer_Update)
                         lista = lsearch.apply()
                         adjustment.apply(lista)
-                        # print(datetime.now())
+                        if stop==iterate:    
+                            adjustment.apply_electre()
+                            endtime = datetime.now() - starttime
+                         
+                            file = open("sol_" + address+".csv", "a+")
+                            for sol in adjustment.solutions:
+                                file.write("{0};{1};{2};{3};{4}".format( starttime, stop,str(self.Fer_Update), round(endtime.total_seconds()), sol.info()))                                          
+                            file.close()
+                            stop=stop*2                       
+                        iterate=iterate+1
                     adjustment.apply_electre()
                     endtime = datetime.now() - starttime
-                 
-                    file = open("b_" + address+".csv", "a+")
+                    file = open("sol_" + address+".csv", "a+")
                     for sol in adjustment.solutions:
-                        file.write("{0};{1};{2}".format(starttime, round(endtime.total_seconds()), sol.info()))                
-                    
-                    file.close()
+                        file.write("{0};{1};{2};{3};{4}".format( starttime, iterate,str(self.Fer_Update), round(endtime.total_seconds()), sol.info()))                                          
+                    file.close()  
                     to_save=""
                     shake.sort(key=lambda x: x.ID, reverse=False)
                     local.sort(key=lambda x: x.ID, reverse=False)
@@ -119,12 +127,10 @@ class RProgram():
                         to_save= to_save+"; " + str(h.in_use) 
                     for h in local:                 
                         to_save= to_save+ "; "+  str(h.in_use)
-                    file1 = open("har_" + address+ ".csv", "a+") 
-                    file1.write(str(starttime)+ to_save + "; adj:"+ str (adjustment.nim) + ";" + "ls:" +str(lsearch.c)+ "; "+ str( runing_time)+" min"+ "\n" )
+                    file1 = open("h_" + address+ ".csv", "a+") 
+                    file1.write(str(starttime)+ to_save+"\n" )
                     file1.close()
+#Se le pasa lista de archivos a correr y bool de si se incluyen o no los cambios de Fer
+a=RProgram(['b20_4obj1'],True)
 
-a=RProgram(["o100_1.txt","o100_2.txt","o100_3.txt","o100_4.txt","o100_5.txt"])
-
-# "o1.txt","o1obj4.txt","o1obj9.txt","o2.txt","o2obj4.txt","o2obj9.txt","o3.txt","o3obj4.txt","o3obj9.txt","o100_1.txt","o100_2.txt"
-#            ,"o100_3.txt","o100_4.txt","o100_5.txt"
 a.apply()

@@ -1,3 +1,10 @@
+#------------------------------------------------------
+# Cambios introducidos a la clase BaseHeuristic para incluir el rank por dominancia
+# y los metodos para modificar (set) y devolver (get) el rank
+# se modifica o devuelve el rank si se no se le pasa valor al parametro rank_by_dom,
+# de lo contrario se modifica o devuelve el rank_dom
+#Pase la copia del portfolio para  el metodo apply de BaseHeuristic y ahi le pase la referencia de la heuristica al portfolio que se modifica
+#-----------------------------------------------------
 # -*- coding: utf-8 -*-
 """
 Created on Thu Nov 28 09:59:55 2019
@@ -20,6 +27,7 @@ import copy
 import portfolio as prf
 from numpy.random import uniform
 
+MIN_RANK = -10
 @dataclass
 class BaseHeuristic(ABC):
     
@@ -30,12 +38,27 @@ class BaseHeuristic(ABC):
         self.kind=kind
         self.in_use=in_use
         self.rank=rank
-        
+        #---------------- linea adicionada por fernando 27/07/2021
+        self.rank_dom = MIN_RANK
+        #--------------------------------------------------------
 #    kind description:
 #        1: General 
 #        2:Shuffle 
-        
-    # Class members region    
+
+    #--------metodos adicionados por fernando 27 de julio del 2021
+    def set_rank(self,rank,rank_by_dom=None):
+        if rank_by_dom is None:
+            self.rank = rank
+        else:
+            self.rank_dom = rank
+
+    def get_rank(self, rank_by_dom=None):
+        if rank_by_dom is None:
+            return self.rank
+        return self.rank_dom
+    #--------------------------------------------------------------
+
+    # Class members region
     def set_ID(self, ID):
         self.ID = ID
 
@@ -46,18 +69,20 @@ class BaseHeuristic(ABC):
         self.active = active
         
     def apply(self, portfolio):
-        pass
+        portf = copy.deepcopy(portfolio)
+        portf.setheur(self)
+        return portf
 
-############################################        
+############################################
 class Swap1(BaseHeuristic):      #quita o pone un proyecto, aleatorio
     def __init__(self, ID, kind,in_use, rank):
         super().__init__(ID, kind,in_use, rank)
     
     def apply(self, portfolio):
 #        print(self.ID)
+        portf = super().apply(portfolio)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
-        p= random.choice(list(range(len(portf.projects))))    
+        p= random.choice(list(range(len(portf.projects))))
         portf.projects[p].active=not portf.projects[p].active
         portf.update()
         portf.make_factible()
@@ -72,7 +97,7 @@ class SwapRandom(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         a=[True,False]    
         for i in portf.projects:
            i.active=random.choice(a)
@@ -89,7 +114,7 @@ class SwapQuarter(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         cant=int(len(portf.projects)/4)
         li= list(range(len(portf.projects)))
         random.shuffle(li)
@@ -109,7 +134,7 @@ class SwapThird(BaseHeuristic):    #quita o pone 2 proyectos, aleatorio
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         cant=int(len(portf.projects)/3)
         li= list(range(len(portf.projects)))
         random.shuffle(li)
@@ -128,7 +153,7 @@ class ShakeArea(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         num=random.choice(range(portf.num_areas))     
         for i in portf.projects:        
             if i.area==num:                    
@@ -146,8 +171,8 @@ class ShakeRegion(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
-        num=random.choice(range(portf.num_regions))     
+        portf = super().apply(portfolio)
+        num=random.choice(range(portf.num_regions))
         for i in portf.projects:        
             if i.region==num:                    
                     i.active=not i.active
@@ -163,7 +188,7 @@ class SwapHalf(BaseHeuristic):    #quita o pone 2 proyectos, aleatorio
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         cant=int(len(portf.projects)/2)
         li= list(range(len(portf.projects)))
         random.shuffle(li)
@@ -182,7 +207,7 @@ class AddRandom(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         for i in portf.projects:
             if i.active==False:              
@@ -201,7 +226,7 @@ class AddLowBgt(BaseHeuristic):  #Añade el de menos presupuesto
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         lower=portf.budget
         temp=0
         for i in portf.projects:
@@ -222,7 +247,7 @@ class AddMaxBgt(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         m=0
         temp=0
         for i in portf.projects:
@@ -243,7 +268,7 @@ class DrawRandom(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         actives=[]
         count=0
         for i in portf.projects:
@@ -266,7 +291,7 @@ class UseBudgetAT(BaseHeuristic):
     
     def apply(self, portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         diff = portf.budget - portf.total_bgt                                                            
         for prj in portf.projects:
             if diff <= 0:  
@@ -289,7 +314,7 @@ class DrawHightBgt(BaseHeuristic):   #Saca el de mayor presupuesto
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         maxim=0
         temp=0
         for i in portf.projects:
@@ -312,7 +337,7 @@ class DrawRandomPutLessBgt(BaseHeuristic):   #Draw one ramdom and put one with l
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         for i in portf.projects:
@@ -343,7 +368,7 @@ class SwapArea(BaseHeuristic):   #Draw one ramdom and put one from other area
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         count=0
@@ -377,7 +402,7 @@ class IncreseBgtArea(BaseHeuristic):   #Draw one ramdom and put one with more bu
     def apply(self, portfolio):
         self.in_use+=1
 #        print(self.ID)
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         count=0
@@ -411,7 +436,7 @@ class DecreaseBgtArea(BaseHeuristic):     #Draw one ramdom and put one with less
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         count=0
@@ -446,7 +471,7 @@ class SwapRegion(BaseHeuristic):   #Draw one ramdom and put one in other region
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         count=0
@@ -480,7 +505,7 @@ class IncreseBgtRegion(BaseHeuristic):   #Draw one ramdom and put one with more 
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         count=0
@@ -514,7 +539,7 @@ class DecreaseBgtRegion(BaseHeuristic):     #Draw one ramdom and put one with le
     def apply(self, portfolio):
         self.in_use+=1
 #        print(self.ID)
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         nonactives=[]
         actives=[]
         count=0
@@ -549,7 +574,7 @@ class MoreProj(BaseHeuristic):
     def apply(self, portfolio):
         self.in_use+=1
         change=False
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         diff = portf.budget - portf.total_bgt
         if diff > 0:
             for prj in portf.projects:
@@ -575,7 +600,7 @@ class QuitBad(BaseHeuristic):
     def apply(self, portfolio):
         self.in_use+=1
         bad=0
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         temp=portf.total_impact[0]
         for i in range(len(portf.projects)):
                 if portf.projects[i].active:
@@ -600,7 +625,7 @@ class UseBudget(BaseHeuristic):
     
     def apply(self, portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         diff = portf.budget - portf.total_bgt                                                            
         for prj in portf.projects:
             if diff <= 0:  
@@ -627,7 +652,7 @@ class SetPrjMinFill(BaseHeuristic): #Selects a project, fill activities random t
     
     def apply(self, portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         selected=random.choice(portf.projects) 
         selected.set_budget(selected.min_budget)  
         portf.update()
@@ -644,7 +669,7 @@ class SetPrjRndFill(BaseHeuristic):
     
     def apply(self, portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         selected=random.choice(portf.projects) 
         selected.set_budget(int(uniform(selected.min_budget, selected.max_budget)))
         portf.update()
@@ -658,9 +683,9 @@ class ProjMin(BaseHeuristic):
     def __init__(self, ID, kind,in_use,rank):
         super().__init__(ID,kind,in_use,rank)       
     
-    def apply(self, portfolio):
+    def apply(portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         selected=random.choice(portf.projects) 
         selected.set_budget=selected.min_budget                
         portf.update()
@@ -676,7 +701,7 @@ class AllRandN(BaseHeuristic):
     
     def apply(self, portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         for x in portf.projects:
             x.set_budget( uniform(x.min_budget, x.max_budget))                   
         portf.update()  
@@ -719,7 +744,7 @@ class MTrySetMax(BaseHeuristic):
     def apply(self, portfolio):
         self.in_use+=1
 #        print(self.ID)
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(self,portfolio)
         diff = portf.budget - portf.total_bgt
         if diff > 0:
             for prj in portf.projects:
@@ -744,7 +769,7 @@ class MSetPrjRnd(BaseHeuristic): #Selects a project, fill activities random g
     def apply(self, portfolio):
         self.in_use+=1
 #        print(self.ID)
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(self,portfolio)
         selected=random.choice(portf.projects) 
         selected.random_budget()           
         portf.update()
@@ -759,7 +784,7 @@ class MMoreProj(BaseHeuristic):
     def apply(self, portfolio):
         self.in_use+=1
         change=False
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         diff = portf.budget - portf.total_bgt
         if diff > 0:
             for prj in portf.projects:
@@ -783,7 +808,7 @@ class MUseBudget(BaseHeuristic):
     
     def apply(self, portfolio):
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         diff = portf.budget - portf.total_bgt                                                            
         for prj in portf.projects:
             if diff <= 0:  
@@ -810,7 +835,7 @@ class MChange5perc(BaseHeuristic):
     def apply(self, portfolio):
         self.in_use+=1
 #        print(self.ID)
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         for i in portf.projects:
             if (random.choice([True,False])):              
                 i.set_budget(i.request_budget+((i.max_budget-i.min_budget)/20)) 
@@ -829,7 +854,7 @@ class MMore5perc(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         i=random.choice(portf.projects)                        
         i.set_budget(i.request_budget+((i.max_budget-i.min_budget)/20))            
         portf.update()  
@@ -843,7 +868,7 @@ class MLess5perc(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         i=random.choice(portf.projects)         
         i.set_budget(i.request_budget-((i.max_budget-i.min_budget)/20))                
         portf.update()  
@@ -862,7 +887,7 @@ class MMore10perc(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         i=random.choice(portf.projects)                        
         i.set_budget(i.request_budget+((i.max_budget-i.min_budget)/10))
         portf.update()  
@@ -876,7 +901,7 @@ class MLess10perc(BaseHeuristic):
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         i=random.choice(portf.projects)         
         i.set_budget(i.request_budget-((i.max_budget-i.min_budget)/10))                    
         portf.update()  
@@ -890,7 +915,7 @@ class DrawHightBgtAndFill(BaseHeuristic):   #Saca el de mayor presupuesto y llen
     def apply(self, portfolio):
 #        print(self.ID)
         self.in_use+=1
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         maxim=0
         temp=0
         for i in portf.projects:
@@ -914,7 +939,7 @@ class DrawRandFill(BaseHeuristic):   #Draw one ramdom and put one with less budg
 #        print(self.ID)
         self.in_use+=1
           
-        portf= copy.deepcopy(portfolio)
+        portf = super().apply(portfolio)
         li = list(range(len(portf.projects))) 
         random.shuffle(li)
         for i in li:

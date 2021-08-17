@@ -1,4 +1,16 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr 14 16:56:02 2020
 
+@author: Madys
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Mar  3 15:45:00 2020
+
+@author: Madys
+"""
 import portfolio as prf
 import project as prj
 import random
@@ -41,13 +53,13 @@ class Synergy():
 
 
 class MProgram():
-    def __init__(self, addresses=[]):
+    def __init__(self, addresses=[], Fer_Update=None):
         self.addresses = addresses
-
+        self.Fer_Update=Fer_Update
     def load_from_Mfile(self, filename):
         
         print("Loading... "+filename)
-        f = open(filename)
+        f = open(filename+'.txt')
         cantpr = int(f.readline())
         pres = float(f.readline())
         pesos = f.readline()
@@ -75,6 +87,7 @@ class MProgram():
             proj = f.readline()
             proj = proj.split()
             tomax = []
+#            test=""
             for x in range(elemtomax):
                 tomax.append(float(proj[4 + x]))
 
@@ -91,9 +104,10 @@ class MProgram():
         
         
         # times=[0.5,1,2,3,5,7.5,10,12.5,15,17.5,20,23,26,30,35,40,45,50]
-        times=[40,45,50,60]
-        for address in self.addresses:
-            for runing_time in times:
+       
+        for runing_time in [0.5]:
+            for address in self.addresses:
+           
                 for i in range(1):
                     h1 = hr.SwapRandom(1, 1, 0, 5)
                     h2 = hr.SwapQuarter(2, 1, 0, 5)
@@ -120,6 +134,8 @@ class MProgram():
             
                     ################
                     counter=0
+                    iterate=1 #num iteracion
+                    stop=1
                     heuristics_data=""
                     starttime = datetime.now()
                     a = self.load_from_Mfile(address)
@@ -130,31 +146,38 @@ class MProgram():
                     adjustment = Adjustment(b, b, shake, a.weights, [], 4, 0,counter,heuristics_data)
                     
                     
-                    while adjustment.nim > adjustment.nima and datetime.now()-starttime<timedelta (minutes=runing_time):              
-                        lsearch = ls.LocalSearch(adjustment.shaked, 20, local)
+                    while adjustment.nim > adjustment.nima and datetime.now()-starttime<timedelta (minutes=runing_time)and stop<4100: 
+                     #El segundo parámetro es la cantidad de veces sin mejora para búsqueda local, el cuarto es True para ajustes de Fernando, False, como estaba
+                        lsearch = ls.LocalSearch(adjustment.shaked, 20, local,self.Fer_Update)
                         lista = lsearch.apply()
                         adjustment.apply(lista)
+                        if stop==iterate:    
+                            adjustment.apply_electre()
+                            endtime = datetime.now() - starttime
+                         
+                            file = open("sol_" + address+".csv", "a+")
+                            for sol in adjustment.solutions:
+                                file.write("{0};{1};{2};{3};{4}".format( starttime, stop,str(self.Fer_Update), round(endtime.total_seconds()), sol.info()) )                                         
+                            file.close()
+                            stop=stop*2                       
+                        iterate=iterate+1
                     adjustment.apply_electre()
                     endtime = datetime.now() - starttime
-                    print(endtime)
-                    file = open("solnew_" + address+".csv", "a+")
+                    file = open("sol_" + address+".csv", "a+")
                     for sol in adjustment.solutions:
-                        file.write("{0}; {1}; {2}".format(starttime, round(endtime.total_seconds()), sol.info()))                
-                    
-                
-                    file.close()
+                        file.write("{0};{1};{2};{3};{4}".format( starttime, iterate,str(self.Fer_Update), round(endtime.total_seconds()), sol.info())  )                                        
+                    file.close()  
                     to_save=""
                     shake.sort(key=lambda x: x.ID, reverse=False)
                     local.sort(key=lambda x: x.ID, reverse=False)
                     for h in shake:
-                        to_save= to_save+";" + str(h.in_use) 
+                        to_save= to_save+"; " + str(h.in_use) 
                     for h in local:                 
-                        to_save= to_save+ ";"+  str(h.in_use)
-    
-                    file1= open("h_" + address+ ".csv", "a+") 
-                    file1.write(str(starttime)+ ";"+ str(round(endtime.total_seconds())) + to_save + "; adj:"+ str (adjustment.nim) + ";" + "ls:" +str(lsearch.c)+ ";"+ str( runing_time)+" min"+ "\n" )
+                        to_save= to_save+ "; "+  str(h.in_use)
+                    file1 = open("h_" + address+ ".csv", "a+") 
+                    file1.write(str(starttime)+ to_save+"\n" )
                     file1.close()
-a=MProgram(["m_4obj_64_2.txt","m_4obj_64_2_ns.txt"])
+a=MProgram(["mns4obj100_1"],True)
 # a=MProgram(["m_4obj_64_2.txt","m_4obj_64_2_ns.txt","m_4obj_128_1.txt","m_4obj_128_1_ns.txt","m_4obj_256_1.txt","m_4obj_256_1_ns.txt","m_4obj_512_1.txt","m_4obj_512_1_ns.txt"])
-
+# a=MProgram(["m_4obj_512_3.txt","m_4obj_1024_1.txt","m_4obj_1024_2.txt","m_4obj_1024_3.txt"])
 a.apply()

@@ -47,7 +47,7 @@ class MPortfolio(Portfolio):
                 tmp_bgt=tmp_bgt-i.request_budget
     
         return MSolution(self.budget, self.weights, self.num_projects, self.num_areas,self.num_regions,self.area_limits, self.region_limits, self.projects,
-                         self.budget-tmp_bgt, temp_area, temp_region, total_impact,self.num_synergies,self.synergies )
+                         self.budget-tmp_bgt, temp_area, temp_region, total_impact,self.num_synergies,self.synergies)
 
 
 class MSolution(Portfolio):
@@ -67,6 +67,7 @@ class MSolution(Portfolio):
         self.area_bgt = area_bgt
         self.region_bgt=region_bgt
         self.total_impact = total_impact
+        self.num_obj=len(self.weights)
 
     
     def make_factible(self):
@@ -243,31 +244,3 @@ class MSolution(Portfolio):
                     synergy.active=True
                 else:
                     synergy.active=False
-
-    def amINotDominated(self, to_compare):
-        for i in range(len(self.weights)):
-            if to_compare.total_impact[i] > self.total_impact[i]:
-                return False
-        return True
-
-    def isItNotDominated(self, to_compare):
-        for i in range(len(self.weights)):
-            if self.total_impact[i] > to_compare.total_impact[i]:
-                return False
-        return True
-
-    def areWeEqual(self, to_compare):
-        for i in range(len(self.weights)):
-            if (self.total_impact[i] != to_compare.total_impact[i]):
-                return False
-        return True
-
-    def compare(self, to_compare):
-        if self.areWeEqual(to_compare):
-            return 2
-        if self.amINotDominated(to_compare):
-            return -1
-        if self.isItNotDominated(to_compare):
-            return 1
-        else:
-            return 0

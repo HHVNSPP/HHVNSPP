@@ -1,3 +1,8 @@
+#-----------------------------------------
+# cambios introducidos  a la clase Portfolio para incluir referencia a la heuristica que crea la solucion
+# decidi modificar esta clase pues no existe una clase general para la solucion, de esta manera los cambios son minimos
+# tambien pase los metodos relativos a la comparacion de dominancia a la clase base, asi todas las soluciones los heredan.
+#------------------------------------------
 from abc import ABC, abstractmethod, abstractproperty
 from dataclasses import dataclass
 import copy
@@ -9,8 +14,61 @@ import random
 @dataclass
 class Portfolio(ABC):
     # Constructor
-    def __init__(self):
+    # ----------------parametros adicionados por fernando 27 de julio del 2021, los pesos y indica la heuristica que creo la solucion
+    def __init__(self, weights=None, num_obj=None):
+    #-------------------------------------------------------------------------------------------------------------------
         super().__init__()
+        self.total_impact = []
+        # ----------------linea adicionada por fernando 27 de julio del 2021
+        # Indica la heuristica que lo creo (si es una solucion), si aplica, de lo contrario es None
+        self.createdby = None
+        self.num_obj=num_obj
+        # ------------------------------------------------------------------
+
+    #--------metodos adicionados por fernando 27 de julio del 2021
+    def setheur(self, heur):
+        self.createdby = heur
+
+    def getheur(self): # get  reference to the heuristic that created the solution
+        return self.createdby
+    #---------------------------------------------------------
+    #------------metodos modificados por fernando 27/07/2021
+    #-----------la implementacion de no dominancia estaba mal, ahora ya esta corregida
+    def amINotDominated(self, to_compare):
+        greater_equal = 0
+        greater = False
+        for i in range(self.num_obj):
+            if self.total_impact[i] >= to_compare.total_impact[i] :
+                greater_equal += 1
+                if self.total_impact[i] > to_compare.total_impact[i] :
+                    greater = True
+        return greater == True and greater_equal == self.num_obj
+
+    def isItNotDominated(self, to_compare):
+        greater_equal = 0
+        greater = False
+        for i in range(self.num_obj):
+            if to_compare.total_impact[i] >= self.total_impact[i] :
+                greater_equal += 1
+                if to_compare.total_impact[i] > self.total_impact[i] :
+                    greater = True
+        return greater == True and greater_equal == self.num_obj
+
+    def areWeEqual(self, to_compare):
+        for i in range(self.num_obj):
+            if (self.total_impact[i] != to_compare.total_impact[i]):
+                return False
+        return True
+
+    def compare(self, to_compare):
+        if self.areWeEqual(to_compare):
+            return 2
+        if self.amINotDominated(to_compare):
+            return -1
+        if self.isItNotDominated(to_compare):
+            return 1
+        else:
+            return 0
 
 class RPortfolio(Portfolio):
     def __init__(self, budget, num_obj, num_areas, num_reg, weights=None, projects=None, kind="RPortfolio"):
@@ -86,6 +144,7 @@ class RPortfolio(Portfolio):
     
     
 class RSolution(Portfolio):
+
     def __init__(self, budget, kind="RPortfolio", num_obj=4, num_areas=3, num_regions=2, projects=[], lim_inf_area=[],
                  lim_sup_area=[], lim_inf_region=[], lim_sup_region=[], area_bgt=[], region_bgt=[], total_bgt=0,
                  total_impact=[], points=0):
@@ -105,6 +164,7 @@ class RSolution(Portfolio):
         self.total_impact = total_impact
         self.total_bgt = total_bgt
         self.points = points
+
 
     def update(self):  # Update total budget asigned to portfolio, also area and region budget
         #          Update total impact per objectives
@@ -139,33 +199,6 @@ class RSolution(Portfolio):
         print(self.lim_inf_area)
         print(str(area1) + " " + str(area2) + " " + str(area3))
 
-    def amINotDominated(self, to_compare):
-        for i in range(self.num_obj):
-            if to_compare.total_impact[i] > self.total_impact[i]:
-                return False
-        return True
-
-    def isItNotDominated(self, to_compare):
-        for i in range(self.num_obj):
-            if self.total_impact[i] > to_compare.total_impact[i]:
-                return False
-        return True
-
-    def areWeEqual(self, to_compare):
-        for i in range(self.num_obj):
-            if (self.total_impact[i] != to_compare.total_impact[i]):
-                return False
-        return True
-
-    def compare(self, to_compare):
-        if self.areWeEqual(to_compare):
-            return 2
-        if self.amINotDominated(to_compare):
-            return -1
-        if self.isItNotDominated(to_compare):
-            return 1
-        else:
-            return 0
 
     def make_factible(self):
 
@@ -288,8 +321,9 @@ class RSolution(Portfolio):
         prj_file.close()
 
 
+
 class Synergy():
-    def __init__(self, nombre, tecn, valor, tipo, mina, maxa, cant):
+    def __init__(self, nombre, tecn, valor, tipo, mina, maxa, cant, active=False):
         self.nombre = nombre
         self.tecn = tecn
         self.valor = valor
@@ -298,6 +332,7 @@ class Synergy():
         self.maxa = maxa
         self.cant = cant
         self.elements = []
+        self.active=active
 
     def AddElement(self, elem):
         self.elements.append(elem)
@@ -453,34 +488,4 @@ class NSolution(Portfolio):
         self.area_bgt = area_bgt
         self.total_impact = [total_impact, act]
         self.total_bgt = total_bgt
-       
-
-
-    def amINotDominated(self, to_compare):
-        for i in range(self.num_obj):
-            if to_compare.total_impact[i] > self.total_impact[i]:
-                return False
-        return True
-
-    def isItNotDominated(self, to_compare):
-        for i in range(self.num_obj):
-            if self.total_impact[i] > to_compare.total_impact[i]:
-                return False
-        return True
-
-    def areWeEqual(self, to_compare):
-        for i in range(self.num_obj):
-            if (self.total_impact[i] != to_compare.total_impact[i]):
-                return False
-        return True
-
-    def compare(self, to_compare):
-        if self.areWeEqual(to_compare):
-            return 2
-        if self.amINotDominated(to_compare):
-            return -1
-        if self.isItNotDominated(to_compare):
-            return 1
-        else:
-            return 0
 
