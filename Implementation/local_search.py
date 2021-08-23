@@ -1,12 +1,9 @@
-from abc import ABC, abstractmethod, abstractproperty
-from dataclasses import dataclass
 import copy
-from project import RProject
-import random
-import portfolio as prf
+from random import shuffle
 from heuristic import MIN_RANK
+
 class LocalSearch():
-    def __init__(self, portfolio_base, c, heuristics=None,rank_by_dom=None):
+    def __init__(self, portfolio_base, c, heuristics = None, rank_by_dom = None):
         if heuristics is None:
             self.heuristics = []
         else:
@@ -20,7 +17,7 @@ class LocalSearch():
         self.heuristics.sort(key=lambda x: x.get_rank(self.rank_by_dom), reverse=True)
         #--------------------------------------------------------
     def shuffle_heur(self):
-        random.shuffle(self.heuristics)
+        shuffle(self.heuristics)
 
     #---------------metodo modificada por fernando 27/0/2021: adicionado parametro rank_by_dom
     def check_heur(self): #Check heuristics rank
@@ -62,7 +59,7 @@ class LocalSearch():
         if add: portfs.append(reference)
 
     #--------------- metodo modificado por fernando 27/07/2021
-    def apply(self):
+    def execute(self):
         num_non_impr=0
         result=[]          
         portf= copy.deepcopy(self.portfolio_base)
@@ -79,17 +76,16 @@ class LocalSearch():
                 elif i.get_rank(self.rank_by_dom)>heur.get_rank(self.rank_by_dom):
                     heur=i
                     
-            portf=heur.apply(self.portfolio_base)                                    
-            comparison=self.portfolio_base.compare(portf)
-            # portf.Print()
-            
-            if comparison==1:
+            portf = heur.execute(self.portfolio_base)                                    
+            comparison = self.portfolio_base.compare(portf)
+
+            if comparison == 1:
                 self.portfolio_base=portf                    
                 self.add2nondom(result,portf,heur)
                 if self.rank_by_dom is None:
                     self.setHto_1()
                 num_non_impr=0
-            elif comparison==0:
+            elif comparison == 0:
                 self.add2nondom(result,portf,heur)
                 if self.rank_by_dom is None:
                     heur.set_rank(0)

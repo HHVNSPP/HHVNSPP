@@ -50,29 +50,13 @@ class Project(ABC):
     def get_active(self):
         return self.active
 
-    # Abstract methods region
-
-
-#    @abstractmethod
-#    def save(self):  # abstract method
-#        pass
-#
-#    @abstractmethod
-#    def load(self, data):
-#        pass
-#
-
-class RProject(Project):
+class ProjectB(Project):
     def __init__(self, ID, request_budget, area, region, impact, active):
         super().__init__(ID, request_budget, impact, active)
         self.area = area
         self.region = region
 
-
-
-
-
-class MProject(Project):
+class ProjectA(Project):
     def __init__(self, ID, min_budget, max_budget, area, region, impact, real_impact, request_budget, active):
         super().__init__(ID, request_budget, impact, active)
         self.area = area
@@ -103,7 +87,7 @@ class MProject(Project):
             for i in range(len(self.impact)):
                 self.real_impact[i] = round((m * (self.request_budget - self.min_budget) + 0.7) * self.impact[i])
 
-class NProject(Project):
+class ProjectC(Project):
     def __init__(self, ID, min_budget, max_budget, area, impact, activities, real_impact, request_budget, active):
         super().__init__(ID, request_budget, impact, active)
         self.min_budget = min_budget

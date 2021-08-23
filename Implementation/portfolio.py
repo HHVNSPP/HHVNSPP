@@ -3,11 +3,9 @@
 # decidi modificar esta clase pues no existe una clase general para la solucion, de esta manera los cambios son minimos
 # tambien pase los metodos relativos a la comparacion de dominancia a la clase base, asi todas las soluciones los heredan.
 #------------------------------------------
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC
 from dataclasses import dataclass
 import copy
-from project import RProject
-import pickle
 import random
 
 
@@ -70,11 +68,10 @@ class Portfolio(ABC):
         else:
             return 0
 
-class RPortfolio(Portfolio):
-    def __init__(self, budget, num_obj, num_areas, num_reg, weights=None, projects=None, kind="RPortfolio"):
+class PortfolioB(Portfolio):
+    def __init__(self, budget, num_obj, num_areas, num_reg, weights = None, projects = None):
         super().__init__()
         self.budget = budget
-        self.kind = kind
         self.num_obj = num_obj
         if weights == None:
             self.weights = []
@@ -99,10 +96,8 @@ class RPortfolio(Portfolio):
         except MemoryError:
             print("Severe error: an exception has occurred on deep copying file")
 
-
     def add_project(self, project):
         self.projects.append(project)
-
 
     def load(self, filename):
         print("Loading....")
@@ -136,21 +131,17 @@ class RPortfolio(Portfolio):
                 for index1 in range(self.num_obj-1):
                     total_impact[index1] = total_impact[index1] + i.impact[index1]
                     total_impact[self.num_obj-1]=total_impact[index1]
-        return RSolution(self.budget, "RPortfolio", self.num_obj, self.num_areas, self.num_reg, self.projects,
+        return SolutionB(self.budget, "RPortfolio", self.num_obj, self.num_areas, self.num_reg, self.projects,
                          lim_inf_area, lim_sup_area, lim_inf_region, lim_sup_region, area_bgt, region_bgt, total_bgt,
                          total_impact)
 
-  
-    
-    
-class RSolution(Portfolio):
+class SolutionB(Portfolio):
 
-    def __init__(self, budget, kind="RPortfolio", num_obj=4, num_areas=3, num_regions=2, projects=[], lim_inf_area=[],
+    def __init__(self, budget, num_obj=4, num_areas=3, num_regions=2, projects=[], lim_inf_area=[],
                  lim_sup_area=[], lim_inf_region=[], lim_sup_region=[], area_bgt=[], region_bgt=[], total_bgt=0,
                  total_impact=[], points=0):
         super().__init__()
         self.budget = budget
-        self.kind = kind
         self.num_obj = num_obj
         self.num_areas = num_areas
         self.num_regions = num_regions
@@ -297,7 +288,6 @@ class RSolution(Portfolio):
         prf_file = open(filename, 'wb')
         prf_data = dict(
             budget=self.budget,
-            kind=self.kind,
             area=self.weights,
             weights=self.weights,
             projects=[]
@@ -338,9 +328,8 @@ class Synergy():
         self.elements.append(elem)
 
 
-class NPortfolio(Portfolio):
-    def __init__(self, budget, num_projects, num_areas, num_activities, num_synergies, projects, areas, synergies,
-                 kind="RPortfolio"):
+class PortfolioC(Portfolio):
+    def __init__(self, budget, num_projects, num_areas, num_activities, num_synergies, projects, areas, synergies):
         self.budget = budget
         self.num_projects = num_projects
         self.num_areas = num_areas
@@ -353,7 +342,6 @@ class NPortfolio(Portfolio):
   
 
     def initial_solution(self):
-#        print("initial")## The region and area limits are supposed to be  given by DM
         temp_bgt=self.budget
         temp_area=[0]*self.num_areas
         final_imp = 0
@@ -370,11 +358,11 @@ class NPortfolio(Portfolio):
                 final_bgt=final_bgt+i.request_budget
                 temp_area[i.area]=temp_area[i.area]+i.request_budget
      
-        return NSolution(self.budget, self.num_projects, self.num_areas, self.num_activities, self.num_synergies,
+        return SolutionC(self.budget, self.num_projects, self.num_areas, self.num_activities, self.num_synergies,
                          self.areas, self.projects, self.synergies, final_bgt, area_bgt, [final_imp, act_proj])
 
 
-class NSolution(Portfolio):
+class SolutionC(Portfolio):
     def __init__(self, budget, n_projects, n_areas, n_activities, n_synergies, areas, projects, synergies, total_budget,
                  area_bgt, total_impact):
         self.budget = budget

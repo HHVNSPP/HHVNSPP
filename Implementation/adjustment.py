@@ -4,14 +4,8 @@ Created on Thu Nov 28 09:03:09 2019
 
 @author: Madys
 """
-from abc import ABC, abstractmethod, abstractproperty
-from dataclasses import dataclass
 from Electre import Electre
-import copy
-from project import RProject
-import pickle
-import random
-import pandas as pd
+from random import choice
 
 class Adjustment():
     def __init__(self,to_shake,shaked, heuristics,weights,solutions, nim, nima, counter, heuristic_data):  
@@ -105,41 +99,35 @@ class Adjustment():
         return nd_locals     
 
     
-    def apply(self, local_s):
+    def execute(self, local_s):
 #        for i in self.heuristics:
 #            print(str(i.ID)+ " " +str(i.rank))
-#        print("inside adjustment.apply")          
+#        print("inside adjustment.execute")          
         sol=self.check_improvement(local_s)      
         self.solutions=self.solutions+sol
         self.solutions=self.delete_d(self.solutions)     
 
         if len(self.solutions)>0:            
-            to_select=random.choice(list(range(len(self.solutions))))
+            to_select = choice(list(range(len(self.solutions))))
 #            print("to select " + str(to_select))
             self.to_shake=self.solutions[to_select]
 #        print("into adjustment")   
 #        print(self.to_shake)
-        self.shaked=self.heuristics[0].apply(self.to_shake)
+        self.shaked=self.heuristics[0].execute(self.to_shake)
         
         
 #        print(self.nim)
 #        print("SOLUTIONS")
 #        print(len(self.solutions))
     
-    def apply_electre(self):
+    def electre(self):
         array=[]      
         for sol in self.solutions:
             array.append(sol.total_impact)
-#        print(self.weights)
-#        print(array)
-        electre=Electre(self.weights,array)
+        e = Electre(self.weights,array)
         for i in range(len(self.solutions)):
-            self.solutions[i].points=electre.sol[i]        
+            self.solutions[i].points = e.sol[i]        
         self.solutions.sort(key=lambda x: x.points, reverse=True)
-        
-#        for i in (self.solutions):
-#            print(i.total_impact) 
-#            print(i.points)
         
    
         
