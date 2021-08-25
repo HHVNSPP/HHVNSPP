@@ -1,7 +1,7 @@
 from datetime import timedelta
-from setA import executeA
-from setB import executeB
-from setC import executeC
+from instanceSetA import executeA
+from instanceSetB import executeB
+from instanceSetC import executeC
 import os
 
 limit = timedelta (seconds = 15) # maximum runtime for each individual execution

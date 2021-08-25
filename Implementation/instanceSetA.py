@@ -13,7 +13,7 @@ from portfolio import PortfolioC
 from portfolio import Synergy
 from datetime import datetime
 
-def load(filename):
+def load(filename, ignoreSynergies = False):
     with open(filename) as data:
         budget = None
         areas = None
@@ -26,6 +26,9 @@ def load(filename):
         while True:
             line = data.readline()
             if len(line) == 0: # no more data
+                if ignoreSynergies: # blank these if requested
+                    synergyCount = 0
+                    synergies = []
                 return PortfolioC(budget,
                              projectCount, areaCount, activityCount, synergyCount, projects, areas, synergies)                
             if '=' in line:
@@ -96,8 +99,7 @@ def load(filename):
                             i = t[1:-1].split(',')
                             synergies[int(i[0]) - 1].AddElement([int(i[0]), int(i[1]), int(i[2])])
 
-
-def executeC(instance, limit, maxiter, target, sep, mod = True):
+def executeC(instance, limit, maxiter, target, sep, mod = True, skipSyn = True): # we have no baseline for the synergy-included instances to compare to
     h0 = hr.AllRandN(0, 1, 0, 5)
     h1 = hr.SwapRandom(1, 1, 0, 5)
     h2 = hr.SwapQuarter(2, 1, 0, 5)
@@ -119,7 +121,7 @@ def executeC(instance, limit, maxiter, target, sep, mod = True):
     stop = 1
     heuristics_data = ""
     timestamp = datetime.now()
-    a = load(instance)
+    a = load(instance, skipSyn)
     b = a.initial_solution()
     b.make_factible()       
     adjustment = Adjustment(b, b, shake, [0.5, 0.5], [], 5, 0, counter, heuristics_data)
