@@ -99,7 +99,7 @@ def load(filename, ignoreSynergies = False):
                             i = t[1:-1].split(',')
                             synergies[int(i[0]) - 1].AddElement([int(i[0]), int(i[1]), int(i[2])])
 
-def executeC(instance, limit, maxiter, target, sep, mod = True, skipSyn = True): # we have no baseline for the synergy-included instances to compare to
+def executeA(instance, limit, maxiter, target, sep, mod = True, skipSyn = True): # we have no baseline for the synergy-included instances to compare to
     h0 = hr.AllRandN(0, 1, 0, 5)
     h1 = hr.SwapRandom(1, 1, 0, 5)
     h2 = hr.SwapQuarter(2, 1, 0, 5)
