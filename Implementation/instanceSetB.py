@@ -1,31 +1,29 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  3 15:45:00 2020
-@author: Madys
-"""
-
 import heuristic as hr
 import local_search as ls
 from adjustment import Adjustment
-from project import ProjectB
-from portfolio import PortfolioB
+from project import ProjectAR
+from portfolio import Portfolio
 from datetime import datetime
 
 def load(filename):
     with open(filename) as f:
         projectCount = int(f.readline())
         budget = float(f.readline())
-        weights = [int(t) for i in (f.readline()).split()]
-        elemtomax = len(weights)
+        areaLimits = {'LowerBound': [0.3 * budget, 0.25 * budget, 0.2 * budget],
+                      'UpperBound': [0.4 * budget, 0.35 * budget, 0.3 * budget]}
+        regionLimits = {'LowerBound': [0.4 * budget, 0.4 * budget],
+                        'UpperBound': [0.6 * budget, 0.6 * budget]}
+        w = [int(t) for i in (f.readline()).split()]
+        k = len(weights)
         projects = []
-        for i in range(projectCount):
-            proj = f.readline()
-            proj = proj.split()
-            tomax = []
-            for x in range(elemtomax):
-                tomax.append(float(proj[3 + x]))
-            projects.append(ProjectB(i, float(proj[0]), int(proj[1]) - 1, int(proj[2]) - 1, tomax, False))
-        return PortfolioB(budget, elemtomax, 3, 2, weights, projects)
+        for pID in range(projectCount):
+            d = f.readline().split()
+            req = float(d.pop(0))
+            area = int(d.pop(0)) - 1
+            region = int(d.pop(0)) - 1            
+            impacts = [float(d.pop(0)) for i in range(k)]
+            projects.append(ProjectAR(pID, impacts, req, area, region))
+        return Portfolio(budget, w, projects, areaLimits, regionLimits)
 
 def executeB(instance, limit, maxiter, target, sep, mod = True):
     h1 = hr.SwapRandom(1, 1, 0, 5)
@@ -57,8 +55,8 @@ def executeB(instance, limit, maxiter, target, sep, mod = True):
     heuristics_data = ""
     timestamp = datetime.now()
     a = load(instance)
-    b = a.initial_solution()
-    b.make_factible()
+    b = a.initial()
+    b.feasible()
     adjustment = Adjustment(b, b, shake, a.weights, [], 4, 0, counter, heuristics_data)
     while adjustment.nim > adjustment.nima:
         if datetime.now() - timestamp > limit:
@@ -84,5 +82,3 @@ def executeB(instance, limit, maxiter, target, sep, mod = True):
         print('# shake', SEP.join([str(h.in_use) for h in shake]), file = target)
         print('# local', SEP.join([str(h.in_use) for h in local]), file = target)
         print('# time', 'timestamp', file = target)
-
-

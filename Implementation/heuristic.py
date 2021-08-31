@@ -75,7 +75,7 @@ class Swap1(BaseHeuristic):      #quita o pone un proyecto, aleatorio
         p= random.choice(list(range(len(portf.projects))))
         portf.projects[p].active=not portf.projects[p].active
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
    
 ###############################################
@@ -92,7 +92,7 @@ class SwapRandom(BaseHeuristic):
         for i in portf.projects:
            i.active=random.choice(a)
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
      
 ###############################################
@@ -112,7 +112,7 @@ class SwapQuarter(BaseHeuristic):
         for i in l2:
            portf.projects[i].active=not portf.projects[i].active
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf    
 
 ###############################################
@@ -132,7 +132,7 @@ class SwapThird(BaseHeuristic):    #quita o pone 2 proyectos, aleatorio
         for i in l2:
            portf.projects[i].active=not portf.projects[i].active
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
 ###############################################
             
@@ -149,7 +149,7 @@ class ShakeArea(BaseHeuristic):
             if i.area==num:                    
                     i.active=not i.active
         portf.update()                
-        portf.make_factible()
+        portf.make_feasible()
         return portf
         
 ###############################################
@@ -167,7 +167,7 @@ class ShakeRegion(BaseHeuristic):
             if i.region==num:                    
                     i.active=not i.active
         portf.update()                
-        portf.make_factible()
+        portf.make_feasible()
         return portf
 ###############################################
             
@@ -186,7 +186,7 @@ class SwapHalf(BaseHeuristic):    #quita o pone 2 proyectos, aleatorio
         for i in l2:
            portf.projects[i].active=not portf.projects[i].active
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf     
 ################################################
       
@@ -205,7 +205,7 @@ class AddRandom(BaseHeuristic):
         if (len(nonactives)>0):           
             portf.projects[random.choice(nonactives)].active=True
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
     
 ################################################
@@ -226,7 +226,7 @@ class AddLowBgt(BaseHeuristic):  #Añade el de menos presupuesto
                     temp=i.ID
         portf.projects[temp].active=True 
         portf.update()                
-        portf.make_factible()
+        portf.make_feasible()
         return portf      
 
 ################################################
@@ -247,7 +247,7 @@ class AddMaxBgt(BaseHeuristic):
                     temp=i.ID
         portf.projects[temp].active=True  
         portf.update()             
-        portf.make_factible()
+        portf.make_feasible()
         return portf  
 
 ################################################# 
@@ -272,7 +272,7 @@ class DrawRandom(BaseHeuristic):
         portf.update() 
         h=UseBudgetAT(20, 2, 0, 1)   
         h.execute(portf) 
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
 #########################    
 class UseBudgetAT(BaseHeuristic):
@@ -293,7 +293,7 @@ class UseBudgetAT(BaseHeuristic):
                         prj.active=True
                         portf.update()  
                                                                            
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
     
  ################################################
@@ -316,7 +316,7 @@ class DrawHightBgt(BaseHeuristic):   #Saca el de mayor presupuesto
         portf.update()    
         h=UseBudgetAT(20, 2, 0, 1)   
         h.execute(portf)           
-        portf.make_factible()
+        portf.make_feasible()
         return portf  
 ###################################################
             
@@ -343,10 +343,10 @@ class DrawRandomPutLessBgt(BaseHeuristic):   #Draw one ramdom and put one with l
                 if (portf.projects[i].request_budget<portf.projects[selected].request_budget):                 
                     portf.projects[i].active=True
                     portf.update()
-                    portf.make_factible()
+                    portf.make_feasible()
                     return portf
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
                
                     ###############
@@ -377,10 +377,10 @@ class SwapArea(BaseHeuristic):   #Draw one ramdom and put one from other area
                 if (portf.projects[i].area!=portf.projects[selected].area):                 
                     portf.projects[i].active=True
                     portf.update()
-                    portf.make_factible()
+                    portf.make_feasible()
                     return portf
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
 
 ###########################################################
@@ -412,10 +412,10 @@ class IncreseBgtArea(BaseHeuristic):   #Draw one ramdom and put one with more bu
                     if portf.projects[i].request_budget>portf.projects[selected].request_budget:
                         portf.projects[i].active=True
                         portf.update()
-                        portf.make_factible()
+                        portf.make_feasible()
                         return portf
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
 
 
@@ -446,10 +446,10 @@ class DecreaseBgtArea(BaseHeuristic):     #Draw one ramdom and put one with less
                     if portf.projects[i].request_budget<portf.projects[selected].request_budget:
                         portf.projects[i].active=True
                         portf.update()
-                        portf.make_factible()
+                        portf.make_feasible()
                         return portf
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf   
 
                            #############
@@ -480,12 +480,12 @@ class SwapRegion(BaseHeuristic):   #Draw one ramdom and put one in other region
                 if (portf.projects[i].region!=portf.projects[selected].region):                 
                     portf.projects[i].active=True
                     portf.update()
-                    portf.make_factible()
+                    portf.make_feasible()
                     return portf
         portf.update()
         h=UseBudgetAT(20, 2, 0, 1)   
         h.execute(portf) 
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
 
 ###################################################################   
@@ -515,10 +515,10 @@ class IncreseBgtRegion(BaseHeuristic):   #Draw one ramdom and put one with more 
                     if portf.projects[i].request_budget>portf.projects[selected].request_budget:
                         portf.projects[i].active=True
                         portf.update()
-                        portf.make_factible()
+                        portf.make_feasible()
                         return portf
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
 
 ###########################################################
@@ -549,10 +549,10 @@ class DecreaseBgtRegion(BaseHeuristic):     #Draw one ramdom and put one with le
                     if portf.projects[i].request_budget<portf.projects[selected].request_budget:
                         portf.projects[i].active=True
                         portf.update()
-                        portf.make_factible()
+                        portf.make_feasible()
                         return portf
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
     
 #########****************NPORTFOLIO*****************##############
@@ -577,7 +577,7 @@ class MoreProj(BaseHeuristic):
         if change:
             h=UseBudget(21, 4, 0, 1)   
             h.execute(portf)            
-        portf.make_factible()
+        portf.make_feasible()
         
         return portf
 
@@ -603,7 +603,7 @@ class QuitBad(BaseHeuristic):
         portf.update()
         h=MoreProj(21, 4, 0, 1)   
         h.execute(portf)            
-        portf.make_factible()        
+        portf.make_feasible()        
         return portf
 
 
@@ -631,7 +631,7 @@ class UseBudget(BaseHeuristic):
                             prj.set_budget(diff+prj.request_budget) 
                             portf.update()
                             break                                              
-        portf.make_factible()
+        portf.make_feasible()
         return portf    
     
     
@@ -648,7 +648,7 @@ class SetPrjMinFill(BaseHeuristic): #Selects a project, fill activities random t
         portf.update()
         h=MoreProj(17, 4, 0, 1)        
         portf=h.execute(portf)   
-        portf.make_factible()
+        portf.make_feasible()
         return portf
     
 #######################################################################
@@ -665,7 +665,7 @@ class SetPrjRndFill(BaseHeuristic):
         portf.update()
         h=MoreProj(17, 4, 0, 1)        
         portf=h.execute(portf)  
-        portf.make_factible()
+        portf.make_feasible()
         return portf
 
 ####################################    
@@ -679,7 +679,7 @@ class ProjMin(BaseHeuristic):
         selected=random.choice(portf.projects) 
         selected.set_budget=selected.min_budget                
         portf.update()
-        portf.make_factible()              
+        portf.make_feasible()              
         return portf
 
 
@@ -695,7 +695,7 @@ class AllRandN(BaseHeuristic):
         for x in portf.projects:
             x.set_budget( uniform(x.min_budget, x.max_budget))                   
         portf.update()  
-        portf.make_factible()            
+        portf.make_feasible()            
         return portf
  
  
@@ -723,7 +723,7 @@ class AllRandN(BaseHeuristic):
 #                        prj.set_budget(prj.min_budget)
 #                        diff -= prj.min_budget                        
 #                        portf.update()                        
-#        portf.make_factible()
+#        portf.make_feasible()
 #        return portf
 
 ######################################################################  
@@ -747,7 +747,7 @@ class MTrySetMax(BaseHeuristic):
                         else:
                            diff=0                                                                                
         portf.update()                   
-        portf.make_factible()
+        portf.make_feasible()
         return portf
        
 #######################################################################
@@ -763,7 +763,7 @@ class MSetPrjRnd(BaseHeuristic): #Selects a project, fill activities random g
         selected=random.choice(portf.projects) 
         selected.random_budget()           
         portf.update()
-        portf.make_factible()
+        portf.make_feasible()
         return portf
 
 #######################################################################
@@ -787,7 +787,7 @@ class MMoreProj(BaseHeuristic):
         if change:
             h=UseBudget(21, 4, 0, 1)   
             h.execute(portf)            
-        portf.make_factible()
+        portf.make_feasible()
         
         return portf
 
@@ -814,7 +814,7 @@ class MUseBudget(BaseHeuristic):
                             prj.set_budget(diff+prj.request_budget) 
                             portf.update()
                             break                                              
-        portf.make_factible()
+        portf.make_feasible()
         return portf    
     
 #####################################
@@ -833,7 +833,7 @@ class MChange5perc(BaseHeuristic):
                 i.set_budget(i.request_budget-((i.max_budget-i.min_budget)/20))
        
         portf.update()  
-        portf.make_factible()            
+        portf.make_feasible()            
         return portf
     
 #####################################
@@ -848,7 +848,7 @@ class MMore5perc(BaseHeuristic):
         i=random.choice(portf.projects)                        
         i.set_budget(i.request_budget+((i.max_budget-i.min_budget)/20))            
         portf.update()  
-        portf.make_factible()            
+        portf.make_feasible()            
         return portf
 
 #####################################
@@ -862,7 +862,7 @@ class MLess5perc(BaseHeuristic):
         i=random.choice(portf.projects)         
         i.set_budget(i.request_budget-((i.max_budget-i.min_budget)/20))                
         portf.update()  
-        portf.make_factible()            
+        portf.make_feasible()            
         return portf   
 #####################################
         
@@ -880,7 +880,7 @@ class MMore10perc(BaseHeuristic):
         i=random.choice(portf.projects)                        
         i.set_budget(i.request_budget+((i.max_budget-i.min_budget)/10))
         portf.update()  
-        portf.make_factible()            
+        portf.make_feasible()            
         return portf
 
 class MLess10perc(BaseHeuristic):    
@@ -892,7 +892,7 @@ class MLess10perc(BaseHeuristic):
         i=random.choice(portf.projects)         
         i.set_budget(i.request_budget-((i.max_budget-i.min_budget)/10))                    
         portf.update()  
-        portf.make_factible()            
+        portf.make_feasible()            
         return portf     
 
 class DrawHightBgtAndFill(BaseHeuristic):   #Saca el de mayor presupuesto y llena
@@ -914,7 +914,7 @@ class DrawHightBgtAndFill(BaseHeuristic):   #Saca el de mayor presupuesto y llen
         h=MoreProj(17, 4, 0, 1)         
         portf=h.execute(portf)        
         portf.update()              
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
 
 class DrawRandFill(BaseHeuristic):   #Draw one ramdom and put one with less budget req
@@ -933,6 +933,6 @@ class DrawRandFill(BaseHeuristic):   #Draw one ramdom and put one with less budg
                 break                  
         h=MoreProj(17, 4, 0, 1)        
         portf=h.execute(portf)           
-        portf.make_factible()
+        portf.make_feasible()
         return portf 
   

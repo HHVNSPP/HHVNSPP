@@ -1,62 +1,43 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  3 15:45:00 2020
-@author: Madys
-"""
-
 import numpy as np
 import heuristic as hr
 import local_search as ls
-from portfolioA import PortfolioA
 from adjustment import Adjustment
-from project import ProjectA
+from portfolio import PortfolioSyn
+from project import ProjectAR
+from synergy import Synergy
 from datetime import datetime
-
-class Synergy():
-    def __init__(self, nombre, tipo, cant, valor, mina, maxa,  elements=None, active=False):
-        self.nombre = nombre
-        self.valor = valor
-        self.tipo = tipo
-        self.mina = mina
-        self.maxa = maxa
-        self.cant = cant
-        self.active = active
-        if elements == None:
-            self.elements = []
-        else:
-            self.elements = elements
-
-    def AddElement(self, elem):
-        self.elements.append(elem)
 
 def load(filename):
     with open(filename) as f:
-        cantpr = int(f.readline())
-        pres = float(f.readline())
-        pesos = [int(i) for i in (f.readline()).split(" ")]
-        elemtomax = len(pesos)
-        num_syn = int(f.readline())
-        synergies=[]
-        for i in range(num_syn):
+        numberOfProjects = int(f.readline())
+        b = float(f.readline())
+        areaLimits = {'LowerBounds': [0.25 * b, 0.3 * b, 0.3 * b], 
+                      'UpperBounds': [0.45 * b, 0.45 * b,0.45 * b]}
+        regionLimits = {'LowerBounds': [0.4 * b, 0.4 * b],
+                        'UpperBounds': [0.6 * b, 0.6 * b]}
+        weights = [int(i) for i in (f.readline()).split(" ")]
+        n = len(weights)
+        numberOfSynergies = int(f.readline())
+        synergies = []
+        for i in range(numberOfSynergies):
             line = f.readline()
-            line = line.split(" ")
-            synergies.append(Synergy(int(line[0]),int(line[1]),int(line[2]), int(line[3]),int(line[4]), int(line[5]), []))
+            line = line.split()
+            synergies.append(Synergy(int(line[0]), int(line[1]), int(line[2]), int(line[3]), int(line[4]), int(line[5]), []))
             line = f.readline()
-            line = line.split(" ")
+            line = line.split()
             for j in line:
-                synergies[i].AddElement(int(j))                
+                synergies[i].include(int(j))                
         projects = []
-        real_impact = np.zeros(elemtomax)
-        for i in range(cantpr):
-            proj = f.readline()
-            proj = proj.split()
-            tomax = []
-            for x in range(elemtomax):
-                tomax.append(float(proj[4 + x]))
-            projects.append(ProjectA(i, float(proj[0]), float(proj[1]), int(proj[2]) - 1, int(proj[3]) - 1, tomax,real_impact, 0,False))
-        area_limits = [[0.25*pres,0.45*pres],[0.3*pres,0.45*pres],[0.3*pres,0.45*pres]]
-        region_limits = [[0.4*pres,0.6*pres],[0.4*pres,0.6*pres]]
-        return PortfolioA(pres, cantpr,pesos, 3, 2,  projects,area_limits, region_limits,0,[])
+        for pID in range(numberOfProjects):
+            p = f.readline()
+            p = p.split()
+            minB = float(p.pop(0))
+            maxB = float(p.pop(0))
+            area = int(p.pop(0)) - 1
+            region = int(p.pop(0)) - 1
+            impact = [float(p.pop(0)) for i in range(n)] # the contributions for the n objectives
+            projects.append(ProjectAR(pID, impact, minB, maxB, area, region))
+    return PortfolioSyn(b, weights, projects, areaLimits, regionLimits, syn) 
 
 def executeC(instance, limit, maxiter, target, sep, mod = True):
     h1 = hr.SwapRandom(1, 1, 0, 5)
@@ -79,13 +60,13 @@ def executeC(instance, limit, maxiter, target, sep, mod = True):
     counter = 0
     iterate = 1
     stop = 1
-    heuristics_data = ""
+    heuristics_data = ''
     timestamp = datetime.now()
     a = load(instance)
-    b = a.initial_solution()
-    b.make_factible()
+    b = a.initialize()
+    b.feasible()
     adjustment = Adjustment(b, b, shake, a.weights, [], 4, 0, counter, heuristics_data)
-    while adjustment.nim > adjustment.nima:
+    while adjustment.nim > adjustment.nima: # TO BE DONE: need better names than nim and nima
         if datetime.now() - timestamp > limit:
             break # out of time
         if stop >= maxiter:
@@ -108,4 +89,3 @@ def executeC(instance, limit, maxiter, target, sep, mod = True):
     print('# shake', sep.join([str(h.in_use) for h in shake]), file = target)
     print('# local', sep.join([str(h.in_use) for h in local]), file = target)
     print('# time', 'timestamp', file = target)
-
