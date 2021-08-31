@@ -58,7 +58,7 @@ def load(filename):
         region_limits = [[0.4*pres,0.6*pres],[0.4*pres,0.6*pres]]
         return PortfolioA(pres, cantpr,pesos, 3, 2,  projects,area_limits, region_limits,0,[])
 
-def executeA(instance, limit, maxiter, target, sep, mod = True):
+def executeC(instance, limit, maxiter, target, sep, mod = True):
     h1 = hr.SwapRandom(1, 1, 0, 5)
     h2 = hr.SwapQuarter(2, 1, 0, 5)
     h3 = hr.SwapThird(3, 1, 0, 5)
