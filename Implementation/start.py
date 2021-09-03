@@ -1,10 +1,11 @@
 import os
 from electre import Electre
-from datetime import timedelta
+from datetime import timedelta, datetime
 from search import LocalSearch
 from adjustment import Adjustment
 from parser import loadA, loadB, loadC
-from portfolio import Portfolio, Project, Activity, Synergy, initial
+from portfolio import Portfolio, Project, Activity, Synergy
+from solution import initial
 
 def electre(weights, pool):
     score = zip(pool, Electre(weights, [sol.impact for sol in pool]))
@@ -15,8 +16,9 @@ limit = timedelta (seconds = 15) # maximum runtime for each individual execution
 maxiter = 2**10 # maximum iterations
 replicas = 30 # how many times each instance is solved
 sep = ';' # output file column separator
-prefixes = ['P', 'o', 'm'] 
-filetypes = ['.dat', '.txt', '.txt'] 
+prefixes = [ 'P', 'o', 'm' ] # we conserve the filenames of the cited authors 
+filetypes = [ '.dat', '.txt', '.txt' ] 
+load = { 'A': loadA, 'B': loadB, 'C': loadC }
 
 for s in 'ABC':
     directory = r'../Instances/InstanceSet' + s + '/'
@@ -27,8 +29,9 @@ for s in 'ABC':
     for filename in os.listdir(directory):
         print('Examining file', filename)        
         if filename.startswith(prefix) and filename.endswith(ending):
-            print('Processing instance at', filename)
-            pf = load(instance, skipSyn)         
+            instance = directory + filename
+            print(f'Processing instance {instance}')
+            pf = load[s](instance)         
             for r in range(1, replicas + 1):
                 iteration = 1
                 stop = 1

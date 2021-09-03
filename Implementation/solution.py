@@ -1,3 +1,29 @@
+from random import random, choice
+
+VERBOSE = True
+
+def initial(pf): # build a random solution for a portfolio
+    a = dict() # fund assignment 
+    if len(pf.groups) == 1: # no areas or regions (instance set B)
+        for p in pf.projects:
+            if random() < 0.5: # each project has a 50-50 chance of activation
+                a[p] = p.minimumBudget # fully funded
+    else:
+        for i in pf.permutation(): # iterate over the projects in random order
+            p = pf.projects[i]
+            lvl = p.minimumBudget # funds minimum
+            ok = True
+            for g in pr.groups: # check if the bounds are not yet violated
+                if p in g:
+                    if not g.OK():
+                        ok = False
+                        break
+            if ok and lvl >= b: # funds remaining
+                p.activate(a, lvl)
+    if VERBOSE:
+        print('Initial solution created')
+    return Solution(pf, a)
+
 def notDominated(defendant, opponent, n):
     matches = 0
     improves = False
@@ -15,20 +41,19 @@ UNDEFINED = 0
 
 class Solution():
 
-    def __init__(self, portfolio, assignment, g = None, h = None):
+    def __init__(self, p, a):
         self.portfolio = p
         self.assignment = a
-        self.heuristic = h
-        self.groups = g        
-        self.update()
 
-    def disactivate(p):
-        p.disactivate(self.assignment)
+    def disactivate(self, p):
+        if p is not None:
+            p.disactivate(self.assignment)
         
-    def activate(p, level = 0):
-        amount = p.minimumBudget if level == 0 else p.maximumBudget
-        if sum(self.assignment.values() + amount <= self.portfolio.budget):
-            p.activate(self.assignment, amount)
+    def activate(self, p, level = 0, enforce = True):
+        if p is not None:
+            amount = p.minimumBudget if level == 0 else p.maximumBudget
+            if not enforce or sum(self.assignment.values() + amount <= self.portfolio.budget):
+                p.activate(self.assignment, amount)
 
     def fill(self, random = True):
         if random:
@@ -42,8 +67,10 @@ class Solution():
                 self.activate(p)
 
     def pick(self, cand, active = True):
-        opt = self.active() if active else self.inactive()
-        return choice(list(opt & cand))
+        opt = cand & (self.active() if active else self.inactive())
+        if len(opt) > 0:
+            return choice(list(opt))
+        return None
                 
     def alterGroup(self):
         if len(self.portfolio.groups) > 1:
@@ -104,7 +131,7 @@ class Solution():
         return set(self.assignment.keys())
 
     def inactive(self):
-        return self.portfolio.projects - self.active()
+        return set(self.portfolio.projects) - self.active()
         
     def add(self):
         na = self.assignment.copy()
@@ -137,12 +164,7 @@ class Solution():
             else: # presently active
                 other.disactivate(p) 
         return other # note that these may be infeasible
-        
-    def update(self):
-        for g in self.groups:
-            for m in g:
-                m.update(self.assignment)
-
+    
     def choice(self): # return a random project
         return self.portfolio.choice()
         
@@ -169,35 +191,28 @@ class Solution():
         return UNDEFINED
         
     def OK(self):
-        for g in self.groups():
+        for g in self.portfolio.groups:
             for m in g:
-                if not m.OK():
+                if not m.OK(self.assignment):
                     return False
-        assert sum(self.assignment) <= self.portfolio.budget
         return True
     
     def feasible(self):
-        self.update() # initial update
         while not self.OK():
-            for g in self.groups:
+            for g in self.portfolio.groups:
                 for m in g:
-                    if not m.lowOK():
+                    if not m.lowerOK(self.assignment):
                         self.increase(m)
-                    elif not m.highOK():
+                    elif not m.upperOK(self.assignment):
                         self.decrease(m)
-            self.update() 
 
     def increase(self, gr):
-        for i in self.portfolio.permutation():
-            p = self.projects[i]
-            if p in gr and p not in self.assignment:
-                if self.activate(p):
-                    return
+        p = self.pick(gr.members, active = False)
+        if p is not None:
+            self.activate(p)
+
 
     def decrease(self, gr):
-        for i in self.portfolio.permutation():
-            p = self.projects[i]            
-            if p in gr and p in self.assignment:
-                del self.assignment[p] # discard present funding
-                return
-            
+        p = self.pick(gr.members)        
+        if  p is not None:
+            self.disactivate(p)

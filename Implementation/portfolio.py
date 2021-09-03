@@ -1,25 +1,7 @@
-from random import shuffle, choice
+from random import shuffle, choice, random
+from solution import Solution, initial
 
-def initial(pf): # build a random solution for a portfolio
-    a = dict() # fund assignment 
-    if len(pf.groups) == 1: # no areas or regions (instance set B)
-        for p in pf.projects:
-            if random() < 0.5: # each project has a 50-50 chance of activation
-                a[p] = p.requestedBudget # fully funded
-    else:
-        for i in pf.permutation(): # iterate over the projects in random order
-            p = pf.projects[i]
-            lvl = p.requestedBudget # funds requested
-            ok = True
-            for g in pr.groups: # check if the bounds are not yet violated
-                if p in g:
-                    if not g.OK():
-                        ok = False
-                        break
-            if ok and lvl >= b: # funds remaining
-                p.allocate(lvl, a)
-    return Solution(pf, a)
-
+VERBOSE = True
 
 class Activity():
 
@@ -39,12 +21,12 @@ class Activity():
 
 class Project():
     
-    def __init__(self, i, requested, minimum = None, act = None):
-        self.potentialImpact = i
+    def __init__(self, imp, requested, minimum = None):
+        self.potential = imp
         self.requestedBudget = requested
         self.minimumBudget = minimum
         # one activity = the whole project (in case there were none)        
-        self.activities = act if act is not None else Activity(1, requested, minimum)
+        self.activities = []
 
     def activate(self, assignment, amount, l = 0):
         for a in self.activities:
@@ -54,18 +36,20 @@ class Project():
                     
     def disactivate(self, assignment):
         for a in self.activities:
-            del assignment[a]
+            if a in assignment:
+                del assignment[a]
     
     def update(self):
-        self.activities.sort(key = lambda a: a.potentialImpact, reverse = True)
+        if len(self.activities) == 0:
+            self.activities = [ Activity(1, requested, minimum) ]
+        else:
+            self.activities.sort(key = lambda a: a.impact, reverse = True)
 
     def impact(self, assignment):
         if any([a in assignment for a in self.activities]): # at least one activity is funded
-            return sum([self.impact * a.effect() for a in self.activities])
+            return sum([self.potential * a.effect() for a in self.activities])
         return 0 # no funds, no impact
     
-    def allocate(self, amount, assignment):
-
 class Synergy():
 
     def __init__(self, nombre, technical, value, kind, lowerThreshold, upperThreshold, elementCount, active = False):
@@ -84,29 +68,27 @@ class Synergy():
         
 class Group():
 
-    def __init__(self, m, l, u):
+    def __init__(self, l, u, m = []):
         self.members = m
         self.lower = l # upper bound for total funding
         self.upper = u # lower bound for total funding
-        self.total = 0
 
     def include(self, m):
         self.members.add(m)
+
+    def total(self, assignment):
+        return sum([assignment.get(m, 0) for m in self.members])
         
-    def update(self, assignment): 
-        self.total = 0        
-        for m in self.members:
-            if m in assignment:
-                self.total += assignment[m].assigned
-            
-    def lowerOK(self):
-        return self.lower is None or self.total >= self.lower
+    def lowerOK(self, a):
+        return self.lower is None or self.total(a) >= self.lower
 
-    def upperOK(self):
-        return self.upper is None or self.upper <= self.total
+    def upperOK(self, a):
+        return self.upper is None or self.upper >= self.total(a)
 
-    def OK(self):
-        return self.lowerOK() and self.upperOK()
+    def OK(self, a):
+        t = self.total(a)
+        both = (self.lower is None or t >= self.lower) and (self.upper is None or t <= self.upper)
+        return both
 
 class Portfolio():
 
@@ -118,6 +100,8 @@ class Portfolio():
         self.order = None
         self.groups = g
         self.synergies = s
+        if VERBOSE:
+            print(f'A portfolio with {len(p)} and a budget of {b} has been created.')
 
     def choice(self):
         return choice(self.projects)
@@ -137,31 +121,27 @@ class Portfolio():
                 chosen.add(p)
         return p
     
-    def lowerOK(self):
+    def lowerOK(self, a):
         for g in self.groups:
-            if not g.lowerOK():
+            if not g.lowerOK(a):
                 return False
         return True
 
-    def upperOK(self):
+    def upperOK(self, a):
         for g in self.groups:
-            if not g.upperOK():
+            if not g.upperOK(a):
                 return False
         return True
 
-    def OK():
+    def OK(a):
         for g in self.groups:
-            if not g.OK():
+            if not g.OK(a):
                 return False
         return True
-        
+    
     def permutation(self):
         if self.order is None: # create if non-existant
-            k = 0
-            for p in self.projects:
-                assert p.ID == k # they are supposed to be numbered 0, 1, 2, ...
-            k += 1 # count them
-            self.order = [i for i in range(k)] # make a list of the IDs [0, k - 1]            
+            self.order = [ i for i in range(len(self.projects)) ] 
         shuffle(self.order) # reorder
         return self.order
 

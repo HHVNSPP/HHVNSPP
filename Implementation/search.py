@@ -1,24 +1,27 @@
 from random import shuffle
 
-def SwapOne(sol):
+def swapOne(sol):
     return sol.swap(count = 1)
 
-def InclRnd(sol):
+def inclRnd(sol):
     return sol.add()
 
-def ExclRnd(sol):
+def exclRnd(sol):
     return sol.fill(random = False)
 
 def inclLow(sol):  
     return sol.fitExtreme(high = False)
     
-def omcHigh(sol):
+def inclHigh(sol):
     return sol.fitExteme()
 
-def DrawHigh(sol):
-    return sol.dropExtreme().fill()
+def exclHigh(sol):
+    return sol.dropExtreme()
 
-def ProjMin(sol):
+def exclLow(sol):
+    return sol.dropExtreme(high = False)
+
+def lowRand(sol):
     return sol.randmin()
 
 ## GROUP LEVEL
@@ -32,10 +35,11 @@ def decrGroup(sol):
 def alterGroup(sol):
     return sol.alterGroup().fill()
     
-LOCAL = [swapOne, addRnd, drawRnd,
-         incrRnd, fundRnd,
-         inclMax, lowRand, exclRnd, exclHigh,
+LOCAL = [swapOne, inclRnd, exclRnd, 
+         inclLow, inclHigh, exclLow, exclHigh,
          incrGroup, decrGroup, alterGroup]
+
+# FILLS!!!
 
 class LocalSearch():
     def __init__(self, s, init = 1):

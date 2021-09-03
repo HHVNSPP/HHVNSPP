@@ -1,6 +1,8 @@
 import operator
 from random import choice
 
+VERBOSE = True
+
 # Shake heuristics
 
 def reset(sol):
@@ -29,7 +31,7 @@ def fillMin(sol):
 def fillRnd(sol):
     return sol.fill()
 
-def fillRnd(sol):
+def fillIncr(sol):
     return sol.fill(level = -1)
 
 def liftRnd(sol):
@@ -38,12 +40,12 @@ def liftRnd(sol):
 SHAKE = [reset, swapQuarter, swapThird, swapHalf, swapGroup]
 
 class Adjustment():
-    def __init__(self, lim, init = 5):
+    def __init__(self, lim = 5, init = -10):
         self.usage = dict()
         self.heuristics = dict() # heuristics and their ranks
         for h in SHAKE:
             self.heuristics[h] = init
-        self.current = choice(heur) # start with a random one
+        self.current = choice(h) # start with a random one
         self.initial = init
         self.solutions = set()
         self.stall = 0 # contender executions with no improvement
@@ -63,6 +65,8 @@ class Adjustment():
         return False
     
     def reset(self):
+        if VERBOSE:
+            print('Resetting ranks in adjustment')
         for h in self.heuristics:
             self.rank[h] = initial
   
@@ -70,6 +74,8 @@ class Adjustment():
         stalled = True
         prune = set() # solutions to discard
         adj = 0
+        if VERBOSE:
+            print(f'Attempting to improve a pool of {len(self.solutions)} solutions')
         for s in self.solutions: # calculate the rank changes
             comp = contender.compare(s)
             if comparator == 1:                
@@ -86,8 +92,12 @@ class Adjustment():
         self.heuristics[self.current] += adj # apply the adjustment
         self.solutions -= prune # discard the pruned solutions
         if stalled: # no improvement
+            if VERBOSE:
+                print('Stalled')
             self.stall += 1
         else: # improvement
+            if VERBOSE:
+                print('Improvement')
             self.stall = 0 # reset the stall counter
         self.current = max(self.heuristics.items(), key = operator.itemgetter(1))[0]
         if self.heuristics[self.current] < 0: # all ranks negative

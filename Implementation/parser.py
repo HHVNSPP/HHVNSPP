@@ -1,14 +1,14 @@
-from portfolio import Portfolio, Project, Activity, Synergy, initial
+from portfolio import Portfolio, Group, Project, Activity, Synergy, initial
 
 def loadC(filename):
     with open(filename) as f:
         numberOfProjects = int(f.readline())
         b = float(f.readline())
-        gr = [{'a1': Group(0.25 * b, 0.45 * b),
-               'a2': Group(0.3 * b, 0.45 * b),
-               'a3': Group(0.3 * b, 0.45 * b)], 
-              ['r1': Group(0.4 * b, 0.6 * b),
-               'r2': Group(0.4 * b, 0.6 * b)]}
+        gr = {'a1': Group(0.25 * b, 0.45 * b),
+              'a2': Group(0.3 * b, 0.45 * b),
+              'a3': Group(0.3 * b, 0.45 * b), 
+              'r1': Group(0.4 * b, 0.6 * b),
+              'r2': Group(0.4 * b, 0.6 * b)}
         weights = [int(i) for i in (f.readline()).split(" ")]
         n = len(weights)
         numberOfSynergies = int(f.readline())
@@ -33,7 +33,15 @@ def loadC(filename):
             projects.append(p)
             gr[f'a{area}'].include(p)
             gr[f'r{region}'].include(p)
-    return Portfolio(b, weights, projects, g = gr, s = syn) 
+            areas = []
+            regions = []
+            for g in gr:
+                if 'a' in g:
+                    areas.append(gr[g])
+                else:
+                    assert 'r' in g
+                    regions.append(gr[g])                    
+    return Portfolio(b, weights, projects, [areas, regions], s = syn) 
 
 def loadB(filename):
     with open(filename) as f:
@@ -52,10 +60,10 @@ def loadB(filename):
             area = int(d.pop(0)) - 1
             region = int(d.pop(0)) - 1            
             impacts = [float(d.pop(0)) for i in range(k)]
-            projects.append(ProjectAR(pID, impacts, req, area, region))
+            projects.append(ProjectAR(impacts, req, area, region))
         return Portfolio(budget, w, projects, areaLimits, regionLimits)
 
-def loadA(filename, ignoreSynergies = False):
+def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore these synergies
     with open(filename) as data:
         budget = None
         areas = []
@@ -76,7 +84,7 @@ def loadA(filename, ignoreSynergies = False):
                     synergyCount = 0
                     synergies = []
                 w = [1, 1] # two equally important objectives
-                return Portfolio(budget, projects, w, g = [[areas[a] for a in areas]], s = synergies)
+                return Portfolio(budget, w, projects, g = [[areas[a] for a in areas]], s = synergies)
             if '=' in line:
                 f = (line.strip()).split('=')
                 header = f[0]
@@ -106,7 +114,7 @@ def loadA(filename, ignoreSynergies = False):
                         maxB = float(d.pop(0))                        
                         areas[i] = Group(minB, maxB, set())
                     assert len(areas) == areaCount
-                elif 'Projets' in header:
+                elif 'Projects' in header:
                     print('Parsing the project data')
                     assert projectCount != 0
                     for pID in range(projectCount):
@@ -118,11 +126,9 @@ def loadA(filename, ignoreSynergies = False):
                         d = d[1:-1].split(',')
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
-                        # TO BE DONE: are the last two numbers in a project the contributions to the objectives? 
-                        o1 = int(d.pop(0)) # TO BE DONE: if so, why are there 2s? is it not just a count?
-                        o2 = float(d.pop(0))
-                        p = Project(pID, [o1, o2], minB, maxB)
-                        area[int(d.pop(0)) - 1].include(p) # include into the area
+                        a = int(d.pop(0)) - 1
+                        p = Project([1, float(d.pop(0))], minB, maxB)
+                        areas[a].include(p) # include into the area                        
                         projects.append(p)
                     assert len(projects) == projectCount
                 elif 'Activities' in header:
@@ -142,8 +148,9 @@ def loadA(filename, ignoreSynergies = False):
                         assert pr.activities is not None
                         impact = float(d.pop(0))
                         minB = float(d.pop(0))
-                        maxB = float(d.pop(0))                        
-                        pr.activities.append(Activity(projects[pID], impact, minB, maxB))
+                        maxB = float(d.pop(0))
+                        act = Activity(pr, impact, minB, maxB)
+                        pr.activities.append(act)
                     for pID in range(projectCount):
                         pr = projects[pID]
                         pr.update()
