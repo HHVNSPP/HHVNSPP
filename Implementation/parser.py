@@ -4,11 +4,11 @@ def loadC(filename):
     with open(filename) as f:
         numberOfProjects = int(f.readline())
         b = float(f.readline())
-        gr = {'a1': Group(0.25 * b, 0.45 * b),
-              'a2': Group(0.3 * b, 0.45 * b),
-              'a3': Group(0.3 * b, 0.45 * b),
-              'r1': Group(0.4 * b, 0.6 * b),
-              'r2': Group(0.4 * b, 0.6 * b)}
+        gr = [{'a1': Group(0.25 * b, 0.45 * b),
+               'a2': Group(0.3 * b, 0.45 * b),
+               'a3': Group(0.3 * b, 0.45 * b)], 
+              ['r1': Group(0.4 * b, 0.6 * b),
+               'r2': Group(0.4 * b, 0.6 * b)]}
         weights = [int(i) for i in (f.readline()).split(" ")]
         n = len(weights)
         numberOfSynergies = int(f.readline())
@@ -76,7 +76,7 @@ def loadA(filename, ignoreSynergies = False):
                     synergyCount = 0
                     synergies = []
                 w = [1, 1] # two equally important objectives
-                return Portfolio(budget, projects, w, g = [areas[a] for a in areas], s = synergies)
+                return Portfolio(budget, projects, w, g = [[areas[a] for a in areas]], s = synergies)
             if '=' in line:
                 f = (line.strip()).split('=')
                 header = f[0]
@@ -143,7 +143,7 @@ def loadA(filename, ignoreSynergies = False):
                         impact = float(d.pop(0))
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))                        
-                        pr.activities.append(Activity(pID, pr, impact, minB, maxB))
+                        pr.activities.append(Activity(projects[pID], impact, minB, maxB))
                     for pID in range(projectCount):
                         pr = projects[pID]
                         pr.update()

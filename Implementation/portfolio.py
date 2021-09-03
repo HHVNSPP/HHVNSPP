@@ -23,11 +23,12 @@ def initial(pf): # build a random solution for a portfolio
 
 class Activity():
 
-    def __init__(self, imp, maximum, minimum = 0):
+    def __init__(self, p, imp, maximum, minimum = 0):
         self.impact = imp
         self.minimumBudget = minimum
         self.maximumBudget = maximum
-        self.difference = self.maximumBudget - self.minimumBudget 
+        self.difference = self.maximumBudget - self.minimumBudget
+        self.parent = p
 
     def effect(self, level, fraction = 0.3):
         if level == self.maximumBudget:
@@ -45,13 +46,12 @@ class Project():
         # one activity = the whole project (in case there were none)        
         self.activities = act if act is not None else Activity(1, requested, minimum)
 
-    def match(self, a):
-        return a in self.activities
-
-    def activate(self, assignment):
+    def activate(self, assignment, amount, l = 0):
         for a in self.activities:
-            assignment[a] = 0
-
+            lvl = min(amount, a.maximumBudget if l == 1 else a.minimumBudget if l == 0 else a.random())
+            assignment[a] = lvl
+            amount -= lvl
+                    
     def disactivate(self, assignment):
         for a in self.activities:
             del assignment[a]
@@ -65,18 +65,6 @@ class Project():
         return 0 # no funds, no impact
     
     def allocate(self, amount, assignment):
-        for a in self.activities:
-            lvl = a.maximumBudget # attempt to fund the activity fully
-            if amount >= lvl: # do so if possible
-                assignment[a] = lvl
-                amount -= lvl
-            else:
-                # assign it the minimum funding if that is feasible otherwise random partial                
-                lvl = act.minimumBudget
-                lvb = lvl if (lvl > 0 and lvl <= amount) else a.random(amount)
-                if lvl > 0: 
-                    assignment[a] = lvl
-                    amount -= level
 
 class Synergy():
 
@@ -133,7 +121,22 @@ class Portfolio():
 
     def choice(self):
         return choice(self.projects)
-        
+
+    def sample(self, count):
+        if count == 0: # pick a group at random and use that
+            return choice(choice(self.groups)) # an area or a region
+        elif count < 1: # expressed as a fraction
+            count *= len(self.projects)
+            count = round(count) # round to an integer
+        return sample(self.projects, count)
+    
+    def random(self):
+        chosen = set()
+        for p in self.projects:
+            if random() < 0.5:
+                chosen.add(p)
+        return p
+    
     def lowerOK(self):
         for g in self.groups:
             if not g.lowerOK():
