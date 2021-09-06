@@ -5,10 +5,10 @@ DEBUG = False
 VERBOSE = True
 
 def electre(weights, sol):
-    if len(sol) < 2:
+    if sol.shape[0] < 2:
         return [ 1 ] # there is only one, it gets a constant rank
     w = np.diag(np.array(weights))
-    M = normalize(np.matrix([ s.evaluate() for s in sol ]), axis = 0, norm = 'l1')
+    M = normalize(sol, axis = 0, norm = 'l1')
     (alt, atr) = M.shape 
     n = atr # attributes (the objective function evaluations)    
     m = alt # alternatives (the solutions to rank)
@@ -59,5 +59,5 @@ def electre(weights, sol):
     if DEBUG:
         print('dominance', dom)
     rowSums = np.sum(dom, axis = 0)
-    colSums = np.sum(dom, axis = 1) # TO BE DONE: revise that this is what is intended 
+    colSums = np.sum(dom, axis = 1) # TO BE DONE: revise that this is what is intended (important)
     return [ rowSums[i] - colSums[i] for i in range(m) ] # differences between column sums and row sums

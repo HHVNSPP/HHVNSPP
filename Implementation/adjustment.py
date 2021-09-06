@@ -57,18 +57,19 @@ class Adjustment():
         self.limit = lim # how many consequtive stalled iterations to allow
         self.reset() # initial levels
 
-    def postprocess(self, w, target, prefix = ''):
-        order = list(self.pool)
-        for (sol, score) in zip(order, electre(w, order)):
-            print(f'{prefix}{score};{sol}', file = target)
-        print(prefix + ';'.join([f'{k} = {v}' for (k, v) in self.usage.items()]), file = target)
+    def postprocess(self, w, target):
+        sol = np.matrix([ s.evaluate() for s in self.pool ])
+        i = 0
+        for score in electre(w, sol):
+            print(f'electre;{score};{sol[i, :]}', file = target)
+            i += 1
+        print('\n'.join([f'usage;{k.__name__}={v}' for (k, v) in self.usage.items()]), file = target)
 
     def evaluate(self):
         return np.matrix([s.evaluate() for s in self.pool])
         
-    def output(self, target, prefix = ''):
-        for s in self.pool:
-            print(f'{prefix}{s}', file = target)
+    def output(self, target):
+        print(self.evaluate(), file = target)
         
     def active(self):
         if VERBOSE:

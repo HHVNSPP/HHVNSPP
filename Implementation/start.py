@@ -43,11 +43,11 @@ for s in 'ABC':
                         p.step()
                         if stop == iteration:    
                             diff = datetime.now() - timestamp
-                            prefix = f'working;{iteration};{diff};'
-                            p.output(target, prefix)
+                            print(f'working;{iteration};{diff}', file = target)
+                            p.output(target)
                             stop *= 2
                             if stop >= maxiter:
                                 break # out of permitted iterations
                         iteration += 1
-                    prefix = f'postproc;{iteration};{diff};'                        
-                    p.postprocess(pf.weights, target, prefix)
+                    print(f'postproc;{iteration};{diff}', file = target)                        
+                    p.postprocess(pf.weights, target)
