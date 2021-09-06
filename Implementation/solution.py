@@ -1,3 +1,4 @@
+import operator
 from random import random, choice
 
 VERBOSE = False
@@ -38,11 +39,10 @@ def initial(pf): # build a random solution for a portfolio
     if len(pf.groups) == 1: # no areas or regions (instance set B)
         for p in pf.projects:
             if random() < 0.5: # each project has a 50-50 chance of activation
-                p.activate(a, p.minimumBudget)
+                p.activate(a)
     else:
         for i in pf.permutation(): # iterate over the projects in random order
             p = pf.projects[i]
-            lvl = p.minimumBudget # funds minimum
             ok = True
             if VERBOSE:
                 print(f'Considering {len(pf.groups)} types of groups')
@@ -56,7 +56,7 @@ def initial(pf): # build a random solution for a portfolio
                                 if not g.OK(a):
                                     ok = False
                                     break
-            if ok and lvl >= pf.budget: # funds remaining
+            if ok:
                 p.activate(a, lvl)
     if VERBOSE:
         print('Initial solution created')
@@ -76,26 +76,25 @@ class Solution():
     def __repr__(self):
         return str(self)
     
-    def disactivate(self, p):
-        if p is not None:
-            p.disactivate(self.assignment)
+    def disactivate(self, a):
+        if a is not None:
+            a.disactivate(self.assignment)
         
-    def activate(self, p, level = 0, enforce = True):
+    def activate(self, p, level = 0, incr = False):
+        available = self.portfolio.budget - sum(self.assignment.values())
         if p is not None:
-            amount = p.minimumBudget if level == 0 else p.maximumBudget
-            if not enforce or sum(self.assignment.values()) + amount <= self.portfolio.budget:
-                p.activate(self.assignment, amount)
+            p.activate(self.assignment, level, incr, available)
 
-    def fill(self, level = None):
-        if level is None: # random
-            for i in self.portfolio.permutation():
-                self.activate(self.portfolio.projects[i])
-        elif level < 1: # from cheapest to the most expensive
-            opt = [(p, p.minimumBudget) for p in (self.inactives() if not active else self.actives())]
+    def fill(self, level = None, incr = False, sort = False):
+        if sort:
+            opt = [(p, p.minimumBudget) for p in (self.inactive() if not active else self.active())] 
             opt.sort(key = lambda a: a[1])
             assert opt[0] < opt[-1] # increasing order
-            for p in opt:
-                self.activate(p)
+            for (p, l) in opt:
+                self.activate(p, level, incr)
+        else:
+            for i in self.portfolio.permutation():
+                self.activate(self.portfolio.projects[i], level, incr)
 
     def pick(self, cand, active = True):
         opt = cand & (self.active() if active else self.inactive())
@@ -103,48 +102,49 @@ class Solution():
             return choice(list(opt))
         return None
                 
-    def alterGroup(self):
+    def alterGroup(self, level = 0):
         if len(self.portfolio.groups) > 1:
             na = self.assignment.copy()
             other = Solution(self.portfolio, na)            
             gr = sample(self.portfolio.groups, 2)
             other.disactivate(self.pick(gr.pop(0))) # exclude
-            other.activate(self.pick(gr.pop(1), active = False)) #include
+            other.activate(self.pick(gr.pop(1), active = False), level) #include
             return other
-        return sol # cannot be done
+        return self # cannot be done
 
-    def modGroup(self, decr = True):
+    def modGroup(self, decr = True, level = 0):
         gr = choice(choice(self.portfolio.groups)) # pick an area or a region
         act = self.active()
-        exiting = list(act & gr)
-        entering = list((self.portfolio.projects - act) & gr)
+        exiting = list(act & gr.members)
+        entering = list((set(self.portfolio.projects) - act) & gr.members)
         na = self.assignment.copy()
         other = Solution(self.portfolio, na)                    
         for first in entering:
             for second in exiting:
                 above = self.allocation() > second.minimumBudget
                 if (decr and above) or (not decr and not above):
-                    na.activate(second)
-                    na.disactivate(first)
+                    other.activate(second, level)
+                    other.disactivate(first)
                     return other
         return self # was not possible to perform
     
-    def randmin(self):
+    def randmin(self, level = 0):
         other = Solution(self.portfolio, na)
         p = choice(self.active())
-        other.activate(p)
+        other.activate(p, level)
         return other
 
     def extreme(self, high = True, active = True):
-        prices = {p:  p.minimumBudget for p in (self.inactives() if not active else self.actives())}
+        prices = {p:  p.minimumBudget for p in (self.inactive() if not active else self.active())}
         most = max(prices.items(), key = operator.itemgetter(1))[0] if high else min(prices.items(), key = operator.itemgetter(1))[0] 
         return (most, prices[most])
 
     def dropExtreme(self, high = True):
         na = self.assignment.copy()
-        (most, price) = self.extreme(high = high)        
-        del na[most]
-        return Solution(self.portfolio, na)
+        (most, price) = self.extreme(high = high)
+        other = Solution(self.portfolio, na)
+        other.disactivate(most)
+        return other
 
     def fitExtreme(self, high = True):
         na = self.assignment.copy()
@@ -154,8 +154,8 @@ class Solution():
             cand = self.active()
             if len(cand) == 0:
                 return self # modification unsuccessfull
-            other.disactivate(choice(self.active()))
-        na[most] = price # it fits now
+            other.disactivate(choice(list(self.active())))
+        other.activate(most, price)
         return other
 
     def active(self):
@@ -164,22 +164,21 @@ class Solution():
     def inactive(self):
         return set(self.portfolio.projects) - self.active()
         
-    def add(self):
+    def add(self, level = 0):
         na = self.assignment.copy()
         other = Solution(self.portfolio, na)
-        p = choice(self.inactive())
-        if sum(na.values()) + p.minimumBudget <= self.portfolio.budget:
-            other.activate(p)
+        p = choice(list(self.inactive()))
+        other.activate(p, level)
         return other
 
-    def remove(self, fill = True):
+    def remove(self):
         na = self.assignment.copy()
-        p = choice(self.active)
         other = Solution(self.portfolio, na)
+        p = choice(list(self.active()))
         other.disactivate(p)
-        return other.fill()
+        return other
     
-    def swap(self, count = None):
+    def swap(self, count = None, level = 0):
         na = self.assignment.copy()
         selection = set(self.portfolio.sample(count)) if count is not None else self.portfolio.random()
         other = Solution(self.portfolio, na)
@@ -190,11 +189,10 @@ class Solution():
                     present = True
                     break
             if not present: # presently inactive
-                if sum(na.values()) + p.minimumBudget <= self.portfolio.budget:                
-                    other.activate(p) 
+                other.activate(p, level) 
             else: # presently active
                 other.disactivate(p) 
-        return other # note that these may be infeasible
+        return other 
     
     def choice(self): # return a random project
         return self.portfolio.choice()
@@ -239,12 +237,12 @@ class Solution():
                     elif not bounds[UPPER]:
                         self.decrease(g)
 
-    def increase(self, gr):
+    def increase(self, gr, level = 0):
         if VERBOSE:
             print('Increasing')
         p = self.pick(gr.members, active = False)
         if p is not None:
-            self.activate(p)
+            self.activate(p, level)
 
     def decrease(self, gr):
         if VERBOSE:

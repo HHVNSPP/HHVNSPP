@@ -16,12 +16,33 @@ class Activity():
 
     def __repr__(self):
         return str(self)
-        
+
+    def activate(self, assignment, level, incr, available = None):
+        amount = self.minimumBudget # level 0, default
+        if level == 1:
+            amount = self.maximumBudget
+        elif level == None: 
+            amount = self.random(assignment.get(a, 0)) if incr else self.random()
+        if available is not None and available < amount: 
+            amount = available # if bounded by availability
+        assignment[self] = amount
+        return amount         
+
+    def disactivate(self, assignment):
+        if self in assignment:
+            del assignment[self]
+    
     def impact(self, lvl, fr = 0.3):
         rate = self.potential
         if lvl < self.maximumBudget: # TO BE DONE: revision pending for partial impact
             rate = (fr / self.diff) * (lvl - self.minimumBudget) + (1 - fr) * self.potential
         return [rate * p for p in self.parent.potential]
+
+    def random(self, curr = None):
+        if self.diff > 0:
+            low = self.minimumBudget if curr is None else curr
+            return random(low, self.maximumBudget)
+        return self.maximumBudget # no partial assignment possible
 
 class Project():
     
@@ -39,16 +60,15 @@ class Project():
     def __repr__(self):
         return str(self)
     
-    def activate(self, assignment, amount, l = 0):
+    def activate(self, assignment, level = 0, incr = False, available = None):
         for a in self.activities:
-            lvl = min(amount, a.maximumBudget if l == 1 else a.minimumBudget if l == 0 else a.random())
-            assignment[a] = lvl
-            amount -= lvl
-                    
+            assigned = a.activate(assignment, level, incr, available)
+            if available is not None:
+                available -= assigned
+            
     def disactivate(self, assignment):
         for a in self.activities:
-            if a in assignment:
-                del assignment[a]
+            a.disactivate(assignment)
     
     def update(self):
         if len(self.activities) == 0:
@@ -60,7 +80,6 @@ class Project():
             print(f'A project with {len(self.activities)} activities is ready:',
                   ''.join([str(a) for a in self.activities]))
             
-    
 class Synergy():
 
     def __init__(self, nombre, technical, value, kind,
@@ -118,7 +137,7 @@ class Portfolio():
 
     def sample(self, count):
         if count == 0: # pick a group at random and use that
-            return choice(self.groups) # an area or a region
+            return choice(choice(self.groups)).members # an area or a region
         elif count < 1: # expressed as a fraction
             count *= len(self.projects)
             count = round(count) # round to an integer
