@@ -1,36 +1,28 @@
 from random import random, choice
 
-VERBOSE = True
+VERBOSE = False
 
-def initial(pf): # build a random solution for a portfolio
-    a = dict() # fund assignment 
-    if len(pf.groups) == 1: # no areas or regions (instance set B)
-        for p in pf.projects:
-            if random() < 0.5: # each project has a 50-50 chance of activation
-                a[p] = p.minimumBudget # fully funded
-    else:
-        for i in pf.permutation(): # iterate over the projects in random order
-            p = pf.projects[i]
-            lvl = p.minimumBudget # funds minimum
-            ok = True
-            for g in pr.groups: # check if the bounds are not yet violated
-                if p in g:
-                    if not g.OK():
-                        ok = False
-                        break
-            if ok and lvl >= b: # funds remaining
-                p.activate(a, lvl)
+# PARETO DOMINANCE
+
+def equal(first, second):
+    k = len(first)
     if VERBOSE:
-        print('Initial solution created')
-    return Solution(pf, a)
+        assert k == len(second)
+    for i in range(k):
+        if first[i] != second[i]:
+            return False
+    return True
 
-def notDominated(defendant, opponent, n):
+def notDominated(defendant, opponent):
+    n = len(defendant)
+    if VERBOSE:
+        assert n == len(opponent)
     matches = 0
     improves = False
     for i in range(n):
-        if defendant.impact[i] >= opponent.impact[i]:
+        if defendant[i] >= opponent[i]:
             matches += 1 # defendant is better or equal to opponent
-            if defendant.impact[i] > opponent.impact[i] :
+            if defendant[i] > opponent[i] :
                 improves = True # defendant improves upon the opponent in this aspect
     return improves and matches == n # defendant is not dominated by opponent
 
@@ -39,12 +31,51 @@ BETTER = -1
 WORSE = 1
 UNDEFINED = 0
 
+### CREATION OF AN INITIAL SOLUTION
+
+def initial(pf): # build a random solution for a portfolio
+    a = dict() # fund assignment 
+    if len(pf.groups) == 1: # no areas or regions (instance set B)
+        for p in pf.projects:
+            if random() < 0.5: # each project has a 50-50 chance of activation
+                p.activate(a, p.minimumBudget)
+    else:
+        for i in pf.permutation(): # iterate over the projects in random order
+            p = pf.projects[i]
+            lvl = p.minimumBudget # funds minimum
+            ok = True
+            if VERBOSE:
+                print(f'Considering {len(pf.groups)} types of groups')
+            for gt in pf.groups: # check if the bounds are not yet violated
+                if VERBOSE:
+                    print(f'Considering a group type with {len(gt)} groups')
+                    for g in gt:
+                        if VERBOSE:
+                            print(f'Considering a group of {len(g.members)} members')
+                            if p in g.members:
+                                if not g.OK(a):
+                                    ok = False
+                                    break
+            if ok and lvl >= pf.budget: # funds remaining
+                p.activate(a, lvl)
+    if VERBOSE:
+        print('Initial solution created')
+    created = Solution(pf, a)
+    created.feasible() # make it feasible
+    return created
+
 class Solution():
 
     def __init__(self, p, a):
         self.portfolio = p
         self.assignment = a
 
+    def __str__(self):
+        return f'\nFA {self.portfolio} w/ {sum(self.assignment.values())} to {len(self.assignment)}' 
+
+    def __repr__(self):
+        return str(self)
+    
     def disactivate(self, p):
         if p is not None:
             p.disactivate(self.assignment)
@@ -52,14 +83,14 @@ class Solution():
     def activate(self, p, level = 0, enforce = True):
         if p is not None:
             amount = p.minimumBudget if level == 0 else p.maximumBudget
-            if not enforce or sum(self.assignment.values() + amount <= self.portfolio.budget):
+            if not enforce or sum(self.assignment.values()) + amount <= self.portfolio.budget:
                 p.activate(self.assignment, amount)
 
-    def fill(self, random = True):
-        if random:
+    def fill(self, level = None):
+        if level is None: # random
             for i in self.portfolio.permutation():
                 self.activate(self.portfolio.projects[i])
-        else: # from cheapest to the most expensive
+        elif level < 1: # from cheapest to the most expensive
             opt = [(p, p.minimumBudget) for p in (self.inactives() if not active else self.actives())]
             opt.sort(key = lambda a: a[1])
             assert opt[0] < opt[-1] # increasing order
@@ -137,7 +168,7 @@ class Solution():
         na = self.assignment.copy()
         other = Solution(self.portfolio, na)
         p = choice(self.inactive())
-        if sum(na.values() + p.minimumBudget <= self.portfolio.budget):
+        if sum(na.values()) + p.minimumBudget <= self.portfolio.budget:
             other.activate(p)
         return other
 
@@ -150,7 +181,7 @@ class Solution():
     
     def swap(self, count = None):
         na = self.assignment.copy()
-        selection = { self.portfolio.sample(count) } if count is not None else self.portfolio.random()
+        selection = set(self.portfolio.sample(count)) if count is not None else self.portfolio.random()
         other = Solution(self.portfolio, na)
         for p in selection:
             present = False
@@ -159,7 +190,7 @@ class Solution():
                     present = True
                     break
             if not present: # presently inactive
-                if sum(na.values() + p.minimumBudget <= self.portfolio.budget):                
+                if sum(na.values()) + p.minimumBudget <= self.portfolio.budget:                
                     other.activate(p) 
             else: # presently active
                 other.disactivate(p) 
@@ -169,24 +200,24 @@ class Solution():
         return self.portfolio.choice()
         
     def evaluate(self):
-        obj = [0] * self.portfolio.numberOfObjectives
-        for element in self.assignment:
-            for o in range(self.portfolio.numberOfObjectives):
-                obj[o] += element.impact()
-        return obj
-        
-    def equal(self, another):
-        for i in range(self.n):
-            if (self.objectiveFunction[i] != another.objectiveFunction[i]):
-                return False
-        return True
+        n = self.portfolio.numberOfObjectives
+        v = [0] * n
+        for (element, funding) in self.assignment.items():
+            ei = element.impact(funding)
+            for i in range(n):
+                v[i] += ei[i]
+        if VERBOSE:
+            print(f'Evaluated an assignment comprising of {len(self.assignment)} targets as {v}')
+        return v
 
     def compare(self, another):
-        if self.equal(another):
+        se = self.evaluate()
+        ae = another.evaluate()
+        if equal(se, ae):
             return EQUAL
-        elif notDominated(self, another):
+        elif notDominated(se, ae):
             return BETTER
-        elif notDominated(another, self):
+        elif notDominated(ae, se):
             return WORSE
         return UNDEFINED
         
@@ -199,20 +230,43 @@ class Solution():
     
     def feasible(self):
         while not self.OK():
-            for g in self.portfolio.groups:
-                for m in g:
-                    if not m.lowerOK(self.assignment):
-                        self.increase(m)
-                    elif not m.upperOK(self.assignment):
-                        self.decrease(m)
+            for gl in self.portfolio.groups:
+                for g in gl:
+                    print(g)
+                    bounds = g.OK(self.assignment)
+                    if not bounds[LOWER]:
+                        self.increase(g)
+                    elif not bounds[UPPER]:
+                        self.decrease(g)
 
     def increase(self, gr):
+        if VERBOSE:
+            print('Increasing')
         p = self.pick(gr.members, active = False)
         if p is not None:
             self.activate(p)
 
-
     def decrease(self, gr):
+        if VERBOSE:
+            print('Decreasing')        
         p = self.pick(gr.members)        
         if  p is not None:
             self.disactivate(p)
+
+    def makeFeasible(self, amount):
+        for p in self.portfolio.projects:
+            for act in p.activities:
+                if value < act.minimumBudget:
+                    if act.assignedBudget < act.maximumBudget: # not fully funded
+                        act.funding(uniform(act.assignedBudget, act.maximumBudget))
+                        level = act.assignedBudget # what actually got assigned
+                        amount -= level # that is no longer available
+                        self.assignedBudget += level # it has been assigned to this project
+       
+    def update(self):
+        for act in self.activities:
+            self.assignedBudget += act.assignedBudget
+        # TO BE DONE: revision pending, is the below functionality the intended one?
+        if self.requestedBudget < self.minimumBudget: # if the funding is not yet sufficient
+            self.makeFeasible(self.assignedBudget) # reallocate the funds in a feasible way at activity level
+

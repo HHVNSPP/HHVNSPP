@@ -1,4 +1,6 @@
-from portfolio import Portfolio, Group, Project, Activity, Synergy, initial
+from portfolio import Portfolio, Group, Project, Activity, Synergy
+
+VERBOSE = True
 
 def loadC(filename):
     with open(filename) as f:
@@ -16,7 +18,8 @@ def loadC(filename):
         for i in range(numberOfSynergies):
             line = f.readline()
             line = line.split()
-            synergies.append(Synergy(int(line[0]), int(line[1]), int(line[2]), int(line[3]), int(line[4]), int(line[5]), []))
+            synergies.append(Synergy(int(line[0]), int(line[1]), int(line[2]),
+                                     int(line[3]), int(line[4]), int(line[5]), []))
             line = f.readline()
             line = line.split()
             for j in line:
@@ -26,10 +29,10 @@ def loadC(filename):
             p = f.readline().split()
             minB = float(p.pop(0))
             maxB = float(p.pop(0))
-            area = int(p.pop(0)) - 1
-            region = int(p.pop(0)) - 1
+            area = int(p.pop(0)) 
+            region = int(p.pop(0)) 
             obj = [float(p.pop(0)) for i in range(n)] # the contributions for the n objectives
-            p = Project(obj, minB, maxB)
+            p = Project(obj, maxB, minB)
             projects.append(p)
             gr[f'a{area}'].include(p)
             gr[f'r{region}'].include(p)
@@ -37,31 +40,40 @@ def loadC(filename):
             regions = []
             for g in gr:
                 if 'a' in g:
+                    if VERBOSE:
+                        print(f'Including an area with {len(gr[g].members)} projects')
                     areas.append(gr[g])
                 else:
                     assert 'r' in g
+                    if VERBOSE:
+                        print(f'Including a region area with {len(gr[g].members)} projects')                    
                     regions.append(gr[g])                    
-    return Portfolio(b, weights, projects, [areas, regions], s = syn) 
+    return Portfolio(b, weights, projects, [areas, regions], s = synergies) 
 
 def loadB(filename):
     with open(filename) as f:
         projectCount = int(f.readline())
         budget = float(f.readline())
-        areaLimits = {'LowerBound': [0.3 * budget, 0.25 * budget, 0.2 * budget],
-                      'UpperBound': [0.4 * budget, 0.35 * budget, 0.3 * budget]}
-        regionLimits = {'LowerBound': [0.4 * budget, 0.4 * budget],
-                        'UpperBound': [0.6 * budget, 0.6 * budget]}
-        w = [int(t) for i in (f.readline()).split()]
-        k = len(weights)
+        areas = { 1: Group(0.3 * budget, 0.4 * budget),
+                  2: Group(0.25 * budget, 0.35 * budget),
+                  3: Group(0.2 * budget, 0.3 * budget) }
+        regions = { 1: Group(0.4 * budget, 0.6 * budget),
+                    2: Group(0.4 * budget, 0.6 * budget) } 
+        w = [int(i) for i in (f.readline()).split()]
+        k = len(w)
         projects = []
         for pID in range(projectCount):
             d = f.readline().split()
+            print(d)
             req = float(d.pop(0))
-            area = int(d.pop(0)) - 1
-            region = int(d.pop(0)) - 1            
-            impacts = [float(d.pop(0)) for i in range(k)]
-            projects.append(ProjectAR(impacts, req, area, region))
-        return Portfolio(budget, w, projects, areaLimits, regionLimits)
+            a = int(d.pop(0))
+            r = int(d.pop(0))
+            pr = Project([float(d.pop(0)) for i in range(k)], req)
+            areas[a].include(pr)
+            regions[r].include(pr)
+            projects.append(pr)
+        gr = [ list(areas.values()), list(regions.values()) ]
+        return Portfolio(budget, w, projects, gr)
 
 def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore these synergies
     with open(filename) as data:
@@ -83,7 +95,9 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                     print('Ignoring synergies')
                     synergyCount = 0
                     synergies = []
-                w = [1, 1] # two equally important objectives
+                w = [0.5, 0.5] # two equally important objectives
+                if VERBOSE:
+                    print(f'Including {len(areas)} areas')
                 return Portfolio(budget, w, projects, g = [[areas[a] for a in areas]], s = synergies)
             if '=' in line:
                 f = (line.strip()).split('=')
@@ -127,7 +141,7 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
                         a = int(d.pop(0)) - 1
-                        p = Project([1, float(d.pop(0))], minB, maxB)
+                        p = Project([1, float(d.pop(0))], maxB, minB)
                         areas[a].include(p) # include into the area                        
                         projects.append(p)
                     assert len(projects) == projectCount
@@ -166,12 +180,14 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                             d = d[:-1] # trim trailing commas                        
                         assert d[0] == '<' and d[-1] == '>'
                         d = d[1:-1].split(',')            
-                        synergies.append(Synergy(int(d[0]), int(d[1]), int(float(d[2])), int(d[3]), int(d[4]), int(d[5]), int(d[6])))
+                        synergies.append(Synergy(int(d[0]), int(d[1]),
+                                                 int(float(d[2])), int(d[3]),
+                                                 int(d[4]), int(d[5]), int(d[6])))
                     assert len(synergies) == synergyCount
                 elif 'SItems' in header:
                     print('Parsing the synergy details')                    
                     for i in range(synergyCount):
-                        d = content if '[{' in content else data.readline().strip() # for some reason, these do not start on a new line
+                        d = content if '[{' in content else data.readline().strip() 
                         content = '' # blank this out
                         start = d.index('{') + 1
                         end = d.index('}')
@@ -181,4 +197,5 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                             i = t.split(',')
                             synergies[int(i[0]) - 1].include([int(i[0]), int(i[1]), int(i[2])])
                 else:
-                    print(f'Ignoring line <{content}>')        
+                    print(f'Ignoring line <{header} = {content}>')        
+                    

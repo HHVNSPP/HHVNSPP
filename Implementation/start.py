@@ -1,11 +1,9 @@
 import os
-from electre import Electre
-from datetime import timedelta, datetime
-from search import LocalSearch
+from solution import initial
 from adjustment import Adjustment
 from parser import loadA, loadB, loadC
+from datetime import timedelta, datetime
 from portfolio import Portfolio, Project, Activity, Synergy
-from solution import initial
 
 def electre(weights, pool):
     score = zip(pool, Electre(weights, [sol.impact for sol in pool]))
@@ -36,29 +34,20 @@ for s in 'ABC':
                 iteration = 1
                 stop = 1
                 timestamp = datetime.now()
-                pool = None
                 print(f'Executing replica {r} for {filename} in {directory}')
-                curr = initial(pf).feasible()
                 with open(output + f'r{r}_' + filename, 'w') as target:
-                    pool = Adjustment()
-                    while pool.active():
+                    p = Adjustment(initial(pf))
+                    while p.active():
                         if datetime.now() - timestamp > limit:
                             break # out of time
-                        curr = pool.execute(LocalSearch(curr))
+                        p.step()
                         if stop == iteration:    
                             diff = datetime.now() - timestamp
-                            for s in pool.solutions:
-                                print(f'working;{timestamp};{iteration};{diff};{s}', file = target)
+                            prefix = f'working;{iteration};{diff};'
+                            p.output(target, prefix)
                             stop *= 2
                             if stop >= maxiter:
                                 break # out of permitted iterations
                         iteration += 1
-                    electre(sol, pf.weights)
-                    diff = datetime.now() - timestamp
-                    for s in pool.solutions:
-                        print(f'postproc;{timestamp};{iteration};{diff};{s}', file = target)
-                    print(pool.usage(target))
-
-
-
-
+                    prefix = f'postproc;{iteration};{diff};'                        
+                    p.postprocess(pf.weights, target, prefix)

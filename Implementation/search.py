@@ -1,5 +1,33 @@
 from random import shuffle
 
+VERBOSE = False
+
+def update(sol, ref):
+    prune = set()
+    ok = True
+    for s in sol:
+        comp = ref.compare(s)
+        if comp == BETTER: # ref dominates s   
+            prune.add(s) # s needs to be pruned
+        elif comp == WORSE: # s dominates ref
+            ok = False # ref cannot enter
+        ref -= prune # remove the dominated ones
+    if ok: # add the one that was not dominated by any
+        sol.add(ref)
+    return len(prune) # how many did ref dominate
+
+def check(heur, byDom = True):
+    for h in heur:
+        r = heur[h]
+        if byDom:
+            if r == 0 or r == 1:
+                return True
+        elif r > 0:
+            return True    
+    return False
+
+# LOCAL SEARCH HEURISTICS
+
 def swapOne(sol):
     return sol.swap(count = 1)
 
@@ -24,7 +52,7 @@ def exclLow(sol):
 def lowRand(sol):
     return sol.randmin()
 
-## GROUP LEVEL
+## GROUP LEVEL LOCAL SEARCH HEURISTICS
 
 def incrGroup(sol):
     return sol.modGroup(decr = False)
@@ -34,90 +62,77 @@ def decrGroup(sol):
 
 def alterGroup(sol):
     return sol.alterGroup().fill()
-    
+
 LOCAL = [swapOne, inclRnd, exclRnd, 
          inclLow, inclHigh, exclLow, exclHigh,
          incrGroup, decrGroup, alterGroup]
 
-# FILLS!!!
+# fill heuristics
 
-class LocalSearch():
-    def __init__(self, s, init = 1):
-        self.heuristics = dict()
-        for h in LOCAL:
-            self.heuristics[h] = init
-        self.initial = init
-        self.seed = s # initial solution
-        self.current = None # current solution
+def fillMin(sol):
+    return sol.fill(level = 0)
 
-        self.heuristics.sort(key = lambda x: x.rank(self.byDom), reverse = True)
+def fillMax(sol):
+    return sol.fill(level = 1)
 
-    def check(self):
-        for i in self.heuristics:
-            if self.rank_by_dom is None:
-                if i.get_rank()==1 or i.get_rank()==0:
-                    return True
-            elif i.get_rank(self.rank_by_dom) > 0:
-                return True
-            else: return False
-    
-    def reset(self):
-        for h in self.heuristics:
-            self.heuristics[h] = self.initial
+def fillRnd(sol):
+    return sol.fill()
 
-    # update the set of non-dominated solutions        
-    def update(self, alt, reference, heur = None):
-        prune = set()
-        add = True
-        for i in range(len(alt)):        
-            comparison = alt[i].compare(reference)
-            if comparison == 1:   
-                prune.add(i)
-            elif comparison == -1 or comparison == 2:
-                add = False
-        if self.rank_by_dom != None:
-            if len(prune) > 0:
-                strength = len(prune)
-            else:
-                strength = 0
-            if heur == reference.getheur():
-                heur.set_rank(strength, True)
-        alt -= prune
-        if add:
-            alt.append(reference)
+def fillIncr(sol):
+    return sol.fill(level = -1)
 
-    def execute(self):
-        num_non_impr = 0
-        result = []          
-        while num_non_impr<self.c and self.check():
-            shuffle(self.heuristics)
-            selected = self.heuristics
-            for h in self.heuristics:
-                if self.rank_by_dom is None and h.rank == 1:
-                    selected = h
-                    break
-                elif h.rank(self.rank_by_dom) > heur.rank(self.rank_by_dom):
-                    selected = h
-            alt = selected.execute(self.initial) # create an alternative solution
-            comparison = self.initial.compare(alt)
-            if comparison == 1:
-                self.solution = self.initial # keep the initial solution
-                self.update(result, alt, heur)
-                if self.rank_by_dom is None:
-                    self.reset()
-                num_non_impr=0
-            elif comparison == 0:
-                self.update(result, alt, heur)
-                if self.rank_by_dom is None:
-                    heur.rank(0)
-                num_non_impr=num_non_impr+1
-            else:
-                if self.rank_by_dom is None:
-                    heur.rank(-1)
-                num_non_impr=num_non_impr+1 
-        if self.rank_by_dom is None:
-            self.reset()
-        if len(result) == 0:
-            return [self.initial]
-        else:
-            return result           
+def fillLift(sol):
+    return sol.fill(level = 2)
+
+FILL = [fillMin, fillMax, fillRnd, fillIncr, fillLift]
+
+### LOCAL SEARCH
+
+def localSearch(pool, counters, init = -10, limit = 10, byDom = True):
+    if VERBOSE:
+        print('Executing local search')
+    hr = { h : init for h in LOCAL}
+    fr = { h : init for h in LOCAL}
+    shuffle(LOCAL)
+    stall = 0
+    assert len(pool) > 0
+    while stall < limit and check(hr, fr):
+        sh = None
+        br = 0
+        for h in LOCAL: # pick a local-search heuristic
+            r = heur[h]
+            if not byDom and r == 1:
+                sh = h
+                break
+            elif r > br:
+                sh = h
+                br = r
+        fh = None
+        br = 0
+        for f in FILL: # pick a fill heuristic
+            r = fill[f]
+            if not byDom and r == 1:
+                fh = f
+                break
+            elif r > br:
+                fh = f
+                br = r
+        for s in pool:
+            alt = fh(sh(s)) # create an alternative solution and fill it
+            counters[fh] += 1
+            counters[sh] += 1
+            comp = alt.compare(s)
+            if comp == BETTER: # alt dominates s
+                r = update(pool, alt)
+                stall = 0 # improvement obtained                        
+                if byDom: # update the dominance ranks of thr two
+                    heur[sh] = r 
+                    fill[fh] = r
+            elif comp == EQUAL: 
+                stall += 1 # no improvement, but not worse
+            else: # it was WORSE
+                stall += 1                 
+                if not byDom:
+                    heur[sh] = -1 # punish the search heuristic
+                    fill[fh] = -1 # punish the fill heuristic
+    return pool    

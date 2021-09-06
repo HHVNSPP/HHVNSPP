@@ -1,7 +1,12 @@
 import operator
+import numpy as np
 from random import choice
+from electre import electre
+from search import localSearch
+from solution import BETTER, EQUAL
+from collections import defaultdict
 
-VERBOSE = True
+VERBOSE = False
 
 # Shake heuristics
 
@@ -17,7 +22,7 @@ def swapThird():
 def swapHalf(sol):
     return sol.swap(count = 1/2)
 
-def swapGroup():
+def swapGroup(sol):
     return sol.swap(count = 0)
 
 # budget-exhausting heuristics
@@ -40,27 +45,39 @@ def liftRnd(sol):
 SHAKE = [reset, swapQuarter, swapThird, swapHalf, swapGroup]
 
 class Adjustment():
-    def __init__(self, lim = 5, init = -10):
-        self.usage = dict()
+
+    def __init__(self, seed, lim = 5, init = -10):
+        self.pool = { seed }
+        self.usage = defaultdict(int) # counters
         self.heuristics = dict() # heuristics and their ranks
         for h in SHAKE:
             self.heuristics[h] = init
-        self.current = choice(h) # start with a random one
         self.initial = init
-        self.solutions = set()
-        self.stall = 0 # contender executions with no improvement
+        self.stall = 0 # executions with no improvement
         self.limit = lim # how many consequtive stalled iterations to allow
         self.reset() # initial levels
+
+    def postprocess(self, w, target, prefix = ''):
+        order = list(self.pool)
+        for (sol, score) in zip(order, electre(w, order)):
+            print(f'{prefix}{score};{sol}', file = target)
+        print(prefix + ';'.join([f'{k} = {v}' for (k, v) in self.usage.items()]), file = target)
+
+    def evaluate(self):
+        return np.matrix([s.evaluate() for s in self.pool])
+        
+    def output(self, target, prefix = ''):
+        for s in self.pool:
+            print(f'{prefix}{s}', file = target)
         
     def active(self):
+        if VERBOSE:
+            print(f'Stalled for {self.stall} iterations of the permitted {self.limit}')
         return self.stall < self.limit 
-        
-    def usage(self, target):
-        print(';'.join([f'{k} = {v}' for (k, v) in self.usage.items()]), file = target)
         
     def check(self):
         for h in self.heuristics:
-            if self.rank[h]:
+            if self.heuristics[h]:
                 return True
         return False
     
@@ -68,20 +85,27 @@ class Adjustment():
         if VERBOSE:
             print('Resetting ranks in adjustment')
         for h in self.heuristics:
-            self.rank[h] = initial
+            self.heuristics[h] = self.initial
   
-    def improve(self, contender): 
+    def improve(self, seed):
+        if max(self.heuristics.values()) < 0: # all ranks negative
+            self.reset() # reset all ranks to the initial value        
+        heur = max(self.heuristics.items(), key = operator.itemgetter(1))[0]
+        contender = heur(seed) # apply the shake heuristic
+        self.usage[heur] += 1
+        assert contender is not None
+        contender.feasible()
         stalled = True
-        prune = set() # solutions to discard
+        prune = set() # pool to discard
         adj = 0
         if VERBOSE:
-            print(f'Attempting to improve a pool of {len(self.solutions)} solutions')
-        for s in self.solutions: # calculate the rank changes
+            print(f'Comparing against a pool of {len(self.pool)} pool')
+        for s in self.pool: # calculate the rank changes
             comp = contender.compare(s)
-            if comparator == 1:                
+            if comp == 1:                
                 adj += 1
                 stalled = False
-            elif comparator == 0:
+            elif comp == 0:
                 adj += -1
                 stalled = False
             elif comp == BETTER:
@@ -89,8 +113,7 @@ class Adjustment():
                 adj -= 5
             elif comp == EQUAL:
                 adj -= 10
-        self.heuristics[self.current] += adj # apply the adjustment
-        self.solutions -= prune # discard the pruned solutions
+        self.heuristics[heur] += adj # apply the adjustment
         if stalled: # no improvement
             if VERBOSE:
                 print('Stalled')
@@ -99,18 +122,13 @@ class Adjustment():
             if VERBOSE:
                 print('Improvement')
             self.stall = 0 # reset the stall counter
-        self.current = max(self.heuristics.items(), key = operator.itemgetter(1))[0]
-        if self.heuristics[self.current] < 0: # all ranks negative
-            self.reset() # reset all ranks to the initial value
-        self.solutions.add(contender)
+        self.pool -= prune
+        self.pool.add(contender)
     
-    def execute(curr):
-        self.improve(curr)
-        if len(self.solutions) > 0:                        
-            pick = choice(list(self.solutions))
-            self.usage[self.current] += 1 # count the heuristic usage
-            return self.current(pick).feasible() 
-
+    def step(self):
+        seed = self.pool.copy()
+        for s in localSearch(seed, self.usage):
+            self.improve(s)
             
    
         
