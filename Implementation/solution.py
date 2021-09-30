@@ -131,12 +131,6 @@ class Solution():
                     return other
         return self # was not possible to perform
     
-    def randmin(self):
-        other = Solution(self.portfolio, self.assignment.copy())  
-        p = choice(self.actives(aslist = True))
-        other.activate(p)
-        return other
-
     def extreme(self, high = True, active = True):
         prices = {p:  p.minimumBudget for p in (self.inactives() if not active else self.actives())}
         if len(prices) == 0: # no candidates
@@ -154,25 +148,12 @@ class Solution():
     
     def randmin(self, level = 0):
         other = Solution(self.portfolio, self.assignment.copy())
-        p = choice(self.actives())
+        cand = self.actives()
+        if len(cand) == 0:
+            return self # nothing can be done
+        p = choice(cand)
         other.activate(p, level)
         return other
-
-    def extreme(self, high = True, active = True):
-        prices = {p:  p.minimumBudget for p in (self.inactives() if not active else self.actives())}
-        if len(prices) > 0:
-            most = pick(prices, high)
-            return (most, prices.get(most, None))
-        else:
-            return (None, None) 
-
-    def dropExtreme(self, high = True):
-        (most, price) = self.extreme(high = high)
-        if most is not None:
-            other = Solution(self.portfolio, self.assignment.copy())
-            other.disactivate(most)
-            return other
-        return self # cannot be done
 
     def fitExtreme(self, high = True):
         other = Solution(self.portfolio, self.assignment.copy())        
@@ -180,10 +161,10 @@ class Solution():
         if most is None:
             return self # nothing can be done
         while self.portfolio.budget < other.allocation() + price:
-            cand = self.actives()
+            cand = self.actives(aslist = True)
             if len(cand) == 0:
                 return self # modification unsuccessfull
-            other.disactivate(choice(self.actives(aslist = True)))
+            other.disactivate(choice(cand))
         other.activate(most, price) # it fits now
         return other
 
@@ -202,14 +183,20 @@ class Solution():
         
     def add(self, level = 0):
         other = Solution(self.portfolio, self.assignment.copy())
-        p = choice(self.inactives(aslist = True))
+        cand = self.inactives(aslist = True)
+        if len(cand) == 0:
+            return self # nothing can be done
+        p = choice(cand)
         if other.allocation() + p.minimumBudget <= self.portfolio.budget:
             other.activate(p, level = level)
         return other
 
     def remove(self):
         other = Solution(self.portfolio, self.assignment.copy())
-        p = choice(self.actives(aslist = True))        
+        cand = self.actives(aslist = True)
+        if len(cand) == 0:
+            return self # nothing can be done
+        p = choice(cand)
         other.disactivate(p)
         return other
     
