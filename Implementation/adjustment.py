@@ -1,8 +1,21 @@
 import numpy as np
 from electre import electre
-from search import localSearch
 from collections import defaultdict
-from tools import pick, verbose, BETTER, EQUAL
+from tools import pick, verbose, BETTER, EQUAL, localSearch, FILL
+
+def update(sol, ref):
+    prune = set()
+    ok = True
+    for s in sol:
+        comp = ref.compare(s)
+        if comp == BETTER: # ref dominates s   
+            prune.add(s) # s needs to be pruned
+        elif comp == WORSE: # s dominates ref
+            ok = False # ref cannot enter
+    sol -= prune # remove the dominated ones
+    if ok: # add the one that was not dominated by any
+        sol.add(ref)
+    return len(prune) # how many did ref dominate
 
 # Shake heuristics
 
@@ -21,37 +34,17 @@ def swapHalf(sol):
 def swapGroup(sol):
     return sol.swap(count = 0)
 
-# budget-exhausting heuristics
-
-def fillMin(sol):
-    return sol.fill(level = 0)
-
-def fillMax(sol):
-    return sol.fill(level = 1)
-
-def fillRnd(sol):
-    return sol.fill()
-
-def fillIncr(sol):
-    return sol.fill(level = -1)
-
-def liftRnd(sol):
-    return sol.lift()
-
 SHAKE = [ reset, swapQuarter, swapThird, swapHalf, swapGroup ]
 
 class Adjustment():
 
-    def __init__(self, seed, lim = 5, init = -10):
+    def __init__(self, seed, lim = 10):
         self.pool = { seed }
         self.usage = defaultdict(int) # counters
-        self.heuristics = dict() # heuristics and their ranks
-        for h in SHAKE:
-            self.heuristics[h] = init
-        self.initial = init
         self.stall = 0 # executions with no improvement
         self.limit = lim # how many consequtive stalled iterations to allow
-        self.reset() # initial levels
+        self.sr = { h : 1 for h in SHAKE } 
+        self.fr = { h : 1 for h in FILL }
 
     def postprocess(self, w, target):
         sol = np.matrix([ s.evaluate() for s in self.pool ])
@@ -72,26 +65,24 @@ class Adjustment():
             print(f'Stalled for {self.stall} iterations of the permitted {self.limit}')
         return self.stall < self.limit 
         
-    def check(self):
-        for h in self.heuristics:
-            if self.heuristics[h]:
-                return True
-        return False
-    
-    def reset(self):
-        if verbose:
-            print('Resetting ranks in adjustment')
-        for h in self.heuristics:
-            self.heuristics[h] = self.initial
-  
     def improve(self, seed):
-        if max(self.heuristics.values()) < 0: # all ranks negative
-            self.reset() # reset all ranks to the initial value        
-        heur = pick(self.heuristics)
-        contender = heur(seed) # apply the shake heuristic
+        assert seed is not None
+        if len(self.sr) > 0 and max(self.sr.values()) < 0:
+            self.sr = { h : 1 for h in SHAKE } # reset
+        if len(self.fr) > 0 and max(self.fr.values()) < 0:
+            self.fr = { h : 1 for h in FILL } # reset
+        sh = pick(self.sr) # pick a shake heuristic
+        fh = pick(self.fr) # pick a fill heuristic
+        if verbose:
+            print(f'Shaking with <{sh.__name__}>')                        
+        contender = sh(seed)
         assert contender is not None
-        assert contender.feasible()
-        self.usage[heur] += 1
+        if verbose:
+            print(f'Filling with <{fh.__name__}>')                
+        fh(contender)
+        assert contender is not None
+        self.usage[sh] += 1
+        self.usage[fh] += 1
         stalled = True
         prune = set() # pool to discard
         adj = 0
@@ -110,7 +101,8 @@ class Adjustment():
                 adj -= 5
             elif comp == EQUAL:
                 adj -= 10
-        self.heuristics[heur] += adj # apply the adjustment
+        self.sr[sh] += adj # apply the adjustment
+        self.fr[fh] += adj # apply the adjustment
         if stalled: # no improvement
             if verbose:
                 print('Stalled')

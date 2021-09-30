@@ -1,3 +1,4 @@
+import operator
 from random import random, choice
 from tools import pick, WORSE, EQUAL, BETTER, UNDEFINED, verbose
 
@@ -33,11 +34,10 @@ def initial(pf): # build a random solution for a portfolio
     if len(pf.groups) == 1: # no areas or regions (instance set B)
         for p in pf.projects:
             if random() < 0.5: # each project has a 50-50 chance of activation
-                p.activate(a, p.minimumBudget, l = 0)
+                p.activate(a, p.minimumBudget, level = 0)
     else:
         for i in pf.permutation(): # iterate over the projects in random order
             p = pf.projects[i]
-            lvl = p.minimumBudget # funds minimum
             ok = True
             if verbose:
                 print(f'Considering {len(pf.groups)} types of groups')
@@ -52,8 +52,7 @@ def initial(pf): # build a random solution for a portfolio
                                     ok = False
                                     break
             if ok and lvl >= pf.budget: # funds remaining
-                p.activate(a, lvl, l = 2) # random amounts
-    if verbose:
+                p.activate(a, lvl, level = 2) # random amounts
         print('Initial solution created')
     created = Solution(pf, a)
     assert created.feasible()
@@ -71,9 +70,9 @@ class Solution():
     def __repr__(self):
         return str(self)
     
-    def disactivate(self, p):
-        if p is not None:
-            p.disactivate(self.assignment)
+    def disactivate(self, a):
+        if a is not None:
+            a.disactivate(self.assignment)
         
     def activate(self, p, level = 0):
         if p is not None:
@@ -105,7 +104,7 @@ class Solution():
             chosen = choice(list(opt))
         return chosen
                 
-    def alterGroup(self):
+    def alterGroup(self, level = 0):
         if len(self.portfolio.groups) > 1:
             na = self.assignment.copy()
             other = Solution(self.portfolio, na)            
@@ -143,7 +142,7 @@ class Solution():
         if len(prices) == 0: # no candidates
             return (None, None)
         most = pick(prices, high)
-        return (most, prices[most])
+        return (most, prices.get(most, None))
 
     def dropExtreme(self, high = True):
         (most, price) = self.extreme(high = high)
@@ -152,6 +151,28 @@ class Solution():
         alt = Solution(self.portfolio, self.assignment.copy())
         alt.disactivate(most)
         return alt
+    
+    def randmin(self, level = 0):
+        other = Solution(self.portfolio, self.assignment.copy())
+        p = choice(self.actives())
+        other.activate(p, level)
+        return other
+
+    def extreme(self, high = True, active = True):
+        prices = {p:  p.minimumBudget for p in (self.inactives() if not active else self.actives())}
+        if len(prices) > 0:
+            most = pick(prices, high)
+            return (most, prices.get(most, None))
+        else:
+            return (None, None) 
+
+    def dropExtreme(self, high = True):
+        (most, price) = self.extreme(high = high)
+        if most is not None:
+            other = Solution(self.portfolio, self.assignment.copy())
+            other.disactivate(most)
+            return other
+        return self # cannot be done
 
     def fitExtreme(self, high = True):
         other = Solution(self.portfolio, self.assignment.copy())        
@@ -179,25 +200,22 @@ class Solution():
         else:
             return set(self.portfolio.projects) - self.actives()
         
-    def add(self):
-        na = self.assignment.copy()
-        other = Solution(self.portfolio, na)
+    def add(self, level = 0):
+        other = Solution(self.portfolio, self.assignment.copy())
         p = choice(self.inactives(aslist = True))
-        if sum(na.values()) + p.minimumBudget <= self.portfolio.budget:
-            other.activate(p)
+        if other.allocation() + p.minimumBudget <= self.portfolio.budget:
+            other.activate(p, level = level)
         return other
 
     def remove(self):
-        na = self.assignment.copy()
-        p = choice(self.actives(aslist = True))
-        other = Solution(self.portfolio, na)
+        other = Solution(self.portfolio, self.assignment.copy())
+        p = choice(self.actives(aslist = True))        
         other.disactivate(p)
         return other
     
-    def swap(self, count = None):
-        na = self.assignment.copy()
+    def swap(self, count = None, level = 0):
         selection = set(self.portfolio.sample(count)) if count is not None else self.portfolio.random()
-        other = Solution(self.portfolio, na)
+        other = Solution(self.portfolio, self.assignment.copy())
         for p in selection:
             present = False
             for a in p.activities:
@@ -205,11 +223,10 @@ class Solution():
                     present = True
                     break
             if not present: # presently inactive
-                if sum(na.values()) + p.minimumBudget <= self.portfolio.budget:                
-                    other.activate(p) 
+                other.activate(p, level) 
             else: # presently active
                 other.disactivate(p) 
-        return other # note that these may be infeasible
+        return other 
     
     def choice(self): # return a random project
         return self.portfolio.choice()
@@ -248,7 +265,7 @@ class Solution():
             print('Increasing')
         p = self.select(gr.members, active = False)
         if p is not None:
-            self.activate(p)
+            self.activate(p, level)
 
     def decrease(self, gr):
         if verbose:

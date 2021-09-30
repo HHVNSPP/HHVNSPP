@@ -37,14 +37,18 @@ class Activity():
                 i.append(rate * p) # partial benefit
         return i
 
-    def activate(self, assignment, amount, l = 0):
+    def disactivate(self, assignment):
+        if self in assignment:
+            del assignment[self]
+
+    def activate(self, assignment, amount, level = 0):
         if amount < self.minimumBudget:
             return 0 # nothing can be assigned
-        if l == 0:
+        if level == 0:
             lvl = self.minimumBudget
-        elif l == 1:
+        elif level == 1:
             lvl = min(amount, self.maximumBudget) # as much as we afford
-        elif l == 2:
+        elif level == 2:
             lvl = self.randomize(amount)
         assert lvl >= self.minimumBudget
         assert lvl <= self.maximumBudget
@@ -68,15 +72,14 @@ class Project():
     def __repr__(self):
         return str(self)
     
-    def activate(self, assignment, amount, l = 0):
+    def activate(self, assignment, amount, level = 0):
         for a in self.activities:
-            amount -= a.activate(assignment, amount, l)
-                    
+            amount -= a.activate(assignment, amount, level)
+
     def disactivate(self, assignment):
         for a in self.activities:
-            if a in assignment:
-                del assignment[a]
-
+            a.disactivate(assignment)
+            
     def impact(self, assignment, binary, fr = 0.3):
         pi = None
         for a in self.activities:
@@ -99,7 +102,7 @@ class Project():
         if verbose:
             print(f'A project with {len(self.activities)} activities is ready:',
                   ''.join([str(a) for a in self.activities]))
-    
+
 class Synergy():
 
     def __init__(self, nombre, technical, value, kind,
