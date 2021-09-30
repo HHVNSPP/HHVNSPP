@@ -59,5 +59,7 @@ def electre(weights, sol):
     if DEBUG:
         print('dominance', dom)
     rowSums = np.sum(dom, axis = 0)
-    colSums = np.sum(dom, axis = 1) # TO BE DONE: revise that this is what is intended (important)
-    return [ rowSums[i] - colSums[i] for i in range(m) ] # differences between column sums and row sums
+    colSums = np.sum(dom, axis = 1)
+    # differences between column sums and row sums
+    # for maximization, the more negative, the better
+    return [ rowSums[i] - colSums[i] for i in range(m) ] 

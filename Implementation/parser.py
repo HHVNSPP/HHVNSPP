@@ -1,6 +1,6 @@
 from portfolio import Portfolio, Group, Project, Activity, Synergy
 
-VERBOSE = True
+verbose = False
 
 def loadC(filename):
     with open(filename) as f:
@@ -11,7 +11,8 @@ def loadC(filename):
               'a3': Group(0.3 * b, 0.45 * b), 
               'r1': Group(0.4 * b, 0.6 * b),
               'r2': Group(0.4 * b, 0.6 * b)}
-        weights = [int(i) for i in (f.readline()).split(" ")]
+        weights = [ int(i) for i in (f.readline()).split(" ") ]
+        binary = [ False for w in weights ] 
         n = len(weights)
         numberOfSynergies = int(f.readline())
         synergies = []
@@ -40,15 +41,15 @@ def loadC(filename):
             regions = []
             for g in gr:
                 if 'a' in g:
-                    if VERBOSE:
+                    if verbose:
                         print(f'Including an area with {len(gr[g].members)} projects')
                     areas.append(gr[g])
                 else:
                     assert 'r' in g
-                    if VERBOSE:
+                    if verbose:
                         print(f'Including a region area with {len(gr[g].members)} projects')                    
                     regions.append(gr[g])                    
-    return Portfolio(b, weights, projects, [areas, regions], s = synergies) 
+    return Portfolio(b, weights, binary, projects, [areas, regions], s = synergies) 
 
 def loadB(filename):
     with open(filename) as f:
@@ -59,7 +60,9 @@ def loadB(filename):
                   3: Group(0.2 * budget, 0.3 * budget) }
         regions = { 1: Group(0.4 * budget, 0.6 * budget),
                     2: Group(0.4 * budget, 0.6 * budget) } 
-        w = [int(i) for i in (f.readline()).split()]
+        w = [ int(i) for i in (f.readline()).split() ]
+        b = [ False for w in weights ] 
+        n = len(weights)        
         k = len(w)
         projects = []
         for pID in range(projectCount):
@@ -73,7 +76,7 @@ def loadB(filename):
             regions[r].include(pr)
             projects.append(pr)
         gr = [ list(areas.values()), list(regions.values()) ]
-        return Portfolio(budget, w, projects, gr)
+        return Portfolio(budget, w, b, projects, gr)
 
 def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore these synergies
     with open(filename) as data:
@@ -95,10 +98,11 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                     print('Ignoring synergies')
                     synergyCount = 0
                     synergies = []
-                w = [0.5, 0.5] # two equally important objectives
-                if VERBOSE:
+                w = [ 0.5, 0.5 ] # two equally important objectives
+                b = [ True, False ] # the first is a binary one (yes/no)
+                if verbose:
                     print(f'Including {len(areas)} areas')
-                return Portfolio(budget, w, projects, g = [[areas[a] for a in areas]], s = synergies)
+                return Portfolio(budget, w, b, projects, g = [[areas[a] for a in areas]], s = synergies)
             if '=' in line:
                 f = (line.strip()).split('=')
                 header = f[0]
@@ -114,7 +118,8 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                 elif 'nsynergies' in header:
                     synergyCount = int(content)                
                 elif "Areas" in header:
-                    print('Parsing the area data')                    
+                    if verbose:
+                        print('Parsing the area data')                    
                     assert areaCount != 0
                     areas = dict()
                     for i in range(areaCount):
@@ -129,7 +134,8 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         areas[i] = Group(minB, maxB, set())
                     assert len(areas) == areaCount
                 elif 'Projects' in header:
-                    print('Parsing the project data')
+                    if verbose:
+                        print('Parsing the project data')
                     assert projectCount != 0
                     for pID in range(projectCount):
                         d = data.readline().strip()
@@ -146,7 +152,8 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         projects.append(p)
                     assert len(projects) == projectCount
                 elif 'Activities' in header:
-                    print('Parsing the activity data')                                        
+                    if verbose:
+                        print('Parsing the activity data')                                        
                     assert activityCount is not None 
                     for i in range(projectCount * activityCount): # each project has the same number of activities
                         d = data.readline().strip()
@@ -163,14 +170,14 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         impact = float(d.pop(0))
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
-                        act = Activity(pr, impact, minB, maxB)
-                        pr.activities.append(act)
+                        pr.activities.append(Activity(pr, impact, maxB, minB))
                     for pID in range(projectCount):
                         pr = projects[pID]
                         pr.update()
                         assert activityCount == len(pr.activities)
                 elif 'Synergies' in header:
-                    print('Parsing the synergy setup')
+                    if verbose:
+                        print('Parsing the synergy setup')
                     assert synergyCount != 0
                     synergies = []
                     for i in range(synergyCount):
@@ -185,7 +192,8 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                                                  int(d[4]), int(d[5]), int(d[6])))
                     assert len(synergies) == synergyCount
                 elif 'SItems' in header:
-                    print('Parsing the synergy details')                    
+                    if verbose:
+                        print('Parsing the synergy details')                    
                     for i in range(synergyCount):
                         d = content if '[{' in content else data.readline().strip() 
                         content = '' # blank this out
