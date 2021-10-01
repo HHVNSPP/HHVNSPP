@@ -1,5 +1,4 @@
-import operator
-from random import random, choice
+from random import random, choice, shuffle
 from tools import pick, WORSE, EQUAL, BETTER, UNDEFINED, verbose
 
 # PARETO DOMINANCE
@@ -29,34 +28,34 @@ def notDominated(defendant, opponent):
 
 ### CREATION OF AN INITIAL SOLUTION
 
-def initial(pf): # build a random solution for a portfolio
-    a = dict() # fund assignment 
-    if len(pf.groups) == 1: # no areas or regions (instance set B)
-        for p in pf.projects:
-            if random() < 0.5: # each project has a 50-50 chance of activation
-                p.activate(a, p.minimumBudget, level = 0)
-    else:
-        for i in pf.permutation(): # iterate over the projects in random order
-            p = pf.projects[i]
-            ok = True
+def initial(pf, attempts = 10): # build a random solution for a portfolio
+    ok = None
+    for attempt in range(attempts):
+        ok = True
+        available = pf.budget
+        a = dict() # fund assignment 
+        shuffle(pf.groups) # consider the partitions in random order
+        for part in pf.groups: 
+            shuffle(part) # consider the subgroups in random order
+            for g in part:
+                spent = 0
+                for p in g.permutation(): # random order
+                    if spent > g.lower: # feasible
+                        break
+                    if available - spent >= p.minimumBudget: # if there are funds left
+                        if p.minimumBudget + spent < g.upper: # feasible
+                            spent += p.activate(a, p.minimumBudget, level = 0)
+                if not (spent >= g.lower and spent <= g.upper):
+                    ok = False
+                    break # infeasible, try again from the start
+                available -= spent
+        if ok:
             if verbose:
-                print(f'Considering {len(pf.groups)} types of groups')
-            for gt in pf.groups: # check if the bounds are not yet violated
-                if verbose:
-                    print(f'Considering a group type with {len(gt)} groups')
-                    for g in gt:
-                        if verbose:
-                            print(f'Considering a group of {len(g.members)} members')
-                            if p in g.members:
-                                if not g.feasible(a):
-                                    ok = False
-                                    break
-            if ok and lvl >= pf.budget: # funds remaining
-                p.activate(a, lvl, level = 2) # random amounts
-        print('Initial solution created')
-    created = Solution(pf, a)
-    assert created.feasible()
-    return created
+                print('Initial solution created')
+            created = Solution(pf, a)
+            assert created.feasible()
+            return created
+    return None # no feasible initial solution found; the instance may be ill-posed
 
 class Solution():
 
@@ -248,16 +247,12 @@ class Solution():
         return self.portfolio.feasible(self.assignment)
     
     def increase(self, gr):
-        if verbose:
-            print('Increasing')
         p = self.select(gr.members, active = False)
         if p is not None:
             self.activate(p, level)
 
     def decrease(self, gr):
-        if verbose:
-            print('Decreasing')        
         p = self.select(gr.members)        
-        if  p is not None:
+        if p is not None:
             self.disactivate(p)
 

@@ -12,7 +12,7 @@ def loadC(filename):
               'r1': Group(0.4 * b, 0.6 * b),
               'r2': Group(0.4 * b, 0.6 * b)}
         weights = [ int(i) for i in (f.readline()).split(" ") ]
-        binary = [ False for w in weights ] 
+        binary = [ False for w in weights ] # all linear impacts
         n = len(weights)
         numberOfSynergies = int(f.readline())
         synergies = []
@@ -61,8 +61,7 @@ def loadB(filename):
         regions = { 1: Group(0.4 * budget, 0.6 * budget),
                     2: Group(0.4 * budget, 0.6 * budget) } 
         w = [ int(i) for i in (f.readline()).split() ]
-        b = [ False for w in weights ] 
-        n = len(weights)        
+        b = [ True for v in w ] # all are yes/no objectives
         k = len(w)
         projects = []
         for pID in range(projectCount):

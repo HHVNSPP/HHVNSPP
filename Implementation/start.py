@@ -10,9 +10,9 @@ def electre(weights, pool):
     score.sort(key = lambda x: x[1], reverse = True)
     return score
 
-limit = 15 # maximum runtime for each individual execution in seconds
-maxiter = 2**10 # maximum iterations
-replicas = 30 # how many times each instance is solved
+limit = 5 # maximum runtime for each individual execution in seconds (just a few)
+maxiter = 2**8 # maximum iterations (goal: 200+)
+replicas = 5 # how many times each instance is solved (goal: 30+)
 sep = ';' # output file column separator
 prefixes = [ 'P', 'o', 'm' ] # we conserve the filenames of the cited authors 
 filetypes = [ '.dat', '.txt', '.txt' ] 
@@ -40,6 +40,9 @@ for s in 'ABC':
                 print(f'Executing replica {r} for {filename} in {directory}')
                 with open(output + f'r{r}_' + filename, 'w') as target:
                     p = Adjustment(initial(pf))
+                    if p is None:
+                        print(f'ERROR: no feasible initial solution')
+                        break
                     while p.active():
                         p.step()
                         diff = time() - timestamp                        

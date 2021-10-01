@@ -73,8 +73,10 @@ class Project():
         return str(self)
     
     def activate(self, assignment, amount, level = 0):
+        spent = 0
         for a in self.activities:
-            amount -= a.activate(assignment, amount, level)
+            spent += a.activate(assignment, amount - spent, level)
+        return spent
 
     def disactivate(self, assignment):
         for a in self.activities:
@@ -126,6 +128,7 @@ class Group():
         self.members = m
         self.lower = l # upper bound for total funding
         self.upper = u # lower bound for total funding
+        self.order = None
 
     def include(self, m):
         self.members.add(m)
@@ -136,6 +139,12 @@ class Group():
             print(f'Goal: {self.lower} <= {t:.0f} <= {self.upper}')
         return [ self.lower is None or t >= self.lower, self.upper is None or t <= self.upper ]
 
+    def permutation(self):
+        if self.order is None: # create if non-existant
+            self.order = list(self.members)
+        shuffle(self.order) # reorder
+        return self.order
+    
 class Portfolio():
 
     def __init__(self, total, w, b, p, g = None, s = None):
