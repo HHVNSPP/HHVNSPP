@@ -19,7 +19,7 @@ filetypes = [ '.dat', '.txt', '.txt' ]
 load = { 'A': loadA, 'B': loadB, 'C': loadC }
 verbose = False
 
-for s in 'ABC':
+for s in 'BC': # debug (A removed for now)
     directory = r'../Instances/InstanceSet' + s + '/'
     output = f'../Results/InstanceSet{s}/'
     prefix = prefixes.pop(0)
