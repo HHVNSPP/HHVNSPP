@@ -1,4 +1,3 @@
-from tools import verbose
 from random import shuffle, choice, random, sample
 
 class Activity():
@@ -13,8 +12,12 @@ class Activity():
         self.parent = p
 
     def __str__(self):
-        return f'A[{self.minimumBudget}, {self.maximumBudget}] = {self.potential}'
+        return f'A[{self.minimumBudget:.0}, {self.maximumBudget:.0}] = {self.potential}'
 
+    def funding(self, assignment):
+        amount = 1.0 * assignment.get(self, 0) # force all to decimal (some are integers)
+        return f'{amount:.0}' # ignore fractional differences
+    
     def __repr__(self):
         return str(self)
 
@@ -66,8 +69,6 @@ class Project():
         self.minimumBudget = minimum if minimum is not None else self.maximumBudget
         assert self.minimumBudget <= self.maximumBudget
         self.activities = list()
-        if verbose:
-            print(self, 'created')
 
     def __str__(self):
         pot = '|'.join([ str(p) for p in self.potential ])
@@ -77,6 +78,9 @@ class Project():
         if  self.minimumBudget < self.maximumBudget:        
             r = f'[{self.minimumBudget}, {self.maximumBudget}]'
         return 'P' + r + act + pot
+
+    def funding(self, assignment):
+        return ''.join([ a.funding(assignment) for a in self.activities ])        
 
     def __repr__(self):
         return str(self)
@@ -96,15 +100,11 @@ class Project():
         pi = [0] * k
         for a in self.activities:
             imp = a.impact(assignment, partial, fraction)
-            if verbose:
-                print('Ai', imp)
             for pos in range(k):
                 if partial[pos]:
                     pi[pos] += imp[pos] * self.potential[pos]
                 else:
                     pi[pos] = max(pi[pos], 1 * (imp[pos] > 0))
-        if verbose:
-            print('Pi', pi)
         return pi
                 
     def update(self):
@@ -115,9 +115,6 @@ class Project():
         else: # sort in decreasing order of impact
             self.activities.sort(key = lambda a: a.potential, reverse = True)
             self.maximumBudget = sum([ a.maximumBudget for a in self.activities ])
-            if verbose:
-                print(f'A project with {len(self.activities)} activities is ready:',
-                      ''.join([str(a) for a in self.activities]))
 
 class Synergy():
 
@@ -149,20 +146,14 @@ class Group():
 
     def lowerOK(self, a):
         t = sum([a.get(m, 0) for m in self.members])
-        if verbose:
-            print(f'Goal: {self.lower} <= {t:.0f} <= {self.upper}')
         return self.lower is None or t >= self.lower
 
     def upperOK(self, a):
         t = sum([a.get(m, 0) for m in self.members])
-        if verbose:
-            print(f'Goal: {self.lower} <= {t:.0f} <= {self.upper}')
         return self.upper is None or t <= self.upper
         
     def feasible(self, a):
         t = sum([a.get(m, 0) for m in self.members])
-        if verbose:
-            print(f'Goal: {self.lower} <= {t:.0f} <= {self.upper}')
         return [ self.lower is None or t >= self.lower, self.upper is None or t <= self.upper ]
 
     def permutation(self):
@@ -198,6 +189,12 @@ class Portfolio():
                 self.groups.append(g)
         self.synergies = s
 
+    def included(self, active):
+        return ''.join([ str(1 * (p in active)) for p in self.projects ])
+
+    def funding(self, assignment):
+        return ''.join([ p.funding(assignment) for p in self.projects ])    
+        
     def __str__(self):
         return f'PF w/ {len(self.projects)} P & B = {self.budget}'
 
@@ -240,8 +237,8 @@ class Portfolio():
         assigned = sum(a.values())
         if self.budget < assigned:
             return False
-        for g in self.groups: # check each partition
-            if not g.feasible(a): # check each subgroup
+        for g in self.groups: # check each subsgroup
+            if not all(g.feasible(a)): # if either bound is violated
                 return False
         return True
     

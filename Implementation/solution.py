@@ -1,23 +1,5 @@
 from random import random, choice, shuffle, sample
-from tools import pick, BETTER, WORSE, NONDOM, EQUAL, verbose
-
-# PARETO DOMINANCE
-
-def notDominated(defendant, opponent):
-    equal = True
-    n = len(defendant)
-    if verbose:
-        assert n == len(opponent)
-    matches = 0
-    improves = False
-    for i in range(n):
-        if defendant[i] != opponent[i]:
-            equal = False
-        if defendant[i] >= opponent[i]:
-            matches += 1 # defendant is better or equal to opponent
-            if defendant[i] > opponent[i] :
-                improves = True # defendant improves upon the opponent in this aspect
-    return equal, improves and matches == n # defendant is not dominated by opponent
+from tools import pick
 
 ### CREATION OF AN INITIAL SOLUTION
 
@@ -30,8 +12,6 @@ def initial(pf, attempts = 30): # build a random solution for a portfolio
         for g in pf.groups:
             for p in g.permutation(): # random order
                 if g.lowerOK(a):
-                    if verbose:
-                        print('lower ok for', g)
                     break # assign no more to this subgroup
                 if pf.budget - sum(a.values()) >= p.minimumBudget: # if there are funds
                     p.activate(a, p.minimumBudget, level = 0) # try funding
@@ -41,8 +21,6 @@ def initial(pf, attempts = 30): # build a random solution for a portfolio
                 ok = False
                 break # infeasible, try again from the start
     if ok:
-        if verbose:
-            print('Initial solution created')
         created = Solution(pf, a)
         assert created.feasible()
         return created
@@ -66,17 +44,22 @@ class Solution():
                     ok = False
                     break # infeasible, try again from the start
             if self.feasible():
-                if verbose:
-                    print('Feasible solution ensured')                
                 return
         print('ERROR: Unable turn a solution feasible', self)
 
+    def __hash__(self): # these must be able to go into dictionaries
+        return hash(self.portfolio.funding(self.assignment))
+        
+    def __eq__(self, other): # we do not want duplicate solutions
+        return self.assignment == other.assignment
+        
     def __init__(self, p, a):
         self.portfolio = p
         self.assignment = a
 
     def __str__(self):
-        return f'\nFA {self.portfolio} w/ {self.allocation()} to {len(self.assignment)}' 
+        incl = self.portfolio.included(self.actives())
+        return f'S {incl} w/ {self.allocation():.2f} to {len(self.assignment)}' 
 
     def __repr__(self):
         return str(self)
@@ -247,22 +230,7 @@ class Solution():
             assert len(ei) == n
             for i in range(n):
                 v[i] += ei[i]
-        if verbose:
-            print(f'Evaluated an assignment comprising of {len(funded)} projects as {v}')
         return v
-
-    def compare(self, another):
-        se = self.evaluate()
-        ae = another.evaluate()
-        eq, dom = notDominated(se, ae)
-        if eq:
-            return EQUAL
-        elif dom:
-            return BETTER
-        eq, dom = notDominated(ae, se)
-        if dom:
-            return WORSE
-        return NONDOM
         
     def feasible(self):
         return self.portfolio.feasible(self.assignment)

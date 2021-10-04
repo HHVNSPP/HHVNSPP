@@ -64,3 +64,4 @@ def electre(weights, sol):
     # differences between column sums and row sums
     # for maximization, the more negative, the better
     return [ rowSums[i] - colSums[i] for i in range(m) ] 
+

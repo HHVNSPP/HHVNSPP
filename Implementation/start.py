@@ -1,17 +1,12 @@
 import os
 from time import time
 from solution import initial
-from adjustment import Adjustment
+from tools import Adjustment
 from parser import loadA, loadB, loadC
 from portfolio import Portfolio, Project, Activity, Synergy
 
-def electre(weights, pool):
-    score = zip(pool, Electre(weights, [sol.impact for sol in pool]))
-    score.sort(key = lambda x: x[1], reverse = True)
-    return score
-
-limit = 20 # maximum runtime for each individual execution in seconds
-maxiter = 300 # maximum iterations
+limit = 5 # maximum runtime for each individual execution in seconds
+maxiter = 1030 # maximum iterations
 replicas = 30 # how many times each instance is solved
 sep = ';' # output file column separator
 prefixes = [ 'P', 'o', 'm' ] # we conserve the filenames of the cited authors 
@@ -43,9 +38,8 @@ for s in 'ABC':
                         break
                     o = 1
                     for i in range(maxiter):
-                        if not adj.active():
-                            break
-                        adj.step()
+                        if not adj.step():
+                            break # stalled
                         diff = time() - timestamp
                         if i == o: # output on iterations that are powers of two
                             print(f'w;{i};{diff}', file = target)
