@@ -37,7 +37,8 @@ def electre(weights, sol):
         print('weighted data', W)
     Dv = np.zeros((m, m)) # discordance
     s = np.max(W) - np.min(W) # span to normalize
-    assert s != 0
+    if s == 0: # all are the same
+        return [ 1 ] * sol.shape[0] # all get the same rank
     for i in range(m):
         for k in range(m):  
             diff = 0             

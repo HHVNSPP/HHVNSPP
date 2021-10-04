@@ -4,6 +4,7 @@ from random import shuffle, choice, random, sample
 class Activity():
 
     def __init__(self, p, imp, maximum, minimum = 0):
+        assert len(p.potential) == len(imp)
         self.potential = imp
         self.minimumBudget = minimum
         self.maximumBudget = maximum
@@ -12,7 +13,7 @@ class Activity():
         self.parent = p
 
     def __str__(self):
-        return f'\nA[{self.minimumBudget}, {self.maximumBudget}] = {self.potential}'
+        return f'A[{self.minimumBudget}, {self.maximumBudget}] = {self.potential}'
 
     def __repr__(self):
         return str(self)
@@ -20,21 +21,21 @@ class Activity():
     def randomize(self):
         return self.minimumBudget + random() * (self.maximumBudget - self.minimumBudget)
         
-    def impact(self, assignment, binary, fr = 0.3):
+    def impact(self, assignment, partial, fraction = 0.3):
         lvl = assignment.get(self, 0)
         if lvl == 0: # no funds, no impact
-            return [0 for p in self.parent.potential]
+            return [0 for p in self.potential]
         assert lvl >= self.minimumBudget
         assert lvl <= self.maximumBudget
-        rate = self.potential
-        if lvl < self.maximumBudget: 
-            rate = (fr / self.diff) * (lvl - self.minimumBudget) + (1 - fr) * self.potential
         i = []
-        for (p, b) in zip(self.parent.potential, binary):
-            if b:
-                i.append(p) # yes or no
-            else:
-                i.append(rate * p) # partial benefit
+        for (pot, part) in zip(self.potential, partial):
+            rate = pot
+            if part and lvl < self.maximumBudget:
+                multiple = (fraction / self.diff)
+                excess = lvl - self.minimumBudget
+                base = (1 - fraction) * pot
+                rate = multiple * excess + base
+            i.append(rate) 
         return i
 
     def disactivate(self, assignment):
@@ -64,10 +65,18 @@ class Project():
             assert minimum <= requested
         self.minimumBudget = minimum if minimum is not None else self.maximumBudget
         assert self.minimumBudget <= self.maximumBudget
-        self.activities = [ ]
+        self.activities = list()
+        if verbose:
+            print(self, 'created')
 
     def __str__(self):
-        return f'\nP[{self.minimumBudget}, {self.maximumBudget}] ({len(self.activities)})'
+        pot = '|'.join([ str(p) for p in self.potential ])
+        k = len(self.activities)
+        act = f'({k})' if k > 0 else ''
+        r = f'{self.minimumBudget}'
+        if  self.minimumBudget < self.maximumBudget:        
+            r = f'[{self.minimumBudget}, {self.maximumBudget}]'
+        return 'P' + r + act + pot
 
     def __repr__(self):
         return str(self)
@@ -82,28 +91,33 @@ class Project():
         for a in self.activities:
             a.disactivate(assignment)
             
-    def impact(self, assignment, binary, fr = 0.3):
-        pi = None
+    def impact(self, assignment, partial, fraction = 0.3):
+        k = len(self.potential)
+        pi = [0] * k
         for a in self.activities:
-            if pi is None: # the first is places as is
-                pi = a.impact(assignment, binary, fr)
-            else:
-                ia = a.impact(assignment, binary, fr)
-                # binary objectives are yes/no, the others accumulate
-                contrib = [ (not b) * 1 * v for (v, b) in zip(ia, binary) ]
-                pi = [ p + c for (p, c) in zip(pi, contrib) ]
+            imp = a.impact(assignment, partial, fraction)
+            if verbose:
+                print('Ai', imp)
+            for pos in range(k):
+                if partial[pos]:
+                    pi[pos] += imp[pos] * self.potential[pos]
+                else:
+                    pi[pos] = max(pi[pos], 1 * (imp[pos] > 0))
+        if verbose:
+            print('Pi', pi)
         return pi
                 
     def update(self):
         if len(self.activities) == 0:
-            # one activity = the whole project (in case there were none)        
-            self.activities = [ Activity(self, 1, self.maximumBudget, self.minimumBudget) ]
+            # one activity = the whole project (in case there were none)
+            imp = [ 1 ] * len(self.potential) # full impact since it is a singleton task
+            self.activities = [ Activity(self, imp, self.maximumBudget, self.minimumBudget) ]
         else: # sort in decreasing order of impact
             self.activities.sort(key = lambda a: a.potential, reverse = True)
-        self.maximumBudget = sum([ a.maximumBudget for a in self.activities ])
-        if verbose:
-            print(f'A project with {len(self.activities)} activities is ready:',
-                  ''.join([str(a) for a in self.activities]))
+            self.maximumBudget = sum([ a.maximumBudget for a in self.activities ])
+            if verbose:
+                print(f'A project with {len(self.activities)} activities is ready:',
+                      ''.join([str(a) for a in self.activities]))
 
 class Synergy():
 
@@ -121,7 +135,7 @@ class Synergy():
 
     def include(self, elem):
         self.elements.append(elem)
-        
+
 class Group():
 
     def __init__(self, l, u, m = set()):
@@ -132,6 +146,18 @@ class Group():
 
     def include(self, m):
         self.members.add(m)
+
+    def lowerOK(self, a):
+        t = sum([a.get(m, 0) for m in self.members])
+        if verbose:
+            print(f'Goal: {self.lower} <= {t:.0f} <= {self.upper}')
+        return self.lower is None or t >= self.lower
+
+    def upperOK(self, a):
+        t = sum([a.get(m, 0) for m in self.members])
+        if verbose:
+            print(f'Goal: {self.lower} <= {t:.0f} <= {self.upper}')
+        return self.upper is None or t <= self.upper
         
     def feasible(self, a):
         t = sum([a.get(m, 0) for m in self.members])
@@ -144,23 +170,36 @@ class Group():
             self.order = list(self.members)
         shuffle(self.order) # reorder
         return self.order
-    
-class Portfolio():
-
-    def __init__(self, total, w, b, p, g = None, s = None):
-        self.budget = total
-        self.weights = w
-        self.binary = b
-        self.numberOfObjectives = len(w)
-        self.projects = p
-        self.order = None
-        self.groups = g
-        self.synergies = s
-        for pr in self.projects:
-            pr.update() # sort the activities in each project
 
     def __str__(self):
-        return f'\nPF w/ {len(self.projects)} P & B = {self.budget}'
+        return f'G[{self.lower}, {self.upper}] ({len(self.members)})'
+
+    def __repr__(self):
+        return str(self)
+
+class Portfolio():
+
+    def __init__(self, total, w, i, p, part = None, s = None):
+        self.budget = total
+        self.weights = w
+        self.impact = i # false if all-or-nothing, true if partial assignment affects it
+        self.numberOfObjectives = len(w)
+        self.projects = p
+        for pr in self.projects:
+            pr.update() # sort the activities if several, create singleton if none
+            assert len(pr.potential) == self.numberOfObjectives
+            for a in pr.activities:
+                assert len(pr.potential) == self.numberOfObjectives                
+        self.order = None
+        self.partitions = part
+        self.groups = list()
+        for p in self.partitions:
+            for g in p:
+                self.groups.append(g)
+        self.synergies = s
+
+    def __str__(self):
+        return f'PF w/ {len(self.projects)} P & B = {self.budget}'
 
     def __repr__(self):
         return str(self)
@@ -170,9 +209,9 @@ class Portfolio():
 
     def sample(self, count):
         if count == 0: # pick a group at random and use that
-            partition = choice(self.groups) # an area or a region
-            subgroup = choice(partition)
-            return subgroup.members # the member or that subgroup
+            partition = choice(self.partitions) # an area or a region
+            group = choice(partition)
+            return group.members # the member or that subgroup
         elif count < 1: # expressed as a fraction
             count *= len(self.projects)
             count = round(count) # round to an integer
@@ -201,10 +240,9 @@ class Portfolio():
         assigned = sum(a.values())
         if self.budget < assigned:
             return False
-        for part in self.groups: # check each partition
-            for g in part:
-                if not g.feasible(a): # check each subgroup
-                    return False
+        for g in self.groups: # check each partition
+            if not g.feasible(a): # check each subgroup
+                return False
         return True
     
     def permutation(self):

@@ -1,21 +1,7 @@
 import numpy as np
 from electre import electre
 from collections import defaultdict
-from tools import pick, verbose, BETTER, EQUAL, localSearch, FILL
-
-def update(sol, ref):
-    prune = set()
-    ok = True
-    for s in sol:
-        comp = ref.compare(s)
-        if comp == BETTER: # ref dominates s   
-            prune.add(s) # s needs to be pruned
-        elif comp == WORSE: # s dominates ref
-            ok = False # ref cannot enter
-    sol -= prune # remove the dominated ones
-    if ok: # add the one that was not dominated by any
-        sol.add(ref)
-    return len(prune) # how many did ref dominate
+from tools import pick, verbose, score, localSearch, FILL
 
 # Shake heuristics
 
@@ -38,7 +24,8 @@ SHAKE = [ reset, swapQuarter, swapThird, swapHalf, swapGroup ]
 
 class Adjustment():
 
-    def __init__(self, seed, lim = 10):
+    def __init__(self, seed, lim = 50):
+        assert seed is not None
         self.pool = { seed }
         self.usage = defaultdict(int) # counters
         self.stall = 0 # executions with no improvement
@@ -52,7 +39,8 @@ class Adjustment():
         for score in electre(w, sol):
             print(f'electre;{score};{sol[i, :]}', file = target)
             i += 1
-        print('\n'.join([f'usage;{k.__name__}={v}' for (k, v) in self.usage.items()]), file = target)
+        s = [f'usage;{k.__name__}={v}' for (k, v) in self.usage.items()]
+        print('\n'.join(s), file = target)
 
     def evaluate(self):
         return np.matrix([s.evaluate() for s in self.pool])
@@ -76,57 +64,40 @@ class Adjustment():
         if verbose:
             print(f'Shaking with <{sh.__name__}>')                        
         contender = sh(seed)
-        assert contender is not None
+        contender.adjust()
         if verbose:
             print(f'Filling with <{fh.__name__}>')                
         fh(contender)
         assert contender is not None
         self.usage[sh] += 1
         self.usage[fh] += 1
-        stalled = True
-        prune = set() # pool to discard
-        adj = 0
+        fixed = False
+        enters = False
         if verbose:
             print(f'Comparing against a pool of {len(self.pool)} pool')
-        for s in self.pool: # calculate the rank changes
-            comp = contender.compare(s)
-            if comp == 1:                
-                adj += 1
-                stalled = False
-            elif comp == 0:
-                adj += -1
-                stalled = False
-            elif comp == BETTER:
-                prune.add(s) 
-                adj -= 5
-            elif comp == EQUAL:
-                adj -= 10
-        self.sr[sh] += adj # apply the adjustment
-        self.fr[fh] += adj # apply the adjustment
-        if stalled: # no improvement
-            if verbose:
-                print('Stalled')
-            self.stall += 1
-        else: # improvement
-            if verbose:
-                print('Improvement')
-            self.stall = 0 # reset the stall counter
+        (prune, better, worse, equal, nondom) = score(contender, self.pool)
         self.pool -= prune
-        self.pool.add(contender)
+        if worse == 0:
+            self.pool.add(contender) # it was not dominated
+            if better > 0:
+                self.stall = 0 # reset the stall counter            
+                if verbose:
+                    print('Improvement')
+            else: # no improvement
+                self.stall += 1                
+                if verbose:
+                    print('Stalled')
+        adj = 10 * better - 10 * worse + 5 * nondom - equal
+        self.sr[sh] += adj # apply the adjustments
+        self.fr[fh] += adj
     
     def step(self):
+        assert self.pool is not None
         seed = self.pool.copy()
         (sol, use) = localSearch(seed)
         self.usage.update(use)
         for s in sol:
             self.improve(s)
-            
-   
-        
-            
-                 
-        
-        
         
         
         

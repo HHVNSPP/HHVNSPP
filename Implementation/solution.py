@@ -1,63 +1,75 @@
-from random import random, choice, shuffle
-from tools import pick, WORSE, EQUAL, BETTER, UNDEFINED, verbose
+from random import random, choice, shuffle, sample
+from tools import pick, BETTER, WORSE, NONDOM, EQUAL, verbose
 
 # PARETO DOMINANCE
 
-def equal(first, second):
-    k = len(first)
-    if verbose:
-        assert k == len(second)
-    for i in range(k):
-        if first[i] != second[i]:
-            return False
-    return True
-
 def notDominated(defendant, opponent):
+    equal = True
     n = len(defendant)
     if verbose:
         assert n == len(opponent)
     matches = 0
     improves = False
     for i in range(n):
+        if defendant[i] != opponent[i]:
+            equal = False
         if defendant[i] >= opponent[i]:
             matches += 1 # defendant is better or equal to opponent
             if defendant[i] > opponent[i] :
                 improves = True # defendant improves upon the opponent in this aspect
-    return improves and matches == n # defendant is not dominated by opponent
-
+    return equal, improves and matches == n # defendant is not dominated by opponent
 
 ### CREATION OF AN INITIAL SOLUTION
 
-def initial(pf, attempts = 10): # build a random solution for a portfolio
+def initial(pf, attempts = 30): # build a random solution for a portfolio
     ok = None
     for attempt in range(attempts):
         ok = True
-        available = pf.budget
         a = dict() # fund assignment 
-        shuffle(pf.groups) # consider the partitions in random order
-        for part in pf.groups: 
-            shuffle(part) # consider the subgroups in random order
-            for g in part:
-                spent = 0
-                for p in g.permutation(): # random order
-                    if spent > g.lower: # feasible
-                        break
-                    if available - spent >= p.minimumBudget: # if there are funds left
-                        if p.minimumBudget + spent < g.upper: # feasible
-                            spent += p.activate(a, p.minimumBudget, level = 0)
-                if not (spent >= g.lower and spent <= g.upper):
-                    ok = False
-                    break # infeasible, try again from the start
-                available -= spent
-        if ok:
-            if verbose:
-                print('Initial solution created')
-            created = Solution(pf, a)
-            assert created.feasible()
-            return created
-    return None # no feasible initial solution found; the instance may be ill-posed
+        shuffle(pf.groups) # randomize order
+        for g in pf.groups:
+            for p in g.permutation(): # random order
+                if g.lowerOK(a):
+                    if verbose:
+                        print('lower ok for', g)
+                    break # assign no more to this subgroup
+                if pf.budget - sum(a.values()) >= p.minimumBudget: # if there are funds
+                    p.activate(a, p.minimumBudget, level = 0) # try funding
+                    if not g.upperOK(a): # cancel if infeasible
+                        p.disactivate(a)
+            if not g.feasible(a):
+                ok = False
+                break # infeasible, try again from the start
+    if ok:
+        if verbose:
+            print('Initial solution created')
+        created = Solution(pf, a)
+        assert created.feasible()
+        return created
+    print('ERROR: Unable to create a feasible initial solution for', pf)
+    return None 
 
 class Solution():
+
+    def adjust(self, attempts = 50): # ensure feasibility
+        ok = False
+        for attempt in range(attempts):
+            ok = True
+            shuffle(self.portfolio.groups) # randomize order
+            for g in self.portfolio.groups:
+                for p in g.permutation(): # random order
+                    if not g.lowerOK(self.assignment):
+                        self.decrease(g)
+                    if not g.upperOK(self.assignment): 
+                        self.increase(g)
+                if not g.feasible(self.assignment):
+                    ok = False
+                    break # infeasible, try again from the start
+            if self.feasible():
+                if verbose:
+                    print('Feasible solution ensured')                
+                return
+        print('ERROR: Unable turn a solution feasible', self)
 
     def __init__(self, p, a):
         self.portfolio = p
@@ -107,15 +119,15 @@ class Solution():
         if len(self.portfolio.groups) > 1:
             na = self.assignment.copy()
             other = Solution(self.portfolio, na)            
-            gr = sample(self.portfolio.groups, 2)
-            other.disactivate(self.select(gr.pop(0))) # exclude
-            other.activate(self.select(gr.pop(1), active = False)) #include
+            gr = sample(self.portfolio.groups, 2) # any two groups
+            other.disactivate(self.select(gr[0].members)) # exclude
+            other.activate(self.select(gr[1].members, active = False)) #include
             return other
         return self # cannot be done
 
     def modGroup(self, decr = True):
-        subgroup = choice(choice(self.portfolio.groups)) # pick an area or a region
-        gr = subgroup.members
+        p = choice(choice(self.portfolio.partitions)) # areas or regions
+        gr = p.members
         act = self.actives()
         exiting = list(act & gr)
         ia = set(self.portfolio.projects) - act
@@ -145,14 +157,20 @@ class Solution():
         alt.disactivate(most)
         return alt
     
-    def randmin(self, level = 0):
-        other = Solution(self.portfolio, self.assignment.copy())
-        cand = self.actives()
-        if len(cand) == 0:
-            return self # nothing can be done
-        p = choice(cand)
-        other.activate(p, level)
-        return other
+    def rand(self, level = 0):
+        target = None
+        if level != -1:
+            (target, price) = self.extreme(high = (level == 1))
+        else: # random one
+            cand = self.actives(aslist = True)
+            if len(cand) > 0:
+                target = choice(cand)
+        if target is None:
+            return self # nothing can be done            
+        alt = Solution(self.portfolio, self.assignment.copy())
+        alt.disactivate(target) # reset funding
+        alt.activate(target, level = 2) # set a random level
+        return alt
 
     def fitExtreme(self, high = True):
         other = Solution(self.portfolio, self.assignment.copy())        
@@ -219,13 +237,14 @@ class Solution():
         
     def evaluate(self):
         n = self.portfolio.numberOfObjectives
-        b = self.portfolio.binary
+        partial = self.portfolio.impact
         v = [0] * n
         funded = set()
         for (element, funding) in self.assignment.items():
             funded.add(element.parent)
         for project in funded:
-            ei = project.impact(self.assignment, b)
+            ei = project.impact(self.assignment, partial)
+            assert len(ei) == n
             for i in range(n):
                 v[i] += ei[i]
         if verbose:
@@ -235,13 +254,15 @@ class Solution():
     def compare(self, another):
         se = self.evaluate()
         ae = another.evaluate()
-        if equal(se, ae):
+        eq, dom = notDominated(se, ae)
+        if eq:
             return EQUAL
-        elif notDominated(se, ae):
+        elif dom:
             return BETTER
-        elif notDominated(ae, se):
+        eq, dom = notDominated(ae, se)
+        if dom:
             return WORSE
-        return UNDEFINED
+        return NONDOM
         
     def feasible(self):
         return self.portfolio.feasible(self.assignment)

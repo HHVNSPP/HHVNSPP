@@ -2,16 +2,16 @@ from collections import defaultdict
 from random import shuffle, choice
 from fill import FILL
 
-EQUAL = 2
 BETTER = -1
 WORSE = 1
-UNDEFINED = 0
+EQUAL = 0
+NONDOM = 2
 
 verbose = False
 
 def pick(options, high = True):
     assert len(options) > 0
-    best = [choice(list(options.keys()))]
+    best = [ choice(list(options.keys())) ]
     score = options[best[0]]
     for o in options:
         s = options[o]
@@ -20,7 +20,7 @@ def pick(options, high = True):
             best = [o]
         elif s == score:
             best.append(o)
-    return choice(best)
+    return choice(best) # random tie-break
 
 # Fill (budget-exhausting) heuristics
 
@@ -46,20 +46,52 @@ FILL = [ fillMin, fillMax, fillRnd, fillIncr, fillLift ]
 def update(sol, ref):
     return sum([ ref.compare(s) == BETTER for s in sol ])
 
-def prune(original, added):
-    for a in added:
-        ok = True
-        pruned = set()
-        for s in original:
-            comp = a.compare(s)
-            if comp == BETTER: # a dominates s   
-                pruned.add(s) # s needs to be pruned
-            elif comp == WORSE: # s dominates a
-                ok = False # a cannot enter
-        if ok: # add the one that was not dominated by any
-            original.add(a)
-        original -= pruned
-    return original 
+def prune(included):
+    dominated = set()
+    for a in included:
+        for b in included:
+            if a == b:
+                continue
+            if a in dominated:
+                continue
+            if b in dominated:
+                continue
+            comp = a.compare(b)
+            if comp == BETTER: # a dominates b
+                dominated.add(b) # b needs to be pruned
+                if verbose:
+                    print(a, 'dominates', b)
+                    print(a.evaluate())
+                    print(b.evaluate())
+            elif comp == WORSE: # b dominates a
+                dominated.add(a)
+                if verbose:
+                    print(a, 'is dominated by', b)
+                    print(a.evaluate())
+                    print(b.evaluate())                
+    remaining = included - dominated
+    if verbose:
+        print(f'{len(included)} -> {len(remaining)}')
+    return remaining
+
+def score(contender, pool):
+    prune = set()
+    better = 0
+    worse = 0
+    equal = 0
+    nondom = 0
+    for s in pool:
+        comp = contender.compare(s)
+        if comp == WORSE: # the one created by the heuristics was worse
+            worse += 1
+        elif comp == EQUAL: # it was the same impact in every objective
+            equal += 1
+        elif comp == NONDOM: # it was not dominated but not equal either
+            nondom += 1
+        elif comp == BETTER: # it improved
+            prune.add(s) # the original one must be removed now
+            better += 1
+    return (prune, better, worse, equal, nondom)
 
 # LOCAL SEARCH HEURISTICS
 
@@ -84,8 +116,14 @@ def exclHigh(sol):
 def exclLow(sol):
     return sol.dropExtreme(high = False)
 
-def lowRand(sol):
-    return sol.randmin()
+def lowRnd(sol):
+    return sol.rand(level = 0)
+
+def highRnd(sol):
+    return sol.rand(level = 1)
+
+def fundRnd(sol):
+    return sol.rand(level = -1)
 
 ## GROUP LEVEL LOCAL SEARCH HEURISTICS
 
@@ -100,65 +138,68 @@ def alterGroup(sol):
 
 LOCAL = [ swapOne, inclRnd, exclRnd, 
           inclLow, inclHigh, exclLow, exclHigh,
+          lowRnd, highRnd, fundRnd,
           incrGroup, decrGroup, alterGroup ]
 
 ### LOCAL SEARCH
 
-def localSearch(pool, init = -10, limit = 10, byDom = True):
+def localSearch(pool, limit = 30):
+    assert pool is not None
+    assert len(pool) > 0
+    assert None not in pool
     counters = defaultdict(int) # usage counters
     if verbose:
         print('Executing local search')
-    hr = { h : init for h in LOCAL }
-    fr = { h : init for h in FILL }
+    hr = { h : 0 for h in LOCAL }
+    fr = { h : 0 for h in FILL }
     stall = 0
     assert len(pool) > 0
     while stall < limit:
-        shuffle(LOCAL)
-        shuffle(FILL)
+        shuffle(LOCAL) # shuffle for random tie-breaks
         sh = LOCAL[0] # random default
-        br = 0
+        br = hr[sh]
         for h in LOCAL: # pick a local-search heuristic
             r = hr[h]
-            if not byDom and r == 1:
-                sh = h
-                break
-            elif r > br:
+            if r > br:
                 sh = h
                 br = r
+        shuffle(FILL)
         fh = FILL[0] # random default
-        br = 0
+        br = fr[fh]
         for f in FILL: # pick a fill heuristic
             r = fr[f]
-            if not byDom and r == 1:
-                fh = f
-                break
-            elif r > br:
+            if r > br:
                 fh = f
                 br = r
         if verbose:
             print(sh.__name__, fh.__name__)
         alts = set()
         for s in pool:
-            alt = sh(s) # create an alternative solution 
-            assert alt is not None
+            assert s is not None
+            alt = sh(s) # create an alternative solution
+            if not alt.feasible():
+                print(sh.__name__, 'produced an infeasible solution')
+            assert alt is not None and alt.feasible()            
             fh(alt) # fill it
+            if not alt.feasible():
+                print(fh.__name__, 'produced an infeasible solution')
             assert alt.feasible()
             counters[fh] += 1
             counters[sh] += 1
             comp = alt.compare(s)
             if comp == BETTER: # the newly made one dominates the original
                 alts.add(alt) # queue for inclusion
-                r = update(pool, alt) # check how many it dominates
+                score = update(pool, alt) # check how many it dominates
                 stall = 0 # improvement obtained                        
-                if byDom: # update the dominance ranks of thr two
-                    hr[sh] = r 
-                    fr[fh] = r
+                hr[sh] += score # reward the heuristics
+                fr[fh] += score
             elif comp == EQUAL: 
                 stall += 1 # no improvement, but not worse
+                hr[sh] -= 1 # punish the heuristics slightly
+                fr[fh] -= 1                                
             else: # it was WORSE
-                stall += 1                 
-                if not byDom:
-                    hr[sh] = -1 # punish the search heuristic
-                    fr[fh] = -1 # punish the fill heuristic
-        pool = prune(pool, alts) # keep only the non-dominated ones
+                stall += 1
+                hr[sh] /= 2 # punish the heuristics heavily
+                fr[fh] /= 2                
+        pool = prune(pool | alts) # keep only the non-dominated ones
     return (pool, counters)
