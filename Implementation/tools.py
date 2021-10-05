@@ -1,4 +1,5 @@
 import numpy as np
+from time import time
 from electre import electre
 from random import shuffle, choice
 from collections import defaultdict
@@ -171,12 +172,14 @@ def adjust(alt, s, big = 10, small = 1):
         elif comp == EQUAL: 
             return -small
         else: # neither dominates the other, they're not equal
-            return small
+            return 0
 
 class Adjustment():
 
-    def __init__(self, seed):
+    def __init__(self, seed, lim):
         assert seed is not None
+        self.start = time()
+        self.limit = lim
         self.pool = { seed }
         self.usage = defaultdict(int) # counters
         self.stall = 0 # executions with no improvement
@@ -202,9 +205,11 @@ class Adjustment():
         return np.matrix([s.evaluate() for s in self.pool])
         
     def output(self, target):
+        diff = time() - self.start        
+        print(f'w;{i};{diff}', file = target)
         print(self.evaluate(), file = target)
         
-    def improve(self, limit = 50):
+    def improve(self, maxiter = 20):
         # the improvement ranks persist throughout the process
         sh = pick(self.sr) # pick a shake heuristic
         fh = pick(self.fr) # pick a fill heuristic
@@ -225,14 +230,14 @@ class Adjustment():
             self.usage[fh] += 1
             shaken.add(ss)
         self.pool = prune(self.pool | shaken) # keep only the non-dominated ones
-        return self.stall < limit # true if ok to continue
+        return self.stall < maxiter and time() - self.start < self.limit # true if ok to continue
 
-    def search(self, limit = 30):
+    def search(self, maxiter = 20):
         hr = { h : 0 for h in LOCAL } # reset each local search
         fr = { h : 0 for h in FILL }
         lstall = 0
         assert len(self.pool) > 0
-        while lstall < limit:
+        while lstall < maxiter and time() - self.start < self.limit:
             shuffle(LOCAL) # shuffle for random tie-breaks
             sh = LOCAL[0] # random default
             br = hr[sh]
@@ -253,9 +258,8 @@ class Adjustment():
             for sol in self.pool:
                 assert sol is not None
                 ls = sh(sol) # create an alternative solution
-                if not ls.feasible():
-                    print(sh.__name__, 'produced an infeasible solution')
-                assert ls is not None and ls.feasible()            
+                ls.adjust() # make it feasible
+                assert ls.feasible()            
                 fh(ls) # fill it
                 if not ls.feasible():
                     print(fh.__name__, 'produced an infeasible solution')
@@ -273,5 +277,6 @@ class Adjustment():
             self.pool = prune(self.pool | local) # keep only the non-dominated ones
         
     def step(self):
-        self.search() # search
-        return self.improve() # shake
+        if self.search(): # do a search
+            return self.improve() # time for a shake
+        return False # out of time while searching

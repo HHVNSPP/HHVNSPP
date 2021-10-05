@@ -17,6 +17,10 @@ class Activity():
     def funding(self, assignment):
         amount = 1.0 * assignment.get(self, 0) # force all to decimal (some are integers)
         return f'{amount:.0}' # ignore fractional differences
+
+    def feasible(self, a):
+        amount = a.get(self, 0)
+        return amount >= self.minimumBudget and amount <= self.maximumBudget
     
     def __repr__(self):
         return str(self)
@@ -79,6 +83,15 @@ class Project():
             r = f'[{self.minimumBudget}, {self.maximumBudget}]'
         return 'P' + r + act + pot
 
+    def assigned(self, a):
+        return sum([ a.get(act, 0) for act in self.activities ])
+
+    def feasible(self, a):
+        t = self.assigned(a)
+        if t < self.minimumBudget or t > self.maximumBudget:
+            return False
+        return all ([ act.feasible(a) for act in self.activities ])
+
     def funding(self, assignment):
         return ''.join([ a.funding(assignment) for a in self.activities ])        
 
@@ -97,6 +110,7 @@ class Project():
             
     def impact(self, assignment, partial, fraction = 0.3):
         k = len(self.potential)
+        assert len(partial) == k
         pi = [0] * k
         for a in self.activities:
             imp = a.impact(assignment, partial, fraction)
@@ -110,7 +124,7 @@ class Project():
     def update(self):
         if len(self.activities) == 0:
             # one activity = the whole project (in case there were none)
-            imp = [ 1 ] * len(self.potential) # full impact since it is a singleton task
+            imp = [ 1 for p in self.potential ] # full impact since it is a singleton task
             self.activities = [ Activity(self, imp, self.maximumBudget, self.minimumBudget) ]
         else: # sort in decreasing order of impact
             self.activities.sort(key = lambda a: a.potential, reverse = True)
@@ -144,17 +158,19 @@ class Group():
     def include(self, m):
         self.members.add(m)
 
+    def assigned(self, a):
+        return sum([m.assigned(a) for m in self.members])
+    
     def lowerOK(self, a):
-        t = sum([a.get(m, 0) for m in self.members])
-        return self.lower is None or t >= self.lower
+        return self.lower is None or self.assigned(a) >= self.lower
 
     def upperOK(self, a):
-        t = sum([a.get(m, 0) for m in self.members])
-        return self.upper is None or t <= self.upper
+        return self.upper is None or self.assigned(a) <= self.upper
         
     def feasible(self, a):
-        t = sum([a.get(m, 0) for m in self.members])
-        return [ self.lower is None or t >= self.lower, self.upper is None or t <= self.upper ]
+        t = self.assigned(a)
+        p = [ p.feasible(a) for p in self.members ]
+        return [ self.lower is None or t >= self.lower, self.upper is None or t <= self.upper, all(p) ]
 
     def permutation(self):
         if self.order is None: # create if non-existant
@@ -237,10 +253,7 @@ class Portfolio():
         assigned = sum(a.values())
         if self.budget < assigned:
             return False
-        for g in self.groups: # check each subsgroup
-            if not all(g.feasible(a)): # if either bound is violated
-                return False
-        return True
+        return all([ g.feasible(a) for g in self.groups ])
     
     def permutation(self):
         if self.order is None: # create if non-existant

@@ -1,46 +1,44 @@
 from random import random, choice, shuffle, sample
 from tools import pick
 
-### CREATION OF AN INITIAL SOLUTION
-
-def initial(pf, attempts = 50): # build a random solution for a portfolio
-    ok = False
+### Creation of an initial solution
+def initial(pf, attempts = 50):
+    ok = None
+    a = None
     for attempt in range(attempts):
         ok = True
-        a = dict() # fund assignment 
+        a = dict() # a fresh fund assignment 
         shuffle(pf.groups) # randomize order of groups
         for g in pf.groups:
             for p in g.permutation(): # random order for the projects
-                if not g.lowerOK(a): # if this group needs more
+                if not g.lowerOK(a): # if this group needs more funding
                     if pf.budget - sum(a.values()) >= p.minimumBudget: # if there are funds
-                        p.activate(a, p.minimumBudget, level = 0) # try funding
-                        if not g.upperOK(a): # cancel if infeasible
+                        p.activate(a, p.minimumBudget, level = 0)
+                        if not g.upperOK(a): # cancel if that was too much
                             p.disactivate(a)
             if not g.feasible(a):
                 ok = False
                 break # infeasible, try again from the start
     created = Solution(pf, a)
-    if not ok:
+    if not created.feasible(): 
         created.adjust()        
-    assert created.feasible()
     return created
 
 class Solution():
 
     def adjust(self, attempts = 50): # ensure feasibility
-        ok = False
         for attempt in range(attempts):
-            ok = True
             shuffle(self.portfolio.groups) # randomize order
             for g in self.portfolio.groups:
-                for p in g.permutation(): # random order
-                    if not g.lowerOK(self.assignment):
-                        self.decrease(g)
-                    if not g.upperOK(self.assignment): 
-                        self.increase(g)
-                if not g.feasible(self.assignment):
-                    ok = False
-                    break # infeasible, try again from the start
+                skip = True
+                if not g.lowerOK(self.assignment):
+                    skip = False
+                    self.increase(g) # needs more
+                if not g.upperOK(self.assignment):
+                    skip = False
+                    self.decrease(g) # needs less
+                if skip: # this group is good now
+                    break
             if self.feasible():
                 return
         print('ERROR: Unable turn a solution feasible', self)
@@ -235,11 +233,15 @@ class Solution():
     
     def increase(self, gr):
         p = self.select(gr.members, active = False)
-        if p is not None:
-            self.activate(p, level)
+        if p is None: # nothing to activate
+            p = self.select(gr.members, active = True)
+            if p is None: # nothing to increase
+                return # cannot be done
+            self.activate(p, level = 1) # max funds
+        self.activate(p, level = 2) # random level
 
     def decrease(self, gr):
-        p = self.select(gr.members)        
-        if p is not None:
+        p = self.select(gr.members, active = True)        
+        if p is not None: 
             self.disactivate(p)
 
