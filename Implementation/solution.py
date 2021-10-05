@@ -3,29 +3,27 @@ from tools import pick
 
 ### CREATION OF AN INITIAL SOLUTION
 
-def initial(pf, attempts = 30): # build a random solution for a portfolio
-    ok = None
+def initial(pf, attempts = 50): # build a random solution for a portfolio
+    ok = False
     for attempt in range(attempts):
         ok = True
         a = dict() # fund assignment 
-        shuffle(pf.groups) # randomize order
+        shuffle(pf.groups) # randomize order of groups
         for g in pf.groups:
-            for p in g.permutation(): # random order
-                if g.lowerOK(a):
-                    break # assign no more to this subgroup
-                if pf.budget - sum(a.values()) >= p.minimumBudget: # if there are funds
-                    p.activate(a, p.minimumBudget, level = 0) # try funding
-                    if not g.upperOK(a): # cancel if infeasible
-                        p.disactivate(a)
+            for p in g.permutation(): # random order for the projects
+                if not g.lowerOK(a): # if this group needs more
+                    if pf.budget - sum(a.values()) >= p.minimumBudget: # if there are funds
+                        p.activate(a, p.minimumBudget, level = 0) # try funding
+                        if not g.upperOK(a): # cancel if infeasible
+                            p.disactivate(a)
             if not g.feasible(a):
                 ok = False
                 break # infeasible, try again from the start
-    if ok:
-        created = Solution(pf, a)
-        assert created.feasible()
-        return created
-    print('ERROR: Unable to create a feasible initial solution for', pf)
-    return None 
+    created = Solution(pf, a)
+    if not ok:
+        created.adjust()        
+    assert created.feasible()
+    return created
 
 class Solution():
 
