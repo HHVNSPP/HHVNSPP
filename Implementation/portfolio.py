@@ -1,46 +1,57 @@
 from random import shuffle, choice, random, sample
+from math import ceil
 
 class Activity():
 
     def __init__(self, project, imp, maximum, minimum = 0):
         self.parent = project
-        self.potential = imp
-        self.minimumBudget = minimum
-        self.maximumBudget = maximum
-        self.diff = self.maximumBudget - self.minimumBudget
+        self.pot = imp
+        self.minBudget = minimum
+        self.maxBudget = maximum
+        self.diff = self.maxBudget - self.minBudget
         assert self.diff >= 0
 
     def __str__(self):
-        return f'A[{self.minimumBudget:.0}, {self.maximumBudget:.0}] = {self.potential}'
+        return f'A[{self.minBudget:.0f}, {self.maxBudget:.0f}] = {self.pot}'
 
     def funding(self, assignment):
-        amount = 1.0 * assignment.get(self, 0) # force all to decimal (some are integers)
-        return f'{amount:.0}' # ignore fractional differences
+        # force all to decimal (some are integers)        
+        amount = 1.0 * assignment.get(self, 0) 
+        return f'{amount:.0f}' # ignore fractional differences when comparing
 
     def feasible(self, a):
         amount = a.get(self, 0)
-        return amount >= self.minimumBudget and amount <= self.maximumBudget
+        inactive = amount == 0
+        if not inactive: # if funded, check the levels
+            bounds = amount >= self.minBudget and amount <= self.maxBudget
+            return bounds
+        return True # this is inactive
     
     def __repr__(self):
         return str(self)
 
-    def randomize(self):
-        return self.minimumBudget + random() * (self.maximumBudget - self.minimumBudget)
+    def randomize(self, low = None, high = None, integer = True):
+        if low is None:
+            low = self.minBudget
+        if high is None:
+            high = self.maxBudget
+        span = high - low
+        lvl = random() * span + low
+        return round(lvl) if integer else lvl
         
     def impact(self, assignment, partial, fraction = 0.3):
         lvl = assignment.get(self, 0)
         if lvl == 0: # no funds, no impact
-            return [0 for p in self.potential]
-        assert lvl >= self.minimumBudget
-        assert lvl <= self.maximumBudget
+            return [0 for p in self.pot]
         i = []
-        for (pot, part) in zip(self.potential, partial):
-            rate = pot
-            if part and lvl < self.maximumBudget:
-                multiple = (fraction / self.diff)
-                excess = lvl - self.minimumBudget
-                base = (1 - fraction) * pot
-                rate = multiple * excess + base
+        lacking = lvl < self.maxBudget
+        multiple = fraction / self.diff
+        excess = lvl - self.minBudget
+        base = multiple * excess
+        for (pot, part) in zip(self.pot, partial):
+            rate = pot # all-or-nothing as default
+            if part and lacking:
+                rate = base + (1 - fraction) * pot
             i.append(rate) 
         return i
 
@@ -48,86 +59,106 @@ class Activity():
         if self in assignment:
             del assignment[self]
 
-    def activate(self, assignment, amount, level = 0):
-        if amount < self.minimumBudget:
-            return 0 # nothing can be assigned
-        if level == 0:
-            lvl = self.minimumBudget
-        elif level == 1:
-            lvl = min(amount, self.maximumBudget) # as much as we afford
-        elif level == 2:
-            lvl = self.randomize(amount)
-        assert lvl >= self.minimumBudget
-        assert lvl <= self.maximumBudget
-        assignment[self] = lvl
-        return lvl
+    def activate(self, assignment, amount = 0, level = 0):
+        current = assignment.get(self, 0)
+        if level == 0: # lowest possible funding was requested
+            amount = self.minBudget
+        elif level == 1: # highest possible funding was requested
+            amount = self.maxBudget  
+        elif level == 2: # random funding was requested
+            amount = self.randomize(current, current + amount)
+        amount = min(amount, self.maxBudget)
+        amount = max(amount, self.minBudget)
+        assignment[self] = amount
+        return amount
     
 class Project():
     
-    def __init__(self, imp, requested, minimum = None):
-        self.potential = imp
-        self.maximumBudget = requested
+    def __init__(self, imp, requested, minimum = None, groups = []):
+        self.pot = imp
+        self.maxBudget = requested
         if minimum is not None:
             assert minimum <= requested
-        self.minimumBudget = minimum if minimum is not None else self.maximumBudget
-        assert self.minimumBudget <= self.maximumBudget
-        self.activities = list()
+        self.minBudget = minimum if minimum is not None else self.maxBudget
+        assert self.minBudget <= self.maxBudget
+        self.tasks = list()
+        self.groups = groups
 
     def __str__(self):
-        pot = '|'.join([ str(p) for p in self.potential ])
-        k = len(self.activities)
+        pot = '|'.join([ str(p) for p in self.pot ])
+        k = len(self.tasks)
         act = f'({k})' if k > 0 else ''
-        r = f'={self.minimumBudget}'
-        if  self.minimumBudget < self.maximumBudget:        
-            r = f'=[{self.minimumBudget}, {self.maximumBudget}]'
+        r = f'={self.minBudget}'
+        if  self.minBudget < self.maxBudget:        
+            r = f'=[{self.minBudget:.0f}, {self.maxBudget:.0f}]'
         return 'P' + r + act + pot
 
-    def assigned(self, a):
-        return sum([ a.get(act, 0) for act in self.activities ])
+    def assigned(self, assignment):
+        return sum([ assignment.get(act, 0) for act in self.tasks ])
 
     def feasible(self, a):
         t = self.assigned(a)
-        if t < self.minimumBudget or t > self.maximumBudget:
-            return False
-        return all ([ act.feasible(a) for act in self.activities ])
+        inactive = t == 0
+        if not inactive: # check levels if funded
+            if t < self.minBudget or t > self.maxBudget:
+                return False
+            # check also tasks
+            return all ([ act.feasible(a) for act in self.tasks ])
+        return True # not active, hence feasible at zero
+        
+    def underfunded(self, a):
+        return self.assigned(a) < self.minBudget
 
+    def overfunded(self, a):
+        return self.assigned(a) > self.maxBudget
+    
     def funding(self, assignment):
-        return ''.join([ a.funding(assignment) for a in self.activities ])        
+        lvls = [ a.funding(assignment) for a in self.tasks ]
+        return ''.join(lvls)
 
     def __repr__(self):
         return str(self)
     
     def activate(self, assignment, amount, level = 0):
-        spent = 0
-        for a in self.activities:
-            spent += a.activate(assignment, amount - spent, level)
-        return spent
+        current = self.assigned(assignment)
+        if amount + current < self.minBudget:
+            return 0 # nothing can be done 
+        available = amount
+        while available > 0:
+            ok = False
+            for a in self.tasks:
+                allocated = a.activate(assignment, available, level)
+                if allocated > 0:
+                    ok = True
+                    available -= allocated
+            if not ok: # none of the tasks took any more money
+                break
+        return amount - available # what was spent
 
     def disactivate(self, assignment):
-        for a in self.activities:
+        for a in self.tasks:
             a.disactivate(assignment)
             
     def impact(self, assignment, partial, fraction = 0.3):
-        k = len(self.potential)
-        assert len(partial) == k
+        k = len(self.pot)
         pi = [0] * k
-        for a in self.activities:
+        for a in self.tasks:
             imp = a.impact(assignment, partial, fraction)
             for pos in range(k):
                 if partial[pos]:
-                    pi[pos] += imp[pos] * self.potential[pos]
+                    pi[pos] += imp[pos] * self.pot[pos]
                 else:
-                    pi[pos] = max(pi[pos], 1 * (imp[pos] > 0))
+                    pi[pos] = max(pi[pos], 1 * imp[pos])
         return pi
                 
     def update(self):
-        if len(self.activities) == 0:
+        if len(self.tasks) == 0:
             # one activity = the whole project (in case there were none)
-            imp = [ 1 for p in self.potential ] # full impact since it is a singleton task
-            self.activities = [ Activity(self, imp, self.maximumBudget, self.minimumBudget) ]
+            imp = [ 1 for p in self.pot ] # full impact 
+            self.tasks = [ Activity(self, imp, self.maxBudget, self.minBudget) ]
         else: # sort in decreasing order of impact
-            self.activities.sort(key = lambda a: a.potential, reverse = True)
-            self.maximumBudget = sum([ a.maximumBudget for a in self.activities ])
+            self.tasks.sort(key = lambda a: a.pot, reverse = True)
+            self.maxBudget = sum([ a.maxBudget for a in self.tasks ])
 
 class Synergy():
 
@@ -158,7 +189,7 @@ class Group():
         self.members.add(m)
 
     def assigned(self, a):
-        return sum([m.assigned(a) for m in self.members])
+        return sum([ m.assigned(a) for m in self.members ])
     
     def lowerOK(self, a):
         return self.lower is None or self.assigned(a) >= self.lower
@@ -169,7 +200,9 @@ class Group():
     def feasible(self, a):
         t = self.assigned(a)
         p = [ p.feasible(a) for p in self.members ]
-        return [ self.lower is None or t >= self.lower, self.upper is None or t <= self.upper, all(p) ]
+        bot = self.lower is None or t >= self.lower
+        top = self.upper is None or t <= self.upper
+        return all([ bot, top ] + p)
 
     def permutation(self):
         if self.order is None: # create if non-existant
@@ -188,23 +221,14 @@ class Portfolio():
     def __init__(self, total, w, i, p, part = None, s = None):
         self.budget = total
         self.weights = w
-        self.impact = i # false if all-or-nothing, true if partial assignment affects it
-        self.numberOfObjectives = len(w)
-        assert len(self.impact) == self.numberOfObjectives
+        self.impact = i # all-or-nothing (F) / linear (T)
+        self.dim = len(w)
         self.projects = p
         for pr in self.projects:
-            pr.update() # sort the activities if several, create singleton if none
-            assert len(pr.potential) == self.numberOfObjectives
-            for act in pr.activities:
-                assert len(pr.potential) == self.numberOfObjectives                
+            pr.update() # sort if several, create singleton if none
         self.order = None
         self.partitions = part
         self.groups = list()
-        for p in self.partitions:
-            for g in p:
-                self.groups.append(g)
-                for pr in g.members:
-                    assert pr in self.projects
         self.synergies = s
 
     def included(self, active):
@@ -227,9 +251,9 @@ class Portfolio():
             partition = choice(self.partitions) # an area or a region
             group = choice(partition)
             return group.members # the member or that subgroup
-        elif count < 1: # expressed as a fraction
+        if count < 1: # expressed as a fraction
             count *= len(self.projects)
-            count = round(count) # round to an integer
+            count = int(ceil(count)) # an integer (rounded up)
         return sample(self.projects, count)
     
     def random(self):
@@ -255,7 +279,9 @@ class Portfolio():
         assigned = sum(a.values())
         if self.budget < assigned:
             return False
-        return all([ g.feasible(a) for g in self.groups ])
+        gOK = all([ g.feasible(a) for g in self.groups ])
+        pOK = all([ p.feasible(a) for p in self.projects ])
+        return gOK and pOK
     
     def permutation(self):
         if self.order is None: # create if non-existant

@@ -33,14 +33,17 @@ def loadC(filename):
             minB = float(p.pop(0))
             maxB = float(p.pop(0))
             a = int(p.pop(0)) 
-            r = int(p.pop(0)) 
-            obj = [float(p.pop(0)) for i in range(n)] # the contributions for the n objectives
-            p = Project(obj, maxB, minB)
+            r = int(p.pop(0))
+            # the contributions for the n objectives            
+            obj = [float(p.pop(0)) for i in range(n)] 
+            gr = [ A[a], R[r] ]
+            p = Project(obj, maxB, minB, gr)
             projects.append(p)
-            A[a].include(p)
-            R[r].include(p)
+            for g in gr:
+                g.include(p)
     partial = [ True for w in weights ] # all objectives undergo partial impacts
-    return Portfolio(b, weights, partial, projects, [ list(A.values()), list(R.values()) ], s = synergies) 
+    partition = [ list(A.values()), list(R.values()) ]
+    return Portfolio(b, weights, partial, projects, partition, s = synergies) 
 
 def loadB(filename):
     budget = None
@@ -62,9 +65,10 @@ def loadB(filename):
             a = int(d.pop(0))
             r = int(d.pop(0))
             imp = [ float(d.pop(0)) for i in range(k) ] # all are yes/no objectives
-            pr = Project(imp, req)
-            A[a].include(pr)
-            R[r].include(pr)
+            gr = [ A[a], R[r] ]
+            pr = Project(imp, req, gr)
+            for g in gr:
+                g.include(pr)
             projects.append(pr)
     partial = [ False for obj in w ] # no objective undergo partial impacts
     partitions = [ list(A.values()), list(R.values()) ] # areas and regions
@@ -84,8 +88,6 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
             line = data.readline()
             if len(line) == 0: # no more data
                 print('Done parsing')
-                assert budget is not None
-                assert projects is not None
                 if ignoreSynergies: # blank these out if requested
                     print('Ignoring synergies')
                     synergyCount = 0
@@ -139,14 +141,13 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         maxB = float(d.pop(0))
                         a = int(d.pop(0)) - 1
                         impact = [1, float(d.pop(0))]
-                        p = Project(impact, maxB, minB)
+                        p = Project(impact, maxB, minB, [ A[a] ])
                         A[a].include(p) # include into the area                        
                         projects.append(p)
                     assert len(projects) == projectCount
                 elif 'Activities' in header:
                     if verbose:
                         print('Parsing the activity data')                                        
-                    assert activityCount is not None
                     # each project has the same number of activities                    
                     for i in range(projectCount * activityCount): 
                         d = data.readline().strip()
@@ -157,17 +158,15 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         d = d[1:-1].split(',')
                         pID = int(d.pop(0)) - 1
                         pr = projects[pID]
-                        # activity IDs are not used
-                        d.pop(0)
-                        assert pr.activities is not None
-                        impact = [ 1, float(d.pop(0)) ] # first objective binary, second linear
+                        d.pop(0) # activity IDs are not used
+                        # first binary, second linear                        
+                        impact = [ 1, float(d.pop(0)) ] 
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
-                        pr.activities.append(Activity(pr, impact, maxB, minB))
+                        pr.tasks.append(Activity(pr, impact, maxB, minB))
                 elif 'Synergies' in header:
                     if verbose:
                         print('Parsing the synergy setup')
-                    assert synergyCount != 0
                     synergies = []
                     for i in range(synergyCount):
                         d = data.readline().strip()

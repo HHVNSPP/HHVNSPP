@@ -1,47 +1,48 @@
 import operator
+from math import ceil, log
 from random import random, choice, shuffle, sample
-
-### Creation of an initial solution
-def initial(pf, attempts = 50):
-    ok = None
-    a = None
-    for attempt in range(attempts):
-        ok = True
-        a = dict() # a fresh fund assignment 
-        shuffle(pf.groups) # randomize order of groups
-        for g in pf.groups:
-            for p in g.permutation(): # random order for the projects
-                if not g.lowerOK(a): # if this group needs more funding
-                    if pf.budget - sum(a.values()) >= p.minimumBudget: # if there are funds
-                        p.activate(a, p.minimumBudget, level = 0)
-                        if not g.upperOK(a): # cancel if that was too much
-                            p.disactivate(a)
-            if not g.feasible(a):
-                ok = False
-                break # infeasible, try again from the start
-    created = Solution(pf, a)
-    if not created.feasible(): 
-        created.adjust()        
-    return created
 
 class Solution():
 
-    def adjust(self, attempts = 50): # ensure feasibility
-        for attempt in range(attempts):
-            shuffle(self.portfolio.groups) # randomize order
-            for g in self.portfolio.groups:
-                skip = True
-                if not g.lowerOK(self.assignment):
-                    skip = False
-                    self.increase(g) # needs more
-                if not g.upperOK(self.assignment):
-                    skip = False
-                    self.decrease(g) # needs less
-                if skip: # this group is good now
-                    break
+    def __init__(self, pf, a = None):
+        self.portfolio = pf
+        self.assignment = a
+        if a is None: # not a clone, but a fresh fund assignment 
+            self.assignment = dict() 
+            for i in self.portfolio.permutation():
+                p = self.portfolio.projects[i]
+                for g in p.groups:
+                    if not g.lowerOK(self.assignment):
+                        if self.fits(p.minBudget):
+                            self.activate(p, level = 2)
+            if not self.fix(): # ensure feasability
+                print('ERROR: unable to create a feasible initial solution')
+                quit() # unrecoverable
+                
+    def __str__(self):
+        incl = self.portfolio.included(self.actives())
+        return f'S {incl} w/ {self.allocation():.2f} to {len(self.actives())}' 
+
+    def __repr__(self):
+        return str(self)
+
+    def fix(self): # ensure feasibility
+        permitted = len(self.portfolio.projects)
+        permitted *= len(self.portfolio.groups) + 1
+        for attempt in range(permitted):
             if self.feasible():
-                return
-        print('ERROR: Unable turn a solution feasible', self)
+                return True
+            for i in self.portfolio.permutation(): # random order
+                p = self.portfolio.projects[i]
+                if p.assigned(self.assignment) > 0: # has funds
+                    top = [ g.upperOK(self.assignment) for g in p.groups ]
+                    if not all(top): # at least one group has excess
+                        self.disactivate(p) # unfund
+                        continue
+                bot = [ g.lowerOK(self.assignment) for g in p.groups ]
+                if not all(bot): # at least one group needs more
+                    self.activate(p, level = 0) # minimal funds
+        return False # unable to fix
 
     def clone(self):
         return Solution(self.portfolio, self.assignment.copy())
@@ -51,44 +52,53 @@ class Solution():
         
     def __eq__(self, other): # we do not want duplicate solutions
         return self.assignment == other.assignment
-        
-    def __init__(self, p, a):
-        self.portfolio = p
-        self.assignment = a
+    
+    def allocation(self):
+        return sum(self.assignment.values())
 
-    def __str__(self):
-        incl = self.portfolio.included(self.actives())
-        return f'S {incl} w/ {self.allocation():.2f} to {len(self.assignment)}' 
+    def remaining(self):
+        return self.portfolio.budget - self.allocation()
 
-    def __repr__(self):
-        return str(self)
+    def fits(self, amount):
+        return self.remaining() >= amount
     
     def disactivate(self, a):
         if a is not None:
             a.disactivate(self.assignment)
         
-    def activate(self, p, level = 0):
+    def activate(self, p, amount = None, level = 0):
         if p is not None:
-            amount = min(p.minimumBudget if level == 0 else p.maximumBudget,
-                         self.portfolio.budget - self.allocation())
+            if amount is None:
+                amount = p.maxBudget
+            amount = min(amount, self.remaining())
+            if level == 0:
+                amount = min(amount, p.minBudget)
             if amount > 0:
                 p.activate(self.assignment, amount)
 
-    def allocation(self):
-        return sum(self.assignment.values())
+    def increment(self, p):
+        incr = p.maxBudget - p.assigned(self.assignment)         
+        if self.fits(incr):
+            ok = False
+            for g in p.groups:
+                current = g.assigned(self.assignment)
+                if current + incr > g.upper:
+                    ok = False # would violate upper bound
+                    break
+            if ok:
+                self.activate(p, incr)
     
     def fill(self, level = None, active = False):
         if level is None: # random
             for i in self.portfolio.permutation():
-                self.activate(self.portfolio.projects[i])
+                p = self.portfolio.projects[i]
+                self.increment(p)
         elif level < 1: # from cheapest to the most expensive
             cand = self.inactives() if not active else self.actives() 
-            opt = [ (p, p.minimumBudget) for p in cand ]
+            opt = [ (p, p.minBudget) for p in cand ]
             opt.sort(key = lambda a: a[1])
-            if len(opt) > 1:
-                assert opt[0][1] < opt[-1][1] # increasing order
             for (p, b) in opt:
-                self.activate(p)
+                self.increment(p)
 
     def select(self, cand, active = True):
         opt = cand & (self.actives() if active else self.inactives())
@@ -116,7 +126,7 @@ class Solution():
         other = self.clone()
         for first in entering:
             for second in exiting:
-                above = self.allocation() > second.minimumBudget
+                above = self.allocation() > second.minBudget
                 if (decr and above) or (not decr and not above):
                     other.disactivate(first)
                     other.activate(second)
@@ -124,7 +134,8 @@ class Solution():
         return self # was not possible to perform
     
     def extreme(self, high = True, active = True):
-        prices = {p:  p.minimumBudget for p in (self.inactives() if not active else self.actives())}
+        prices = {p:  p.minBudget for p in (self.inactives() \
+                                            if not active else self.actives())}
         if len(prices) == 0: # no candidates
             return (None, None)
         most = max(prices.items(), key = operator.itemgetter(1))[0]
@@ -158,7 +169,7 @@ class Solution():
         (most, price) = self.extreme(high = high, active = False)
         if most is None:
             return self # nothing can be done
-        while self.portfolio.budget < other.allocation() + price:
+        while not other.fits(price):
             cand = self.actives(aslist = True)
             if len(cand) == 0:
                 return self # modification unsuccessfull
@@ -185,7 +196,7 @@ class Solution():
         if len(cand) == 0:
             return self # nothing can be done
         p = choice(cand)
-        if other.allocation() + p.minimumBudget <= self.portfolio.budget:
+        if other.fits(p.minBudget):
             other.activate(p, level = level)
         return other
 
@@ -199,11 +210,12 @@ class Solution():
         return other
     
     def swap(self, count = None, level = 0):
-        selection = set(self.portfolio.sample(count)) if count is not None else self.portfolio.random()
+        selection = set(self.portfolio.sample(count)) \
+            if count is not None else self.portfolio.random()
         other = self.clone()
         for p in selection:
             present = False
-            for a in p.activities:
+            for a in p.tasks:
                 if a in self.assignment: 
                     present = True
                     break
@@ -217,15 +229,15 @@ class Solution():
         return self.portfolio.choice()
         
     def evaluate(self):
-        n = self.portfolio.numberOfObjectives
+        n = self.portfolio.dim
         partial = self.portfolio.impact
         v = [0] * n
         funded = set()
         for (element, funding) in self.assignment.items():
-            funded.add(element.parent)
+            project = element.parent
+            funded.add(project)
         for project in funded:
             ei = project.impact(self.assignment, partial)
-            assert len(ei) == n
             for i in range(n):
                 v[i] += ei[i]
         return v
@@ -233,17 +245,3 @@ class Solution():
     def feasible(self):
         return self.portfolio.feasible(self.assignment)
     
-    def increase(self, gr):
-        p = self.select(gr.members, active = False)
-        if p is None: # nothing to activate
-            p = self.select(gr.members, active = True)
-            if p is None: # nothing to increase
-                return # cannot be done
-            self.activate(p, level = 1) # max funds
-        self.activate(p, level = 2) # random level
-
-    def decrease(self, gr):
-        p = self.select(gr.members, active = True)        
-        if p is not None: 
-            self.disactivate(p)
-
