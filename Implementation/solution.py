@@ -1,5 +1,5 @@
+import operator
 from random import random, choice, shuffle, sample
-from tools import pick
 
 ### Creation of an initial solution
 def initial(pf, attempts = 50):
@@ -42,6 +42,9 @@ class Solution():
             if self.feasible():
                 return
         print('ERROR: Unable turn a solution feasible', self)
+
+    def clone(self):
+        return Solution(self.portfolio, self.assignment.copy())
 
     def __hash__(self): # these must be able to go into dictionaries
         return hash(self.portfolio.funding(self.assignment))
@@ -96,8 +99,7 @@ class Solution():
                 
     def alterGroup(self, level = 0):
         if len(self.portfolio.groups) > 1:
-            na = self.assignment.copy()
-            other = Solution(self.portfolio, na)            
+            other = self.clone()
             gr = sample(self.portfolio.groups, 2) # any two groups
             other.disactivate(self.select(gr[0].members)) # exclude
             other.activate(self.select(gr[1].members, active = False)) #include
@@ -111,7 +113,7 @@ class Solution():
         exiting = list(act & gr)
         ia = set(self.portfolio.projects) - act
         entering = list(ia & gr)
-        other = Solution(self.portfolio, self.assignment.copy())                    
+        other = self.clone()
         for first in entering:
             for second in exiting:
                 above = self.allocation() > second.minimumBudget
@@ -125,14 +127,14 @@ class Solution():
         prices = {p:  p.minimumBudget for p in (self.inactives() if not active else self.actives())}
         if len(prices) == 0: # no candidates
             return (None, None)
-        most = pick(prices, high)
+        most = max(prices.items(), key = operator.itemgetter(1))[0]
         return (most, prices.get(most, None))
 
     def dropExtreme(self, high = True):
         (most, price) = self.extreme(high = high)
         if most is None:
             return self # nothing can be done
-        alt = Solution(self.portfolio, self.assignment.copy())
+        alt = self.clone()
         alt.disactivate(most)
         return alt
     
@@ -146,13 +148,13 @@ class Solution():
                 target = choice(cand)
         if target is None:
             return self # nothing can be done            
-        alt = Solution(self.portfolio, self.assignment.copy())
+        alt = self.clone()
         alt.disactivate(target) # reset funding
         alt.activate(target, level = 2) # set a random level
         return alt
 
     def fitExtreme(self, high = True):
-        other = Solution(self.portfolio, self.assignment.copy())        
+        other = self.clone()
         (most, price) = self.extreme(high = high, active = False)
         if most is None:
             return self # nothing can be done
@@ -178,7 +180,7 @@ class Solution():
             return set(self.portfolio.projects) - self.actives()
         
     def add(self, level = 0):
-        other = Solution(self.portfolio, self.assignment.copy())
+        other = self.clone()
         cand = self.inactives(aslist = True)
         if len(cand) == 0:
             return self # nothing can be done
@@ -188,7 +190,7 @@ class Solution():
         return other
 
     def remove(self):
-        other = Solution(self.portfolio, self.assignment.copy())
+        other = self.clone()
         cand = self.actives(aslist = True)
         if len(cand) == 0:
             return self # nothing can be done
@@ -198,7 +200,7 @@ class Solution():
     
     def swap(self, count = None, level = 0):
         selection = set(self.portfolio.sample(count)) if count is not None else self.portfolio.random()
-        other = Solution(self.portfolio, self.assignment.copy())
+        other = self.clone()
         for p in selection:
             present = False
             for a in p.activities:

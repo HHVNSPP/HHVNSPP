@@ -11,11 +11,11 @@ def loadC(filename):
     with open(filename) as f:
         numberOfProjects = int(f.readline())
         b = float(f.readline())
-        gr = {'a1': Group(0.25 * b, 0.45 * b),
-              'a2': Group(0.3 * b, 0.45 * b),
-              'a3': Group(0.3 * b, 0.45 * b), 
-              'r1': Group(0.4 * b, 0.6 * b),
-              'r2': Group(0.4 * b, 0.6 * b)}
+        A = { 1: Group(0.25 * b, 0.45 * b),
+              2: Group(0.30 * b, 0.45 * b),
+              3: Group(0.30 * b, 0.45 * b) }
+        R = { 1: Group(0.40 * b, 0.60 * b),
+              2: Group(0.40 * b, 0.60 * b) } 
         weights = [ int(i) for i in (f.readline()).split(" ") ]
         n = len(weights)
         numberOfSynergies = int(f.readline())
@@ -32,40 +32,28 @@ def loadC(filename):
             p = f.readline().split()
             minB = float(p.pop(0))
             maxB = float(p.pop(0))
-            area = int(p.pop(0)) 
-            region = int(p.pop(0)) 
+            a = int(p.pop(0)) 
+            r = int(p.pop(0)) 
             obj = [float(p.pop(0)) for i in range(n)] # the contributions for the n objectives
             p = Project(obj, maxB, minB)
             projects.append(p)
-            gr[f'a{area}'].include(p)
-            gr[f'r{region}'].include(p)
-            for g in gr:
-                if 'a' in g:
-                    if verbose:
-                        print(f'Including an area with {len(gr[g].members)} projects')
-                    areas.append(gr[g])
-                else:
-                    assert 'r' in g
-                    if verbose:
-                        print(f'Including a region area with {len(gr[g].members)} projects')
-                    regions.append(gr[g])
+            A[a].include(p)
+            R[r].include(p)
     partial = [ True for w in weights ] # all objectives undergo partial impacts
-    return Portfolio(b, weights, partial, projects, [areas, regions], s = synergies) 
+    return Portfolio(b, weights, partial, projects, [ list(A.values()), list(R.values()) ], s = synergies) 
 
 def loadB(filename):
     budget = None
     w = None
-    pr = []
-    areas = None
-    regions = None
+    projects = []
     with open(filename) as f:
         projectCount = int(f.readline())
         budget = float(f.readline())
-        areas = { 1: Group(0.3 * budget, 0.4 * budget),
-                  2: Group(0.25 * budget, 0.35 * budget),
-                  3: Group(0.2 * budget, 0.3 * budget) }
-        regions = { 1: Group(0.4 * budget, 0.6 * budget),
-                    2: Group(0.4 * budget, 0.6 * budget) }         
+        A = { 1: Group(0.30 * budget, 0.40 * budget),
+              2: Group(0.25 * budget, 0.35 * budget),
+              3: Group(0.20 * budget, 0.30 * budget) }
+        R = { 1: Group(0.40 * budget, 0.60 * budget),
+              2: Group(0.40 * budget, 0.60 * budget) }         
         w = [ int(i) for i in (f.readline()).split() ]
         k = len(w)
         for pID in range(projectCount):
@@ -74,13 +62,13 @@ def loadB(filename):
             a = int(d.pop(0))
             r = int(d.pop(0))
             imp = [ float(d.pop(0)) for i in range(k) ] # all are yes/no objectives
-            p = Project(imp, req)
-            areas[a].include(p)
-            regions[r].include(p)
-            pr.append(p)
-    gr = [ list(areas.values()), list(regions.values()) ]
+            pr = Project(imp, req)
+            A[a].include(pr)
+            R[r].include(pr)
+            projects.append(pr)
     partial = [ False for obj in w ] # no objective undergo partial impacts
-    return Portfolio(budget, w, partial, pr, gr)
+    partitions = [ list(A.values()), list(R.values()) ] # areas and regions
+    return Portfolio(budget, w, partial, projects, partitions)
 
 def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore these synergies
     budget = None
@@ -124,7 +112,7 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                     if verbose:
                         print('Parsing the area data')                    
                     assert areaCount != 0
-                    areas = dict()
+                    A = dict()
                     for i in range(areaCount):
                         d = data.readline().strip()
                         d = d.replace('];', '') # the last one ends thus
@@ -134,8 +122,8 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         d = d[1:-1].split(',')
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))                        
-                        areas[i] = Group(minB, maxB, set())
-                    assert len(areas) == areaCount
+                        A[i] = Group(minB, maxB)
+                    assert len(A) == areaCount
                 elif 'Projects' in header:
                     if verbose:
                         print('Parsing the project data')
@@ -152,7 +140,7 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         a = int(d.pop(0)) - 1
                         impact = [1, float(d.pop(0))]
                         p = Project(impact, maxB, minB)
-                        areas[a].include(p) # include into the area                        
+                        A[a].include(p) # include into the area                        
                         projects.append(p)
                     assert len(projects) == projectCount
                 elif 'Activities' in header:
@@ -208,5 +196,4 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                 else:
                     print(f'Ignoring line <{header} = {content}>')
     partial = [ False, True ] # no and yes
-    partitions = [[areas[a] for a in areas]]
-    return Portfolio(budget, w, partial, projects, part =  partitions, s = synergies)                    
+    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], s = synergies)                    

@@ -176,8 +176,9 @@ def adjust(alt, s, big = 10, small = 1):
 
 class Adjustment():
 
-    def __init__(self, seed, lim):
-        assert seed is not None
+    def __init__(self, pf, seed, lim, t):
+        self.target = t
+        self.portfolio = pf
         self.start = time()
         self.limit = lim
         self.pool = { seed }
@@ -186,14 +187,14 @@ class Adjustment():
         self.sr = { h : 0 for h in SHAKE } # shake ranks
         self.fr = { h : 0 for h in FILL } # shake-stage fill ranks
 
-    def postprocess(self, weights, target):
+    def postprocess(self):
         sol = list(self.pool)
         eval = np.matrix([ s.evaluate() for s in sol ])
-        score = electre(weights, eval)
+        score = electre(self.portfolio.weights, eval)
         for i in range(len(score)):
-            print(f'electre;{score[i]};{eval[i, :]}', file = target)
+            print(f'electre;{score[i]};{eval[i, :]}', file = self.target)
         us = [f'usage;{k.__name__}={v}' for (k, v) in self.usage.items()]
-        print('\n'.join(us), file = target)
+        print('\n'.join(us), file = self.target)
 
     def __str__(self):
         return f'{self.stall}\n' + '\n'.join([ str(sol) for sol in self.pool ])
@@ -204,10 +205,10 @@ class Adjustment():
     def evaluate(self):
         return np.matrix([s.evaluate() for s in self.pool])
         
-    def output(self, target):
+    def output(self):
         diff = time() - self.start        
-        print(f'w;{i};{diff}', file = target)
-        print(self.evaluate(), file = target)
+        print(diff, file = self.target)
+        print(self.evaluate(), file = self.target)
         
     def improve(self, maxiter = 20):
         # the improvement ranks persist throughout the process
@@ -222,13 +223,14 @@ class Adjustment():
             a = adjust(ss, s)
             self.sr[sh] += a
             self.fr[fh] += a
+            if a >= 0:
+                shaken.add(ss) # not dominated
             if a > 0:
                 self.stall = 0
             else:
                 self.stall += 1
             self.usage[sh] += 1
             self.usage[fh] += 1
-            shaken.add(ss)
         self.pool = prune(self.pool | shaken) # keep only the non-dominated ones
         return self.stall < maxiter and time() - self.start < self.limit # true if ok to continue
 
@@ -237,7 +239,9 @@ class Adjustment():
         fr = { h : 0 for h in FILL }
         lstall = 0
         assert len(self.pool) > 0
-        while lstall < maxiter and time() - self.start < self.limit:
+        while lstall < maxiter:
+            if time() - self.start > self.limit:
+                return False
             shuffle(LOCAL) # shuffle for random tie-breaks
             sh = LOCAL[0] # random default
             br = hr[sh]
@@ -267,16 +271,23 @@ class Adjustment():
                 self.usage[fh] += 1
                 self.usage[sh] += 1
                 a = adjust(ls, sol)
+                if a >= 0: # not dominated
+                    local.add(ls)
                 if a > 0:
                     lstall = 0
                 else:
                     lstall += 1
                 hr[sh] += a
                 fr[fh] += a
-                local.add(ls)
             self.pool = prune(self.pool | local) # keep only the non-dominated ones
+        return True
         
-    def step(self):
-        if self.search(): # do a search
-            return self.improve() # time for a shake
-        return False # out of time while searching
+    def step(self, printout):
+        ok = self.search() # do a search
+        if ok: # still have time
+            ok = self.improve() # do a shake
+        if printout: # if output is requested
+            self.output()
+        if not ok: # if terminating
+            self.postprocess()
+        return ok

@@ -2,14 +2,13 @@ from random import shuffle, choice, random, sample
 
 class Activity():
 
-    def __init__(self, p, imp, maximum, minimum = 0):
-        assert len(p.potential) == len(imp)
+    def __init__(self, project, imp, maximum, minimum = 0):
+        self.parent = project
         self.potential = imp
         self.minimumBudget = minimum
         self.maximumBudget = maximum
         self.diff = self.maximumBudget - self.minimumBudget
         assert self.diff >= 0
-        self.parent = p
 
     def __str__(self):
         return f'A[{self.minimumBudget:.0}, {self.maximumBudget:.0}] = {self.potential}'
@@ -78,9 +77,9 @@ class Project():
         pot = '|'.join([ str(p) for p in self.potential ])
         k = len(self.activities)
         act = f'({k})' if k > 0 else ''
-        r = f'{self.minimumBudget}'
+        r = f'={self.minimumBudget}'
         if  self.minimumBudget < self.maximumBudget:        
-            r = f'[{self.minimumBudget}, {self.maximumBudget}]'
+            r = f'=[{self.minimumBudget}, {self.maximumBudget}]'
         return 'P' + r + act + pot
 
     def assigned(self, a):
@@ -149,8 +148,8 @@ class Synergy():
 
 class Group():
 
-    def __init__(self, l, u, m = set()):
-        self.members = m
+    def __init__(self, l, u):
+        self.members = set() 
         self.lower = l # upper bound for total funding
         self.upper = u # lower bound for total funding
         self.order = None
@@ -191,11 +190,12 @@ class Portfolio():
         self.weights = w
         self.impact = i # false if all-or-nothing, true if partial assignment affects it
         self.numberOfObjectives = len(w)
+        assert len(self.impact) == self.numberOfObjectives
         self.projects = p
         for pr in self.projects:
             pr.update() # sort the activities if several, create singleton if none
             assert len(pr.potential) == self.numberOfObjectives
-            for a in pr.activities:
+            for act in pr.activities:
                 assert len(pr.potential) == self.numberOfObjectives                
         self.order = None
         self.partitions = part
@@ -203,6 +203,8 @@ class Portfolio():
         for p in self.partitions:
             for g in p:
                 self.groups.append(g)
+                for pr in g.members:
+                    assert pr in self.projects
         self.synergies = s
 
     def included(self, active):
@@ -260,4 +262,3 @@ class Portfolio():
             self.order = [ i for i in range(len(self.projects)) ] 
         shuffle(self.order) # reorder
         return self.order
-
