@@ -3,7 +3,7 @@ from tools import Adjustment
 from parser import loadA, loadB, loadC
 from portfolio import Portfolio, Project, Activity, Synergy
 
-verbose = False
+verbose = True
 limit = 60 if not verbose else 5 # max runtime per replica in seconds
 maxiter = 70 if not verbose else 5 # maximum iterations
 replicas = 30 if not verbose else 3 

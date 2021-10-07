@@ -125,7 +125,7 @@ class Project():
     
     def funding(self, assignment):
         lvls = [ a.funding(assignment) for a in self.tasks ]
-        return ''.join(lvls)
+        return '|'.join(lvls)
 
     def __repr__(self):
         return str(self)
@@ -250,7 +250,7 @@ class Portfolio():
         return ''.join([ str(1 * (p in active)) for p in self.projects ])
 
     def funding(self, assignment):
-        return ''.join([ p.funding(assignment) for p in self.projects ])    
+        return '#'.join([ p.funding(assignment) for p in self.projects ])    
         
     def __str__(self):
         return f'PF w/ {len(self.projects)} P & B = {self.budget}'

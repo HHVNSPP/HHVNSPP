@@ -171,7 +171,7 @@ def score(alt, orig, big = 10, small = 1):
 
 class Adjustment():
 
-    def __init__(self, pf, lim, t, seed = 50):
+    def __init__(self, pf, lim, t, seed = 200):
         self.target = t
         self.portfolio = pf
         self.start = time()
@@ -211,7 +211,9 @@ class Adjustment():
         sh = roulette(self.sr) # pick a shake heuristic
         fh = roulette(self.fr) # pick a fill heuristic
         shaken = set()
-        print(f'front size {len(self.front)}')
+        k = len(self.front)
+        if k > 1:
+            print(f'front size {k}')
         for s in self.front:
             ss = sh(s)
             ss.fix()
