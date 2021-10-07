@@ -43,16 +43,12 @@ def dominated(s1, s2):
     b1 = any(imp12) # s1 is better at something
     b2 = any(imp21) # s2 is better at something
     if b1 and b2: # neither dominates the other
-        print('neither', ev1)
-        print('neither', ev2)
-        return set(), False 
+        return set(), False
     if b1 and all(eq12):
         return { s2 }, False # s2 was dominated by s1
     if b2 and all(eq21):
         return { s1 }, False  # s1 was dominated by s2
     # one should never reach this point
-    print(ev1)
-    print(ev2)
     quit()
 
 def compare(original, proposal):
@@ -71,8 +67,9 @@ def prune(included):
                 if b not in dom:
                     if a == b:
                         continue
-                    d, e = dominated(a, b)                    
-                    dom |= d
+                    d, e = dominated(a, b)
+                    if not e:
+                        dom |= d
     remaining = included - dom
     return remaining
 
@@ -170,24 +167,23 @@ def score(alt, orig, big = 10, small = 1):
         return -big
     elif comp == EQUAL: # they are the same quality
         return -small
-    return 0
+    return small
 
 class Adjustment():
 
-    def __init__(self, pf, lim, t):
+    def __init__(self, pf, lim, t, seed = 50):
         self.target = t
         self.portfolio = pf
         self.start = time()
         self.limit = lim
-        seed = Solution(pf) 
-        self.pool = { seed }
+        self.front = prune(set( [Solution(pf) for s in range(seed) ]))
         self.usage = defaultdict(int) # counters
         self.stall = 0 # executions with no improvement
         self.sr = { h : 1 for h in SHAKE } # shake ranks
         self.fr = { h : 1 for h in FILL } # shake-stage fill ranks
 
     def postprocess(self):
-        sol = list(self.pool)
+        sol = list(self.front)
         evaluation = np.matrix([ s.evaluate() for s in sol ])
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
@@ -197,13 +193,13 @@ class Adjustment():
         print('\n'.join(us), file = self.target)
 
     def __str__(self):
-        return f'{self.stall}\n' + '\n'.join([ str(sol) for sol in self.pool ])
+        return f'{self.stall}\n' + '\n'.join([ str(sol) for sol in self.front ])
 
     def __repr__(self):
         return str(self)
 
     def evaluate(self):
-        return np.matrix([s.evaluate() for s in self.pool])
+        return np.matrix([s.evaluate() for s in self.front])
         
     def output(self):
         diff = time() - self.start        
@@ -215,25 +211,25 @@ class Adjustment():
         sh = roulette(self.sr) # pick a shake heuristic
         fh = roulette(self.fr) # pick a fill heuristic
         shaken = set()
-        for s in self.pool:
+        print(f'front size {len(self.front)}')
+        for s in self.front:
             ss = sh(s)
-            if ss.fix(): # could be made feasible
-                fh(ss)
-                a = score(ss, s)
-                self.sr[sh] += a
-                self.fr[fh] += a
-                if a >= 0:
-                    shaken.add(ss) # not dominated
-                self.usage[sh] += 1
-                self.usage[fh] += 1
-            else: # punish
-                self.sr[sh] = max(0, self.sr[sh] - 1)
+            ss.fix()
+            fh(ss)
+            assert ss.feasible()
+            a = score(ss, s)
+            self.sr[sh] += a
+            self.fr[fh] += a
+            if a >= 0:
+                shaken.add(ss) # not dominated
+            self.usage[sh] += 1
+            self.usage[fh] += 1
         k = len(shaken)
         if k > 0:
             pl = 's' if k > 1 else ''
             print(f'{sh.__name__} shook up {k} variant{pl}')        
             # keep only the non-dominated ones
-            self.pool = prune(self.pool | shaken) 
+            self.front = prune(self.front | shaken) 
             self.stall = 0
         else:
             self.stall += 1
@@ -241,7 +237,7 @@ class Adjustment():
         fast = time() - self.start < self.limit
         return progress and fast # true if ok to continue
 
-    def search(self, maxiter = 50):
+    def search(self, maxiter = 50, verbose = False):
         hr = { h : 1 for h in LOCAL } # reset each local search
         fr = { h : 1 for h in FILL }
         lstall = 0
@@ -252,29 +248,29 @@ class Adjustment():
             sh = roulette(hr)
             fh = roulette(fr)
             local = set()
-            for sol in self.pool:
+            for sol in self.front:
                 ls = sh(sol) # create an alternative solution
-                if ls.fix(): # could be made feasible
-                    fh(ls) # fill it
-                    self.usage[fh] += 1
-                    self.usage[sh] += 1
-                    a = score(ls, sol)
-                    if a >= 0: # not dominated
-                        local.add(ls)
-                    hr[sh] += a
-                    fr[fh] += a
-                else: # punish
-                    hr[sh] = max(0, hr[sh] - 1)
+                ls.fix() #  make feasible
+                fh(ls) # fill it
+                self.usage[fh] += 1
+                self.usage[sh] += 1
+                assert ls.feasible()
+                a = score(ls, sol)
+                if a >= 0: # not dominated
+                    local.add(ls)
+                hr[sh] += a
+                fr[fh] += a
             k = len(local)
             if k > 0:
-                pl = 's' if k > 1 else ''
-                print(f'{sh.__name__} produced {k} neighbor{pl}')
+                if verbose:
+                    pl = 's' if k > 1 else ''
+                    print(f'{sh.__name__} produced {k} neighbor{pl}')
                 # keep only the non-dominated ones
-                self.pool = prune(self.pool | local)
+                self.front = prune(self.front | local)
                 lstall = 0
             else:
                 lstall += 1
-        return True
+        return True # still time to keep going
         
     def step(self, printout):
         ok = self.search() # do a search

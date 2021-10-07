@@ -19,12 +19,16 @@ class Activity():
         amount = 1.0 * assignment.get(self, 0) 
         return f'{amount:.0f}' # ignore fractional differences when comparing
 
+    def bounds(self, a):
+        amount = a.get(self, 0)
+        if amount > 0:
+            print(f'A {amount > 0}: {self.minBudget:.0f} <= {amount:.0f} <= {self.maxBudget:.0f}')
+    
     def feasible(self, a):
         amount = a.get(self, 0)
-        inactive = amount == 0
-        if not inactive: # if funded, check the levels
-            bounds = amount >= self.minBudget and amount <= self.maxBudget
-            return bounds
+        active = amount > 0
+        if active: # if funded, check the levels
+            return amount >= self.minBudget and amount <= self.maxBudget
         return True # this is inactive
     
     def __repr__(self):
@@ -96,6 +100,13 @@ class Project():
     def assigned(self, assignment):
         return sum([ assignment.get(act, 0) for act in self.tasks ])
 
+    def bounds(self, a):
+        if not self.feasible(a):
+            t = self.assigned(a)
+            print(f'P {t > 0}:  {self.minBudget:.0f} <= {t:.0f} <= {self.maxBudget:.0f}')
+            for act in self.tasks:
+                act.bounds(a)
+    
     def feasible(self, a):
         t = self.assigned(a)
         inactive = t == 0
@@ -196,6 +207,10 @@ class Group():
 
     def upperOK(self, a):
         return self.upper is None or self.assigned(a) <= self.upper
+
+    def bounds(self, a):
+        if not self.feasible(a):
+            print('G: {self.lower:.0f} <= {self.assigned(a):.0f} <= {self.upper:.0f}')
         
     def feasible(self, a):
         t = self.assigned(a)
@@ -275,6 +290,13 @@ class Portfolio():
                 return False
         return True
 
+    def bounds(self, a):
+        print(f'I: {sum(a.values())} <= {self.budget}')
+        for g in self.groups:
+            g.bounds(a)
+        for p in self.projects:
+            p.bounds(a)
+    
     def feasible(self, a):
         assigned = sum(a.values())
         if self.budget < assigned:

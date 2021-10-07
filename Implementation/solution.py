@@ -17,7 +17,7 @@ class Solution():
                             self.activate(p, level = 2)
             if not self.fix(): # ensure feasability
                 print('ERROR: unable to create a feasible initial solution')
-                quit() # unrecoverable
+                self.bounds() # diagnose
                 
     def __str__(self):
         incl = self.portfolio.included(self.actives())
@@ -32,16 +32,19 @@ class Solution():
         for attempt in range(permitted):
             if self.feasible():
                 return True
+            remove = self.remaining() < 0
             for i in self.portfolio.permutation(): # random order
                 p = self.portfolio.projects[i]
                 if p.assigned(self.assignment) > 0: # has funds
                     top = [ g.upperOK(self.assignment) for g in p.groups ]
-                    if not all(top): # at least one group has excess
+                    if remove or not all(top): # at least one group has excess
                         self.disactivate(p) # unfund
+                        remove = self.remaining() < 0                        
                         continue
                 bot = [ g.lowerOK(self.assignment) for g in p.groups ]
                 if not all(bot): # at least one group needs more
                     self.activate(p, level = 0) # minimal funds
+        self.bounds()
         return False # unable to fix
 
     def clone(self):
@@ -213,13 +216,9 @@ class Solution():
         selection = set(self.portfolio.sample(count)) \
             if count is not None else self.portfolio.random()
         other = self.clone()
+        act = self.actives()
         for p in selection:
-            present = False
-            for a in p.tasks:
-                if a in self.assignment: 
-                    present = True
-                    break
-            if not present: # presently inactive
+            if p not in act: # presently inactive
                 other.activate(p, level) 
             else: # presently active
                 other.disactivate(p) 
@@ -241,7 +240,11 @@ class Solution():
             for i in range(n):
                 v[i] += ei[i]
         return v
-        
+
+    def bounds(self):
+        self.portfolio.bounds(self.assignment)
+        quit() # this is diagnostic info
+    
     def feasible(self):
         return self.portfolio.feasible(self.assignment)
     
