@@ -72,19 +72,18 @@ class Solution():
     def fits(self, amount):
         return self.remaining() >= amount
     
-    def disactivate(self, a):
-        if a is not None:
-            a.disactivate(self.assignment)
+    def disactivate(self, p):
+        p.disactivate(self.assignment)
         
-    def activate(self, p, amount = None, level = 0):
-        if p is not None:
-            if amount is None:
-                amount = p.maxBudget
-            amount = min(amount, self.remaining())
-            if level == 0:
-                amount = min(amount, p.minBudget)
-            if amount > 0:
-                p.activate(self.assignment, amount)
+    def activate(self, p, level = 0, amount = None):
+        if amount is None:
+            amount = p.maxBudget
+        amount = min(amount, self.remaining())
+        if level == 0:
+            amount = min(amount, p.minBudget)
+        if amount > 0:
+            return p.activate(self.assignment, amount, level = level)
+        return 0
 
     def increment(self, p):
         incr = p.maxBudget - p.assigned(self.assignment)         
@@ -223,12 +222,12 @@ class Solution():
         selection = set(self.portfolio.sample(count)) \
             if count is not None else self.portfolio.random()
         other = self.clone()
-        act = self.actives()
-        for p in selection:
-            if p not in act: # presently inactive
-                other.activate(p, level) # fund it
-            else: # presently active
-                other.disactivate(p) # unfund it
+        exiting = selection & self.actives()
+        entering = selection - exiting
+        for p in exiting: # liberate funds
+            other.disactivate(p) # unfund 
+        for p in entering:
+            assigned = other.activate(p, level)
         return other 
     
     def choice(self): # return a random project

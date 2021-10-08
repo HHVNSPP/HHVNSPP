@@ -34,7 +34,7 @@ class Activity():
     def __repr__(self):
         return str(self)
 
-    def randomize(self, low = None, high = None, integer = True):
+    def randomize(self, low = None, high = None, integer = False):
         if low is None:
             low = self.minBudget
         if high is None:
@@ -145,7 +145,8 @@ class Project():
                     available -= allocated
             if not ok: # none of the tasks took any more money
                 break
-        return amount - available # what was spent
+        assigned =  amount - available
+        return assigned
 
     def disactivate(self, assignment):
         for a in self.tasks:
