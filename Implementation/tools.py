@@ -177,24 +177,31 @@ verbose = True
 
 class Adjustment():
 
-    def __init__(self, pf, lim, mi, t):
+    def __init__(self, pf, t):
         self.portfolio = pf
-        self.limit = lim
-        self.maxiter = mi
+        n = len(self.portfolio.projects)
+        k = len(self.portfolio.weights)
+        seed = 2**(7 - ceil(log(k, 2))) 
+        self.limit = n # one second per project
+        self.start = time() # start the timer now
+        if verbose:
+            print(f'Running for no more than {self.limit} seconds')
+        self.maxiter = seed 
         self.maxsearch = self.maxiter // 2 # half for search
         self.target = t
-        n = 2**(7 - ceil(log(len(pf.weights), 2))) # more objectives -> less initial solutions
         if verbose:
-            print(f'Creating {n} initial solutions')
+            print(f'Creating {seed} initial solutions')
         # larger fronts are easier to get with multiple objectives
-        self.front = prune(set( [Solution(pf) for s in range(n) ]))
+        # more objectives -> less initial solutions        
+        self.front = prune(set( [Solution(pf) for s in range(seed) ]))
         if verbose:
-            print(f'Initial front size {len(self.front)}')        
+            f = len(self.front)
+            pl = 's' if f > 1 else ''
+            print(f'Initial front has {f} non-dominated solution{pl}')        
         self.usage = defaultdict(int) # counters
         self.stall = 0 # executions with no improvement
         self.sr = { h : 1 for h in SHAKE } # shake ranks
         self.fr = { h : 1 for h in FILL } # shake-stage fill ranks
-        self.start = time() # start the timer now
         self.search() # improve the initial front with local search
 
     def postprocess(self):
@@ -247,17 +254,22 @@ class Adjustment():
             self.usage[sh] += 1
             self.usage[fh] += 1
         k = len(shaken)
+        stalled = True
         if k > 0:
             if verbose:
                 pl = 's' if k > 1 else ''
-                print(f'Shaking with {sh.__name__} created {k} variant{pl}')
+                print(f'Shake stage created {k} variant{pl} using {sh.__name__}')
             # keep only the non-dominated ones
             old = self.front.copy()
             self.front = prune(self.front | shaken)
-            if old == self.front: # no change
-                self.stall += 1
-            else: # the front has changed
-                self.stall = 0
+            stalled = old == self.front
+        if stalled: # no change
+            self.stall += 1
+            print(f'Shake stage failed to alter the front')                
+        else: # the front has changed
+            self.stall = 0
+            if verbose:
+                print(f'Shake stage altered the front')
 
     def search(self):
         # ranks that reset each local search        
@@ -291,17 +303,19 @@ class Adjustment():
                 self.usage[fh] += 1
                 self.usage[sh] += 1
             k = len(local)
+            stalled = True
             if k > 0:
                 old = self.front.copy()
                 self.front = prune(self.front | local)
-                if old == self.front: # no change
-                    lstall += 1
-                else: # the front has changed
-                    lstall //= 2 # lower the counter
-                    altered += 1
+                stalled = old == self.front 
+            if stalled: # no change
+                lstall += 1
+            else: # the front has changed
+                lstall //= 2 # lower the counter
+                altered += 1
         if verbose and altered > 0:
             pl = 's' if altered > 1 else ''
-            print(f'Search altered the front {altered} time{pl}')
+            print(f'Search stage altered the front {altered} time{pl}')
         return ok
         
     def step(self, printout):
@@ -327,4 +341,8 @@ class Adjustment():
                         pl = 's' if i > 0 else ''
                         print(f'Terminated after {i+1} iteration{pl}') 
                     break # out of time or stalled
+                if verbose:
+                    f = len(self.front)
+                    pl = 's' if f > 1 else ''
+                    print(f'Current front has {f} non-dominated solution{pl}')                    
         self.postprocess()

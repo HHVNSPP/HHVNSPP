@@ -3,10 +3,8 @@ from tools import Adjustment
 from parser import loadA, loadB, loadC
 from portfolio import Portfolio, Project, Activity, Synergy
 
-verbose = False
-timelimit = 300 if not verbose else 5 # max runtime per replica in seconds
-maxiter = 128 if not verbose else 8 # maximum iterations
-replicas = 30 if not verbose else 3 
+verbose = True
+replicas = 30 if not verbose else 3 # testing with less
 prefixes = [ 'P', 'o', 'm' ] # we conserve the filenames of the cited authors 
 filetypes = [ '.dat', '.txt', '.txt' ] # however inconsistent those may be
 load = { 'A': loadA, 'B': loadB, 'C': loadC } # parsing routines
@@ -24,7 +22,8 @@ for s in 'ABC':
             if verbose:
                 print(f'Processing instance {instance}')
             portfolio = load[s](instance)
+            n = len(portfolio.projects)
             for r in range(1, replicas + 1):
                 print(f'Executing replica {r} for {filename} in {directory}')
                 with open(output + f'r{r}_' + filename, 'w') as target:
-                    Adjustment(portfolio, timelimit, maxiter, target).run()
+                    Adjustment(portfolio, target).run()
