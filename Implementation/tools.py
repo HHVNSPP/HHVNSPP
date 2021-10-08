@@ -15,7 +15,7 @@ def roulette(rank):
     shuffle(candidates)
     acc = 0
     for c in candidates:
-        acc += max(rank[c], 1)
+        acc += rank[c]
         if acc >= cutoff:
             return c
 
