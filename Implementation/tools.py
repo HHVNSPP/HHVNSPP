@@ -177,32 +177,35 @@ verbose = True
 
 class Adjustment():
 
-    def __init__(self, pf, t):
+    def __init__(self, pf, t, sec = 5):
         self.portfolio = pf
         n = len(self.portfolio.projects)
         k = len(self.portfolio.weights)
         seed = 2**(7 - ceil(log(k, 2))) 
-        self.limit = n # one second per project
+        self.limit = sec * n # seconds per project
         self.start = time() # start the timer now
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
-        self.maxiter = seed 
+        self.maxiter = 16 * seed
         self.maxsearch = self.maxiter // 2 # half for search
         self.target = t
-        if verbose:
-            print(f'Creating {seed} initial solutions')
-        # larger fronts are easier to get with multiple objectives
-        # more objectives -> less initial solutions        
-        self.front = prune(set( [Solution(pf) for s in range(seed) ]))
-        if verbose:
-            f = len(self.front)
-            pl = 's' if f > 1 else ''
-            print(f'Initial front has {f} non-dominated solution{pl}')        
         self.usage = defaultdict(int) # counters
         self.stall = 0 # executions with no improvement
         self.sr = { h : 1 for h in SHAKE } # shake ranks
         self.fr = { h : 1 for h in FILL } # shake-stage fill ranks
-        self.search() # improve the initial front with local search
+        # larger fronts are easier to get with multiple objectives
+        # more objectives -> less initial solutions        
+        if verbose:
+            print(f'Creating {seed} initial solutions')
+            # improve the initial front with local search
+        self.front = prune(set( [Solution(pf) for s in range(seed) ]))
+        if verbose:
+            f = len(self.front)
+            pl = 's' if f > 1 else ''
+            print(f'Initial front has {f} non-dominated solution{pl}')
+            for s in self.front:
+                        print(s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
+        self.search(self.front)
 
     def postprocess(self):
         t = time() - self.start
@@ -243,35 +246,22 @@ class Adjustment():
             ss.fix()
             fh(ss)
             assert ss.feasible()
+            shaken.add(ss) 
             a = score(ss, s)
-            if a > 0:
+            if a > 0: # not worse
                 self.sr[sh] += a
                 self.fr[fh] += a
-                shaken.add(ss) # not worse
+                self.stall = 0
             else: # negative score
                 self.sr[sh] = max(self.sr[sh] - a, 1)
                 self.fr[fh] = max(self.fr[fh] - a, 1)
+                self.stall += 1
             self.usage[sh] += 1
             self.usage[fh] += 1
-        k = len(shaken)
-        stalled = True
-        if k > 0:
-            if verbose:
-                pl = 's' if k > 1 else ''
-                print(f'Shake stage created {k} variant{pl} using {sh.__name__}')
-            # keep only the non-dominated ones
-            old = self.front.copy()
-            self.front = prune(self.front | shaken)
-            stalled = old == self.front
-        if stalled: # no change
-            self.stall += 1
-            print(f'Shake stage failed to alter the front')                
-        else: # the front has changed
-            self.stall = 0
-            if verbose:
-                print(f'Shake stage altered the front')
+        print(len(shaken))
+        return shaken
 
-    def search(self):
+    def search(self, shaken):
         # ranks that reset each local search        
         lsr = { h : 1 for h in LOCAL } 
         lfr = { h : 1 for h in FILL }
@@ -287,7 +277,7 @@ class Adjustment():
             local = set()
             sh = roulette(lsr) # pick a search heuristic
             fh = roulette(lfr) # a fill one, too
-            for sol in self.front:
+            for sol in shaken:
                 ls = sh(sol) # create an alternative solution
                 ls.fix() #  ensure feasibility
                 fh(ls) # fill it
@@ -299,7 +289,7 @@ class Adjustment():
                     lfr[fh] += a
                 else: # negative score
                     lsr[sh] = max(lsr[sh] - a, 1)
-                    lfr[fh] = max(lfr[fh] - a, 1)                    
+                    lfr[fh] = max(lfr[fh] - a, 1)
                 self.usage[fh] += 1
                 self.usage[sh] += 1
             k = len(local)
@@ -313,14 +303,16 @@ class Adjustment():
             else: # the front has changed
                 lstall //= 2 # lower the counter
                 altered += 1
-        if verbose and altered > 0:
-            pl = 's' if altered > 1 else ''
-            print(f'Search stage altered the front {altered} time{pl}')
+        if verbose:
+            if altered > 0:
+                pl = 's' if altered > 1 else ''
+                print(f'Search stage altered the front {altered} time{pl}')
+            else:
+                print(f'Search stage failed to alter the front')
         return ok
         
     def step(self, printout):
-        self.shake()
-        self.search() 
+        self.search(self.shake()) 
         if printout: # if output is requested
             self.output()
         progress = self.stall < self.maxiter
@@ -344,5 +336,7 @@ class Adjustment():
                 if verbose:
                     f = len(self.front)
                     pl = 's' if f > 1 else ''
-                    print(f'Current front has {f} non-dominated solution{pl}')                    
+                    print(f'Current front has {f} non-dominated solution{pl}')
+                    for s in self.front:
+                        print(s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
         self.postprocess()

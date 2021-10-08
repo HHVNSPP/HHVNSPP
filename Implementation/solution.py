@@ -4,7 +4,7 @@ from random import random, choice, shuffle, sample
 
 class Solution():
 
-    def __init__(self, pf, a = None, verbose = False):
+    def __init__(self, pf, a = None):
         self.portfolio = pf
         self.assignment = a
         if a is None: # not a clone, but a fresh fund assignment 
@@ -23,8 +23,9 @@ class Solution():
             if not self.fix(): # ensure feasability
                 print('ERROR: unable to create a feasible initial solution')
                 self.bounds() # diagnose
-            if verbose:
-                print(pf.included(self.actives()))
+
+    def included(self):
+        return self.portfolio.included(self.actives())
                 
     def __str__(self):
         return self.portfolio.funding(self.assignment)
