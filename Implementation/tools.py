@@ -192,7 +192,6 @@ class Adjustment():
         self.usage = defaultdict(int) # counters
         self.stall = 0 # executions with no improvement
         self.sr = { h : 1 for h in SHAKE } # shake ranks
-        self.fr = { h : 1 for h in FILL } # shake-stage fill ranks
         # larger fronts are easier to get with multiple objectives
         # more objectives -> less initial solutions        
         if verbose:
@@ -239,26 +238,21 @@ class Adjustment():
     def shake(self):
         # the shake ranks persist throughout the process
         sh = roulette(self.sr) # pick a shake heuristic
-        fh = roulette(self.fr) # pick a fill heuristic
+        print(self.sr)
         shaken = set()
         for s in self.front:
             ss = sh(s)
-            ss.fix()
-            fh(ss)
-            assert ss.feasible()
-            shaken.add(ss) 
+            shaken.add(ss.fix()) 
             a = score(ss, s)
             if a > 0: # not worse
                 self.sr[sh] += a
-                self.fr[fh] += a
                 self.stall = 0
             else: # negative score
                 self.sr[sh] = max(self.sr[sh] - a, 1)
-                self.fr[fh] = max(self.fr[fh] - a, 1)
                 self.stall += 1
             self.usage[sh] += 1
-            self.usage[fh] += 1
-        print(len(shaken))
+        if verbose:
+            print(f'Shaking with {sh.__name__} yielded {len(shaken)} alternatives')
         return shaken
 
     def search(self, shaken):

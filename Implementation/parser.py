@@ -87,14 +87,6 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
         while True:
             line = data.readline()
             if len(line) == 0: # no more data
-                print('Done parsing')
-                if ignoreSynergies: # blank these out if requested
-                    print('Ignoring synergies')
-                    synergyCount = 0
-                    synergies = []
-                w = [ 0.5, 0.5 ] # two equally important objectives
-                if verbose:
-                    print(f'Including {len(areas)} areas')
                 break
             if '=' in line:
                 f = (line.strip()).split('=')
@@ -194,5 +186,13 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                             synergies[int(i[0]) - 1].include([int(i[0]), int(i[1]), int(i[2])])
                 else:
                     print(f'Ignoring line <{header} = {content}>')
+    print('Done parsing')
+    if ignoreSynergies: # blank these out if requested
+        print('Ignoring synergies')
+        synergyCount = 0
+        synergies = []
+    w = [ 0.5, 0.5 ] # two equally important objectives
     partial = [ False, True ] # no and yes
+    if verbose:
+        print(f'Including {len(areas)} areas')
     return Portfolio(budget, w, partial, projects, [ list(A.values()) ], s = synergies)                    
