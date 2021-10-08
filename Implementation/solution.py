@@ -11,10 +11,15 @@ class Solution():
             self.assignment = dict() 
             for i in self.portfolio.permutation():
                 p = self.portfolio.projects[i]
-                for g in p.groups:
-                    if not g.lowerOK(self.assignment):
-                        if self.fits(p.minBudget):
-                            self.activate(p, level = 2)
+                fund = False
+                if len(p.groups) > 0:
+                    for g in p.groups:
+                        if not g.lowerOK(self.assignment):
+                            fund = True
+                else: # no groups
+                    fund = True        
+                if fund and self.fits(p.minBudget):
+                    self.activate(p, level = 2)
             if not self.fix(): # ensure feasability
                 print('ERROR: unable to create a feasible initial solution')
                 self.bounds() # diagnose
@@ -37,12 +42,12 @@ class Solution():
             for i in self.portfolio.permutation(): # random order
                 p = self.portfolio.projects[i]
                 if p.assigned(self.assignment) > 0: # has funds
-                    top = [ g.upperOK(self.assignment) for g in p.groups ]
+                    top = [ True ] + [ g.upperOK(self.assignment) for g in p.groups ]
                     if remove or not all(top): # at least one group has excess
                         self.disactivate(p) # unfund
                         remove = self.remaining() < 0                        
                         continue
-                bot = [ g.lowerOK(self.assignment) for g in p.groups ]
+                bot = [ True ] + [ g.lowerOK(self.assignment) for g in p.groups ]
                 if not all(bot): # at least one group needs more
                     self.activate(p, level = 0) # minimal funds
         self.bounds()
@@ -220,9 +225,9 @@ class Solution():
         act = self.actives()
         for p in selection:
             if p not in act: # presently inactive
-                other.activate(p, level) 
+                other.activate(p, level) # fund it
             else: # presently active
-                other.disactivate(p) 
+                other.disactivate(p) # unfund it
         return other 
     
     def choice(self): # return a random project

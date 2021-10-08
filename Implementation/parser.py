@@ -66,7 +66,7 @@ def loadB(filename):
             r = int(d.pop(0))
             imp = [ float(d.pop(0)) for i in range(k) ] # all are yes/no objectives
             gr = [ A[a], R[r] ]
-            pr = Project(imp, req, gr)
+            pr = Project(imp, req, groups = gr)
             for g in gr:
                 g.include(pr)
             projects.append(pr)

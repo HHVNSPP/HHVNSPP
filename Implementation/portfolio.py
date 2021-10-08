@@ -49,9 +49,10 @@ class Activity():
             return [0 for p in self.pot]
         i = []
         lacking = lvl < self.maxBudget
-        multiple = fraction / self.diff
-        excess = lvl - self.minBudget
-        base = multiple * excess
+        if lacking: # partial assigment
+            multiple = fraction / self.diff
+            excess = lvl - self.minBudget
+            base = multiple * excess
         for (pot, part) in zip(self.pot, partial):
             rate = pot # all-or-nothing as default
             if part and lacking:
@@ -264,8 +265,8 @@ class Portfolio():
     def sample(self, count):
         if count == 0: # pick a group at random and use that
             partition = choice(self.partitions) # an area or a region
-            group = choice(partition)
-            return group.members # the member or that subgroup
+            group = choice(partition) # pick a group within that
+            return group.members # the members of that subgroup
         if count < 1: # expressed as a fraction
             count *= len(self.projects)
             count = int(ceil(count)) # an integer (rounded up)
