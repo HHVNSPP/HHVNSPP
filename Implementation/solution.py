@@ -2,6 +2,10 @@ import operator
 from math import ceil, log
 from random import random, choice, shuffle, sample
 
+MINIMUM = 0
+MAXIMUM = 1
+RANDOM = 1
+
 class Solution():
 
     def __init__(self, pf, a = None):
@@ -11,15 +15,10 @@ class Solution():
             self.assignment = dict() 
             for i in self.portfolio.permutation():
                 p = self.portfolio.projects[i]
-                fund = False
-                if len(p.groups) > 0:
-                    for g in p.groups:
-                        if not g.lowerOK(self.assignment):
-                            fund = True
-                else: # no groups
-                    fund = True        
-                if fund and self.fits(p.minBudget):
-                    self.activate(p, level = 2)
+                fund = [ not g.lowerOK(self.assignment) for g in p.groups ]
+                if len(fund) == 0 or any(fund): # if a group lacks funds or there is no group
+                    if self.fits(p.minBudget): # if there are funds
+                        self.activate(p, level = RANDOM)
             if not self.fix(): # ensure feasability
                 print('ERROR: unable to create a feasible initial solution')
                 self.bounds() # diagnose
@@ -50,7 +49,7 @@ class Solution():
                         continue
                 bot = [ True ] + [ g.lowerOK(self.assignment) for g in p.groups ]
                 if not all(bot): # at least one group needs more
-                    self.activate(p, level = 0) # minimal funds
+                    self.activate(p, level = MINIMUM) # minimal funds
         self.bounds()
         return False # unable to fix
 
@@ -75,39 +74,36 @@ class Solution():
     def disactivate(self, p):
         p.disactivate(self.assignment)
         
-    def activate(self, p, level = 0, amount = None):
+    def activate(self, p, level = MINIMUM, amount = None):
         if amount is None:
             amount = p.maxBudget
         amount = min(amount, self.remaining())
-        if level == 0:
+        if level == MINIMUM:
             amount = min(amount, p.minBudget)
         if amount > 0:
             return p.activate(self.assignment, amount, level = level)
         return 0
 
-    def increment(self, p):
-        incr = p.maxBudget - p.assigned(self.assignment)         
-        if self.fits(incr):
-            ok = False
-            for g in p.groups:
-                current = g.assigned(self.assignment)
-                if current + incr > g.upper:
-                    ok = False # would violate upper bound
-                    break
-            if ok:
-                self.activate(p, incr)
-    
-    def fill(self, level = None, active = False):
-        if level is None: # random
-            for i in self.portfolio.permutation():
-                p = self.portfolio.projects[i]
-                self.increment(p)
-        elif level < 1: # from cheapest to the most expensive
-            cand = self.inactives() if not active else self.actives() 
+    def increment(self, p, level):
+        current = p.assigned(self.assignment)         
+        incr = p.maxBudget - current
+        if incr > 0 and self.fits(incr):
+            if all([ g.assigned(self.assignment) + incr < g.upper for g in p.groups ]):
+                if current > 0:
+                    self.disactivate(p) # reset funds
+                self.activate(p, level = level) # fund
+                    
+    def fill(self, level = None, active = False, sort = False):
+        cand = self.inactives() if not active else self.actives() 
+        if sort:
             opt = [ (p, p.minBudget) for p in cand ]
             opt.sort(key = lambda a: a[1])
-            for (p, b) in opt:
-                self.increment(p)
+            cand = [ p for (p, b) in opt ]
+        else:
+            cand = list(cand)
+            shuffle(cand)
+        for p in cand:
+            self.increment(p, level = level)
 
     def select(self, cand, active = True):
         opt = cand & (self.actives() if active else self.inactives())
@@ -219,15 +215,20 @@ class Solution():
         return other
     
     def swap(self, count = None, level = 0):
-        selection = set(self.portfolio.sample(count)) \
-            if count is not None else self.portfolio.random()
-        other = self.clone()
+        selection = None
+        if count is not None and count < 1: # swap all
+            selection = set(self.portfolio.projects)
+        else: # swap some
+            selection = set(self.portfolio.sample(count)) \
+                if count is not None else self.portfolio.random()
+        other = self.clone() # another solution
         exiting = selection & self.actives()
-        entering = selection - exiting
+        entering = list(selection - exiting)
+        shuffle(entering) # in random order
         for p in exiting: # liberate funds
             other.disactivate(p) # unfund 
         for p in entering:
-            assigned = other.activate(p, level)
+            other.activate(p, level)
         return other 
     
     def choice(self): # return a random project
