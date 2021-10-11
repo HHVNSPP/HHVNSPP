@@ -154,7 +154,7 @@ from solution import MINIMUM, MAXIMUM, RANDOM
 
 def fillIncrMin(sol):
     sol.fill(level = MINIMUM, active = False, sort = True)
-    
+     
 def fillIncrMax(sol):
     sol.fill(level = MAXIMUM, active = False, sort = True)
     
@@ -174,7 +174,7 @@ def fillLift(sol):
     sol.fill(level = MAXIMUM, active = True, sort = False)
 
 FILL = [ fillIncrMin, fillIncrMax, fillIncrRnd, \
-         fillRndMin, fillRndMax, fillRndRnd, fillLift ]
+         fillRndMin, fillRndMax, fillRndRnd ]
 
 def score(alt, orig, big = 1, intermediate = 0.2, small = 0.1):
     a = 0
@@ -182,11 +182,9 @@ def score(alt, orig, big = 1, intermediate = 0.2, small = 0.1):
         comp = compare(alt, s)
         if comp == BETTER: # the newly made one dominates the original
             a += big 
-        elif comp == WORSE: # the new one is worse than the original
-            a -= big
         elif comp == EQUAL: # they are the same quality
-            a +=  small
-        else:
+            a += small
+        elif comp != WORSE:
             a += intermediate # neither dominates
     return round(a)
 
@@ -200,8 +198,7 @@ class Adjustment():
         self.limit = sec * n # seconds per project
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
-        self.repetitions = max(3, seed // k)
-        print(f'Executing {self.repetitions} variants per solution')                
+        self.goal = 10 # how many solutions we would like to have in the front at minimum
         self.maxiter = 2 * seed
         if verbose:
             print(f'Executing at most {self.maxiter} iterations')        
@@ -214,7 +211,9 @@ class Adjustment():
             print(f'Stall limit is {self.maxshake} for shake and {self.maxsearch} for search')                
         self.target = t
         self.usage = defaultdict(int) # counters
-        self.rank = { h : 1 for h in SHAKE } # initial unit shake ranks
+        self.shakerank = { h : 1 for h in SHAKE } # initial unit shake ranks
+        self.searchrank = { h : 1 for h in LOCAL } # initial unit search ranks
+        self.fillrank = { h : 1 for h in FILL } # initial unit fill ranks
         self.chosen = None # last used shake heuristic
         # larger fronts are easier to get with multiple objectives
         # more objectives -> less initial solutions        
@@ -223,7 +222,7 @@ class Adjustment():
             # improve the initial front with local search
         self.front = None
         self.start = time() # start the timer now
-        self.search(set( [Solution(self.portfolio) for s in range(seed) ]))
+        self.search(set([ Solution(self.portfolio) for s in range(seed) ]))
 
     def postprocess(self, i):
         if verbose:
@@ -262,8 +261,8 @@ class Adjustment():
     def pick(self, options):
         used = [ self.usage[h] for h in options ]
         h = None
-        if min(used) > 0:
-            h = roulette(options) # pick a heuristic
+        if min(used) > 0: # all options have been used
+            h = roulette(options) # use the ranks
         else: # everyone gets one chance
             candidates = list()
             for h in options:
@@ -275,28 +274,34 @@ class Adjustment():
         return h
             
     def shake(self):
-        self.chosen = self.pick(self.rank)
-        self.usage[self.chosen] += 1        
+        self.chosen = self.pick(self.shakerank)
         shaken = set()
+        repetitions = max(2, self.goal - (len(self.front) if self.front is not None else 0))
         for s in self.front:
-            for r in range(self.repetitions):
-                shaken.add(self.chosen(s)) 
+            for r in range(repetitions):
+                result = self.chosen(s) # shake it
+                result.fix() # make it feasible
+                fillLift(result) # fill it (fixed rule)
+                if details:
+                    print(result.included(), result.evaluate())
+                shaken.add(result)
         k = len(shaken)
-        assert k > 0
         pl = 's' if k > 1 else ''
         print(f'Shaking with {self.chosen.__name__} yielded {k} alternative{pl}')
         if details:
             for s in shaken:
                 print(s.included())
+        missing = 2 * self.goal - k
+        if missing > 0: # too few, add new random solutions
+            shaken |= set([ Solution(self.portfolio) for s in range(missing) ])
+            pl = 's' if missing > 1 else ''            
+            print(f'Adding {missing} new solution{pl}')            
         return shaken # note that these may be INFEASIBLE
 
     def search(self, shaken):
         if self.chosen is None:
             print(f'Executing local search on the initial solutions')
-        # ranks that reset each local search        
-        lsr = { h : 1 for h in LOCAL } 
-        fr = { h : 1 for h in FILL }
-        lstall = 0 # stall counter resets, too
+        lstall = 0 # search stall counter resets each stage
         ok = True # whether the time limit is respected
         altered = 0 # how many times the front changes
         while lstall < self.maxsearch: # while not stalled
@@ -306,11 +311,12 @@ class Adjustment():
                 ok = False # no time left
                 break
             local = set() # gather the variants here
-            lsh = self.pick(lsr) # pick a search heuristic
-            fh = self.pick(fr) # a fill one, too
+            lsh = self.pick(self.searchrank) # pick a search heuristic
+            fh = self.pick(self.fillrank) # a fill one, too
             print(f'Using {lsh.__name__} to search and {fh.__name__} to fill')
+            repetitions = max(2, self.goal - (len(self.front) if self.front is not None else 0))
             for sol in shaken:
-                for r in range(self.repetitions):                
+                for r in range(repetitions):                
                     ls = lsh(sol) # create an alternative solution
                     ls.fix() #  ensure feasibility
                     fh(ls) # fill it
@@ -318,44 +324,52 @@ class Adjustment():
             k = len(local) # check how many there are
             stalled = True
             if k > 0: # examine them
-                # compare against current front
-                if self.front is not None: # not the first search
-                    adj = sum([ score(s, self.front) for s in local] ) // len(local)
-                    if adj > 0: # gain rank
-                        if self.chosen is not None:
-                            self.rank[self.chosen] += adj
-                        lsr[lsh] += adj
-                        fr[fh] += adj
-                    else: # lose rank
-                        if self.chosen is not None:
-                            self.rank[self.chosen] = max(self.rank[self.chosen] - adj, 1)
-                        lsr[lsh] = max(lsr[lsh] + adj, 1)
-                        fr[fh] = max(fr[fh] + adj, 1)
                 # combine and prune
                 curr = self.front if self.front is not None else set()
                 result = prune(local | curr)
                 if result == self.front:
                     lstall += 1
                     print(f'The Pareto front did not change; stall counter {lstall}/{self.maxsearch}')
+                    # losing rank
+                    self.searchrank[lsh] = max(1, self.searchrank[lsh] // 2)
+                    self.fillrank[fh] = max(1, self.fillrank[fh] // 2)
                 else:
-                    lstall //= 2 # lower the counter
+                    self.front = result # update the front                    
+                    # compare against ORIGINAL front
+                    adj = sum([ score(s, curr) for s in local] )
+                    if adj > 0: # these heuristics gain rank
+                        self.searchrank[lsh] += adj
+                        self.fillrank[fh] += adj
+                    lst = '\n'.join([ f'{k.__name__} = {v}' for k, v in self.searchrank.items() ])
+                    print(f'Search ranks:\n{lst}')
+                    lst = '\n'.join([ f'{k.__name__} = {v}'  for k, v in self.fillrank.items() ])
+                    print(f'Fill ranks:\n{lst}')
+                    lstall = 0 # reset the counter
                     altered += 1 # the front has changed
                     print(f'Altered the Pareto front')
-                self.front = result # update the front
+                    for s in result:
+                        print('F', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
+                    if details: 
+                        for s in curr:
+                            print('C', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
+                        for s in local:
+                            print('L', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
         if altered > 0:
-            self.stall = 0 # reset shaking
+            if self.chosen is not None:
+                self.shakerank[self.chosen] += altered # gain rank
+                lst = '\n'.join([ f'{k.__name__} = {v}' for k, v in self.shakerank.items() ])
+                print(f'Shake ranks:\n{lst}') 
+                self.stall = 0 # reset shaking
             f = len(self.front)
             pl = 's' if f > 1 else ''
             if self.chosen is not None:
                 print(f'After shaking with {self.chosen.__name__}, the front has {f} non-dominated solution{pl}')
             else:
                 print(f'The initial solutions gave rise to a front with {f} non-dominated solution{pl}')                
-            if details:
-                for s in self.front:
-                    print(s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
-        else:
+        elif self.chosen is not None:
             print(f'Shaking with {self.chosen.__name__} resulted in no alterations of the front')
             self.stall += 1
+            self.shakerank[self.chosen] = max(1, self.shakerank[self.chosen] // 2)
         return ok
         
     def step(self, printout):

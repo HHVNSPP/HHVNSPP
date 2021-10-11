@@ -85,13 +85,13 @@ class Solution():
         return 0
 
     def increment(self, p, level):
-        current = p.assigned(self.assignment)         
-        incr = p.maxBudget - current
+        former = p.assigned(self.assignment)         
+        incr = p.maxBudget - former
         if incr > 0 and self.fits(incr):
             if all([ g.assigned(self.assignment) + incr < g.upper for g in p.groups ]):
-                if current > 0:
-                    self.disactivate(p) # reset funds
-                self.activate(p, level = level) # fund
+                if former > 0: # reset funds if any
+                    self.disactivate(p)
+                self.activate(p, level = level) > former
                     
     def fill(self, level = None, active = False, sort = False):
         cand = self.inactives() if not active else self.actives() 
@@ -103,7 +103,7 @@ class Solution():
             cand = list(cand)
             shuffle(cand)
         for p in cand:
-            self.increment(p, level = level)
+            self.increment(p, level = level) 
 
     def select(self, cand, active = True):
         opt = cand & (self.actives() if active else self.inactives())
