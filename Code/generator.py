@@ -2,35 +2,37 @@
 """
 Created on Tue Mar  3 16:06:22 2020
 
+GENERATOR FOR THE INSTANCE SET C
+
 @author: Madys
 """
 import random
 
-projects=[]
-num_proj=512
-num_obj=4
-num_inst=4
-budget=num_proj*1000
-name="m_o"
+projects = []
+num_proj = 512
+num_obj = 4
+num_inst = 4
+budget = num_proj * 1000
+name = "m_o"
 
-def beneficios(obj): 
-   if obj==4:
-       matriz=[0,0,0,0]
+def benefits(obj): 
+   if obj == 4:
+       matrix = [0,0,0,0]
        a1=[[0,0,1,1],[1,0,1,0],[0,1,0,1],[1,1,0,0],[0.5,0.5,0.5,0.5],[0.8,0.7,0.5,0],[0,0.7,0.8,0.5]]
        a2=random.choice(a1)
        for j in range(4):
-          matriz[j]=round(random.randint(10,15)*10*a2[j])
-       return matriz
+          matrix[j]=round(random.randint(10,15)*10*a2[j])
+       return matrix
    if obj==3:
-       matriz=[0,0,0]
+       matrix=[0,0,0]
        a1=[[0,1,1],[1,0,1],[0,1,0],[1,1,0],[1,0.5,0.5],[0.8,0.7,0.5],[0.7,0.5,0.8]]
        a2=random.choice(a1)
        for j in range(4):
-          matriz[j]=round(random.randint(10,15)*10*a2[j])
-       return matriz
+          matrix[j]=round(random.randint(10,15)*10*a2[j])
+       return matrix
     
 for inst in range(num_inst):
-    nsyn=random.randint(round(num_proj/20),round(num_proj/15))
+    nsyn = random.randint(round(num_proj/20),round(num_proj/15))
     file = open(name+str(num_proj)+"_"+str(inst+1) +".txt", "w")    
     file.write(str(num_proj)+"\n")
     file.write(str(budget)+"\n")
@@ -59,12 +61,12 @@ for inst in range(num_inst):
                 a=a+str(output[i])+"\n"
         file.write(a)
     for i in range(num_proj):    
-        minimo=random.randint(10,30)*100
-        maximo=round(minimo*random.randint(11,15)/10)
-        ben=beneficios(num_obj)        
+        low=random.randint(10,30)*100
+        high=round(low*random.randint(11,15)/10)
+        ben=benefits(num_obj)        
         cat1=str(random.randint(1,3))
         cat2= str(random.randint(1,2))
-        file.write(str(minimo)+" "+ str(maximo)+" "+ cat1 +" "+ cat2 +" "+ str(ben[0])+" "+str(ben[1])+" "+str(ben[2])+" "+str(ben[3])+" \n")
-        file_ns.write(str(minimo)+" "+ str(maximo)+" "+ cat1 +" "+ cat2+" "+ str(ben[0])+" "+str(ben[1])+" "+str(ben[2])+" "+str(ben[3])+" \n")
+        file.write(str(low)+" "+ str(high)+" "+ cat1 +" "+ cat2 +" "+ str(ben[0])+" "+str(ben[1])+" "+str(ben[2])+" "+str(ben[3])+" \n")
+        file_ns.write(str(low)+" "+ str(high)+" "+ cat1 +" "+ cat2+" "+ str(ben[0])+" "+str(ben[1])+" "+str(ben[2])+" "+str(ben[3])+" \n")
     file.close()   
     file_ns.close()  
