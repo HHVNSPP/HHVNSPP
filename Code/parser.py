@@ -43,6 +43,7 @@ def loadC(filename):
                 g.include(p)
     partial = [ True for w in weights ] # all objectives undergo partial impacts
     partition = [ list(A.values()), list(R.values()) ]
+    print(f'{len(weights)} objectives and {len(projects)} projects parsed')
     return Portfolio(b, weights, partial, projects, partition, s = synergies) 
 
 def loadB(filename):
@@ -186,7 +187,8 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                             synergies[int(i[0]) - 1].include([int(i[0]), int(i[1]), int(i[2])])
                 else:
                     print(f'Ignoring line <{header} = {content}>')
-    print('Done parsing')
+    if verbose:
+        print('Done parsing')
     if ignoreSynergies: # blank these out if requested
         print('Ignoring synergies')
         synergyCount = 0

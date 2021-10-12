@@ -1,5 +1,5 @@
 import operator
-from math import ceil, log, fabs
+from math import fabs
 from random import random, choice, shuffle, sample
 
 MINIMUM = 0
@@ -21,13 +21,18 @@ class Solution():
             self.assignment = dict() 
             for i in self.portfolio.permutation():
                 p = self.portfolio.projects[i]
-                fund = [ not g.lowerOK(self.assignment) for g in p.groups ]
-                if len(fund) == 0 or any(fund): # if a group lacks funds or there is no group
-                    if self.fits(p.minBudget): # if there are funds
-                        self.activate(p, level = RANDOM)
+                if len(p.groups) > 0:
+                    low = [ not g.lowerOK(self.assignment) for g in p.groups ]
+                    high = [ not g.upperOK(self.assignment) for g in p.groups ]                    
+                    if any(low) and not any(high): 
+                        if self.fits(p.minBudget): # if there are funds
+                            self.activate(p, level = MINIMUM)
+                    elif any(high): # too much already
+                        self.deactivate(p)
             if not self.fix(): # ensure feasability
                 print('ERROR: unable to create a feasible initial solution')
                 self.bounds() # diagnose
+                quit() # unable to proceed
 
     def included(self):
         return self.portfolio.included(self.actives())
@@ -38,25 +43,35 @@ class Solution():
     def __repr__(self):
         return str(self)
 
-    def fix(self): # ensure feasibility
-        permitted = len(self.portfolio.projects)
+    def fix(self, rng = 0.1): # ensure feasibility
+        permitted = 10 * len(self.portfolio.projects)
         permitted *= len(self.portfolio.groups) + 1
         for attempt in range(permitted):
             if self.feasible():
                 return True
-            remove = self.remaining() < 0
+            act = self.actives()
             for i in self.portfolio.permutation(): # random order
                 p = self.portfolio.projects[i]
-                if p.assigned(self.assignment) > 0: # has funds
-                    top = [ True ] + [ g.upperOK(self.assignment) for g in p.groups ]
-                    if remove or not all(top): # at least one group has excess
-                        self.disactivate(p) # unfund
-                        remove = self.remaining() < 0                        
-                        continue
-                bot = [ True ] + [ g.lowerOK(self.assignment) for g in p.groups ]
-                if not all(bot): # at least one group needs more
-                    self.activate(p, level = MINIMUM) # minimal funds
-        self.bounds()
+                if random() < rng: # randomize
+                    if p not in act:
+                        self.activate(p, level = RANDOM)
+                    else:
+                        self.deactivate(p)
+                else: # adjust
+                    top = [ g.upperOK(self.assignment) for g in p.groups ] 
+                    bot = [ g.lowerOK(self.assignment) for g in p.groups ]
+                    if p in act and not all(top): # at least one excess
+                        self.deactivate(p) # unfund
+                        break
+                    if p in act and not any(bot): # none underfunded
+                        self.deactivate(p) # reset                        
+                        self.activate(p, level = MINIMUM) # lowest
+                        break
+                    if not all(bot): # at least one group needs more
+                        if p in act:
+                            self.deactivate(p) # reset                        
+                        self.activate(p, level = MAXIMUM) # highest
+                        break
         return False # unable to fix
 
     def clone(self):
@@ -77,8 +92,8 @@ class Solution():
     def fits(self, amount):
         return self.remaining() >= amount
     
-    def disactivate(self, p):
-        p.disactivate(self.assignment)
+    def deactivate(self, p):
+        p.deactivate(self.assignment)
         
     def activate(self, p, level = MINIMUM, amount = None):
         if amount is None:
@@ -96,7 +111,7 @@ class Solution():
         if incr > 0 and self.fits(incr):
             if all([ g.assigned(self.assignment) + incr < g.upper for g in p.groups ]):
                 if former > 0: # reset funds if any
-                    self.disactivate(p)
+                    self.deactivate(p)
                 self.activate(p, level = level) > former
                     
     def fill(self, level = None, active = False, sort = False):
@@ -127,7 +142,7 @@ class Solution():
         leaving = choice(list(act)) # this leaves
         amount = leaving.assigned(self.assignment) # how much it had
         other = self.clone()
-        other.disactivate(leaving) # unfund
+        other.deactivate(leaving) # unfund
         inact = group.members - act # presently unfunded
         target = None
         for peer in inact:
@@ -148,7 +163,7 @@ class Solution():
         if len(candidates) == 0:
             return self # cannot be done
         other = self.clone()
-        other.disactivate(choice(list(candidates))) # removed
+        other.deactivate(choice(list(candidates))) # removed
         gaining = chosen[1].members
         candidates = gaining - act # inactives on the gaining side
         if len(candidates) > 0:
@@ -173,7 +188,7 @@ class Solution():
         if most is None:
             return self # nothing can be done
         alt = self.clone()
-        alt.disactivate(most)
+        alt.deactivate(most)
         return alt
 
     def alter(self, level):
@@ -189,7 +204,7 @@ class Solution():
             if level == RANDOM or differ(current, goal, 0.1):
                 if goal < margin + current: # will be possible to assign
                     alt = self.clone() 
-                    alt.disactivate(target) # reset funding
+                    alt.deactivate(target) # reset funding
                     alt.activate(target, level = level) # assign funds
                     return alt
         return self # discard the clone, no changes were made
@@ -203,7 +218,7 @@ class Solution():
             cand = self.actives(aslist = True)
             if len(cand) == 0:
                 return self # modification unsuccessfull
-            other.disactivate(choice(cand))
+            other.deactivate(choice(cand))
         other.activate(most, level = level) # it fits now
         return other
 
@@ -236,7 +251,7 @@ class Solution():
         if len(cand) == 0:
             return self # nothing can be done
         p = choice(cand)
-        other.disactivate(p)
+        other.deactivate(p)
         return other
     
     def swap(self, count = None, level = MINIMUM):
@@ -249,7 +264,7 @@ class Solution():
         exiting = selection & self.actives()
         entering = list(selection - exiting)
         for p in exiting: # liberate funds (these are always the same)
-            other.disactivate(p) # unfund 
+            other.deactivate(p) # unfund 
         shuffle(entering) # fund in random order
         for p in entering:
             other.activate(p, level)
@@ -274,7 +289,6 @@ class Solution():
 
     def bounds(self):
         self.portfolio.bounds(self.assignment)
-        quit() # this is diagnostic info
     
     def feasible(self):
         return self.portfolio.feasible(self.assignment)

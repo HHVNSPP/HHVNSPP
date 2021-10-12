@@ -1,6 +1,6 @@
 import numpy as np
 from time import time
-from math import log, ceil
+from sys import stderr
 from electre import electre
 from solution import Solution
 from collections import defaultdict
@@ -33,6 +33,21 @@ def roulette(rank):
         acc += rank[c]
         if acc >= cutoff:
             return c
+
+def pick(options, uses):
+    used = [ uses[h] for h in options ]
+    h = None
+    if min(used) > 0: # all options have been used
+        h = roulette(options) # use the ranks
+    else: # everyone gets one chance
+        candidates = list()
+        for h in options:
+            if uses[h] == 0:
+                candidates.append(h)
+        h = choice(candidates)
+        assert h is not None
+    uses[h] += 1
+    return h
 
 BETTER = -1
 WORSE = 1
@@ -331,9 +346,24 @@ def rndRnd(sol):
     sol.fill(level = RANDOM, active = False, sort = False)
     if details:
         print(sol.included())
+
+def liftIncr(sol):
+    if details: # this one adds more funds
+        print(f'Fill liftIncr\n{sol.allocation()}')
+    sol.fill(level = MAXIMUM, active = True, sort = False)
+    if details:
+        print(sol.allocation())
+
+def liftRnd(sol):
+    if details: # this one adds more funds
+        print(f'Fill liftRnd\n{sol.allocation()}')
+    sol.fill(level = MAXIMUM, active = True, sort = False)
+    if details:
+        print(sol.allocation())
     
-FILL = [ incrMin, incrMax, incrRnd, \
-         rndMin, rndMax, rndRnd ]
+FILL = [ incrMin, incrMax, incrRnd,
+         rndMin, rndMax, rndRnd, 
+         liftIncr, liftRnd ]
 
 def score(alt, orig, big = 4, intermediate = 2, small = 1):
     a = 0
@@ -348,48 +378,49 @@ def score(alt, orig, big = 4, intermediate = 2, small = 1):
     return round(a)
 
 class Adjustment():
-
-    def __init__(self, pf, t, sec = 2):
+    
+    def __init__(self, pf, t, sec = 1, goal = 5, it = 33):
         self.portfolio = pf
         n = len(self.portfolio.projects)
         k = len(self.portfolio.weights)
-        seed = 2**(6 - ceil(log(k, 2))) 
-        self.limit = sec * n # seconds per project
+        self.limit = sec * n * k
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
         self.goal = 5 # how many solutions we would like to have in the front at minimum
-        self.maxiter = 2 * seed
-        if verbose:
+        self.maxiter = it
+        if details:
             print(f'Executing at most {self.maxiter} iterations')        
-        self.stall = 0 # executions with no improvement
-        # shake stall
-        self.maxshake = 3 * len(SHAKE)
-        # search stall maximum
-        self.maxsearch = len(LOCAL) + len(FILL)
-        if verbose:
+        self.shakestall = 0 
+        self.maxshake = len(SHAKE) 
+        self.searchstall = 0
+        self.maxsearch = len(LOCAL)
+        if details:
             print(f'Stall limit is {self.maxshake} for shake and {self.maxsearch} for search')                
-        self.target = t
-        self.usage = defaultdict(int) # counters
+        self.target = t # output file
+        self.shakeusage = defaultdict(int) # counters
         self.shakerank = { h : 1 for h in SHAKE } # initial unit shake ranks
+        self.shakefillrank = { h : 1 for h in FILL } # initial unit fill ranks        
+        self.searchusage = defaultdict(int) # counters
         self.searchrank = { h : 1 for h in LOCAL } # initial unit search ranks
-        self.fillrank = { h : 1 for h in FILL } # initial unit fill ranks
+        self.searchfillrank = { h : 1 for h in FILL } # initial unit fill ranks
         self.shaker = None # last used shake heuristic
         self.filler = None # last used fill heuristic
-        # larger fronts are easier to get with multiple objectives
-        # more objectives -> less initial solutions        
-        if verbose:
+        seed = 2 * self.goal # how many initial solutions
+        if details:
             print(f'Creating {seed} initial solutions')
-            # improve the initial front with local search
         self.front = None
-        self.start = time() # start the timer now
+        self.start = time() # start the timer 
         self.search(set([ Solution(self.portfolio) for s in range(seed) ]))
+        self.output() # print-out of the initial population
 
     def postprocess(self, i):
+        if details:
+            self.check()
         if verbose:
             pl = 's' if i > 0 else ''
             print(f'Terminated after {i+1} iteration{pl}') 
         t = time() - self.start
-        print(f'final;{t};{i};{self.stall}', file = self.target)
+        print(f'final;{t};{i};{self.shakestall}', file = self.target)
         sol = list(self.front)
         if verbose:
             print(f'Final front size {len(sol)}')
@@ -402,11 +433,13 @@ class Adjustment():
         for i in range(len(ranking)):
             assert(sol[i].feasible()) # make sure nothing is broken
             print(f'electre;{ranking[i]};{evaluation[i, :]}', file = self.target)
-        us = [ f'usage;{k.__name__}={v}' for (k, v) in self.usage.items() ]
+        us = [ f'usage;shake;{k.__name__}={v}' for (k, v) in self.shakeusage.items() ]
+        print('\n'.join(us), file = self.target)
+        us = [ f'usage;search;{k.__name__}={v}' for (k, v) in self.searchusage.items() ]
         print('\n'.join(us), file = self.target)
 
     def __str__(self):
-        return f'{self.stall}\n' + '\n'.join([ str(sol) for sol in self.front ])
+        return f'{self.shakestall}\n' + '\n'.join([ str(sol) for sol in self.front ])
 
     def __repr__(self):
         return str(self)
@@ -418,129 +451,130 @@ class Adjustment():
         diff = time() - self.start        
         print(diff, file = self.target)
         print(self.evaluate(), file = self.target)
-
-    def pick(self, options):
-        used = [ self.usage[h] for h in options ]
-        h = None
-        if min(used) > 0: # all options have been used
-            h = roulette(options) # use the ranks
-        else: # everyone gets one chance
-            candidates = list()
-            for h in options:
-                if self.usage[h] == 0:
-                    candidates.append(h)
-            h = choice(candidates)
-        assert h is not None
-        self.usage[h] += 1
-        return h
             
     def shake(self):
-        self.shaker = self.pick(self.shakerank)
-        self.filler = self.pick(self.fillrank)
+        self.shaker = pick(self.shakerank, self.shakeusage)
+        self.filler = pick(self.shakefillrank, self.shakeusage)
         shaken = set()
-        repetitions = max(2, self.goal - (len(self.front) if self.front is not None else 0))
+        repetitions = max(1, self.goal - (len(self.front) if self.front is not None else 0))
         for s in self.front:
             for r in range(repetitions):
                 result = self.shaker(s) # shake it
                 if details:
                     print(r, result.included(), result.allocation())
-                result.fix() # make feasible
-                self.filler(result)
+                result.fix() # make it feasible
+                self.filler(result) # fill it
                 shaken.add(result)
         k = len(shaken)
-        pl = 's' if k > 1 else ''
         if details:
+            pl = 's' if k > 1 else ''
             print(f'Shaking with {self.shaker.__name__} yielded {k} alternative{pl}')
             for s in shaken:
                 print(s.included())
         missing = 2 * self.goal - k
-        if missing > 0: # too few, add new random solutions
+        if missing > 0: # too few, add new random solutions 
             shaken |= set([ Solution(self.portfolio) for s in range(missing) ])
-            if details:
-                pl = 's' if missing > 1 else ''            
-                print(f'Adding {missing} new solution{pl}')            
-        return shaken # note that these may be INFEASIBLE
+            print(f'Adding {missing} new solution{pl}')            
+        return shaken
 
+    def check(self): # ensure none of the solutions form a Pareto front
+        for a in self.front:
+            for b in self.front:
+                d, e = dominated(a, b)
+                assert len(d) == 0 # none should dominate the other
+
+    def assess(self, local, searcher, helper): # combine and prune
+        assert len(local) > 0
+        curr = self.front if self.front is not None else set()
+        result = prune(local | curr)
+        if result == self.front:
+            self.searchstall += 1
+            # losing rank
+            self.searchrank[searcher] = max(1, self.searchrank[searcher] // 2)
+            self.searchfillrank[helper] = max(1, self.searchfillrank[helper] // 2)            
+            if details:
+                print(f'The front is stable; stall counter {self.searchstall}/{self.maxsearch}')
+            return False # no change
+        else:
+            self.front = result # update the front
+            if details:
+                self.check() # used when debugging to make sure none are dominated
+            self.searchstall //= 2 # lower the counter
+            # compare against ORIGINAL front
+            adj = round(sum([ score(s, curr) for s in local] )/ len(local))
+            if adj > 0: # these heuristics gain rank
+                self.searchrank[searcher] += adj
+                self.searchfillrank[helper] += adj
+                if details:
+                    display(self.searchrank, 'Search ranks')
+                    display(self.searchfillrank, 'Fill ranks')
+            if details:
+                print(f'Altered the Pareto front')
+                for s in result:
+                    print('F', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
+            return True # alteration
+
+    def update(self, altered):
+        if self.shaker is None:
+            # no shake rank changes when there was no shaking
+            return
+        if altered > 0:
+            self.shakestall = 0 # reset shaking                
+            self.shakerank[self.shaker] += altered # gain rank
+            self.shakefillrank[self.filler] += altered # gain rank
+            if details: 
+                display(self.shakerank, 'Shake ranks')
+                f = len(self.front)
+                pl = 's' if f > 1 else ''
+                if self.shaker is not None:
+                    print(f'After {self.shaker.__name__}, the front has {f} non-dominated solution{pl}')
+                else:
+                    print(f'Initialized a front with {f} non-dominated solution{pl}')                
+        else: # no front changes occured
+            self.shakestall += 1 # stalled, lower ranks
+            self.shakerank[self.shaker] = max(1, self.shakerank[self.shaker] // 2)
+            self.shakefillrank[self.filler] = max(1, self.shakefillrank[self.filler] // 2)
+            if details:
+                print(f'Using {self.shaker.__name__} resulted in no front alterations')
+ 
     def search(self, shaken):
-        if details and self.shaker is None:
+        if self.shaker is None:
             print(f'Executing local search on the initial solutions')
-        lstall = 0 # search stall counter resets each stage
+        self.searchstall = 0 # search stall counter resets each stage
         ok = True # whether the time limit is respected
         altered = 0 # how many times the front changes
-        while lstall < self.maxsearch: # while not stalled
+        for i in range(self.maxiter): # permitted iterations
             if time() - self.start > self.limit: 
                 if verbose:
                     print('Out of time while searching')
                 ok = False # no time left
                 break
             local = set() # gather the variants here
-            searcher = self.pick(self.searchrank) # pick a search heuristic
-            helper = self.pick(self.fillrank) # a fill one, too
+            searcher = pick(self.searchrank, self.searchusage) # pick a search heuristic
+            helper = pick(self.searchfillrank, self.searchusage) # a fill one, too
             if details:
                 print(f'Using {searcher.__name__} to search and {helper.__name__} to fill')
-            repetitions = max(2, self.goal - (len(self.front) if self.front is not None else 0))
+            present = len(self.front) if self.front is not None else 0
+            repetitions = max(self.goal - present, 1)
             for sol in shaken:
                 for r in range(repetitions):                
                     neighbor = searcher(sol) # create an alternative solution
                     neighbor.fix() #  ensure feasibility
                     helper(neighbor) # fill it
                     local.add(neighbor) # record it
-            k = len(local) # check how many there are
-            stalled = True
-            if k > 0: # examine them
-                # combine and prune
-                curr = self.front if self.front is not None else set()
-                result = prune(local | curr)
-                if result == self.front:
-                    lstall += 1
-                    if details:
-                        print(f'The Pareto front did not change; stall counter {lstall}/{self.maxsearch}')
-                    # losing rank
-                    self.searchrank[searcher] = max(1, self.searchrank[searcher] // 2)
-                    self.fillrank[helper] = max(1, self.fillrank[helper] // 2)
-                else:
-                    self.front = result # update the front                    
-                    # compare against ORIGINAL front
-                    adj = round(sum([ score(s, curr) for s in local] )/ len(local))
-                    if adj > 0: # these heuristics gain rank
-                        self.searchrank[searcher] += adj
-                        self.fillrank[helper] += adj
-                    display(self.searchrank, 'Search ranks')
-                    display(self.fillrank, 'Fill ranks')
-                    lstall = 0 # reset the counter
-                    altered += 1 # the front has changed
-                    if details:
-                        print(f'Altered the Pareto front')
-                        for s in result:
-                            print('F', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
-                        for s in curr:
-                            print('C', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
-                        for s in local:
-                            print('L', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
-        if altered > 0:
-            if self.shaker is not None:
-                self.shakerank[self.shaker] += altered # gain rank
-                display(self.shakerank, 'Shake ranks')
-                self.stall = 0 # reset shaking
-            if details:
-                f = len(self.front)
-                pl = 's' if f > 1 else ''
-                if self.shaker is not None:
-                    print(f'After shaking with {self.shaker.__name__}, the front has {f} non-dominated solution{pl}')
-                else:
-                    print(f'The initial solutions gave rise to a front with {f} non-dominated solution{pl}')                
-        elif self.shaker is not None:
-            if details:
-                print(f'Shaking with {self.shaker.__name__} resulted in no alterations of the front')
-            self.stall += 1
-            self.shakerank[self.shaker] = max(1, self.shakerank[self.shaker] // 2)
+            altered += self.assess(local, searcher, helper)
+            if self.searchstall == self.maxsearch: # stalled
+                if verbose:
+                    print('Searching has stalled')                
+                break
+        self.update(altered)
         return ok
         
     def step(self, printout):
         self.search(self.shake())
         if printout: # if output is requested
             self.output()
-        progress = self.stall < self.maxshake
+        progress = self.shakestall < self.maxshake
         if not progress:
             print(f'Shaking has stalled')
         fast = time() - self.start < self.limit
@@ -549,16 +583,16 @@ class Adjustment():
     def run(self):
         o = 1
         for i in range(self.maxiter):
-            k = len(self.front)
-            pl = 's' if k > 1 else ''
-            if details:
-                print(f'Iteration {i+1} with {k} non-dominated solution{pl}')
-            out = i == o
-            if out: # output on iterations that are powers of two
-                print(f'w;{i}', file = self.target)
-                if details:
-                    print(f'Iteration {i} of {self.maxiter}')
-                o *= 2
+            if verbose:
+                k = len(self.front)
+                pl = 's' if k > 1 else ''
+                print(f'Iteration {i+1} starts with {k} non-dominated solution{pl}')
+            out = (i + 1) == o
+            if i == out: # output on iterations that are powers of two
+                print(f'w;{i + 1}', file = self.target)
+                # progress indication print-out
+                print(f'Iteration {i + 1} of {self.maxiter}', file = stderr)
+                o *= 2            
             if not self.step(out):
                 self.postprocess(i)
                 return

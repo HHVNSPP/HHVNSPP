@@ -60,7 +60,7 @@ class Activity():
             i.append(rate) 
         return i
 
-    def disactivate(self, assignment):
+    def deactivate(self, assignment):
         if self in assignment:
             del assignment[self]
 
@@ -148,9 +148,9 @@ class Project():
         assigned =  amount - available
         return assigned
 
-    def disactivate(self, assignment):
+    def deactivate(self, assignment):
         for a in self.tasks:
-            a.disactivate(assignment)
+            a.deactivate(assignment)
             
     def impact(self, assignment, partial, fraction = 0.3):
         k = len(self.pot)
@@ -161,7 +161,7 @@ class Project():
                 if partial[pos]:
                     pi[pos] += imp[pos] * self.pot[pos]
                 else:
-                    pi[pos] = max(pi[pos], 1 * imp[pos])
+                    pi[pos] = max(pi[pos], imp[pos] * self.pot[pos])
         return pi
                 
     def update(self):
@@ -211,8 +211,8 @@ class Group():
         return self.upper is None or self.assigned(a) <= self.upper
 
     def bounds(self, a):
-        if not self.feasible(a):
-            print('G: {self.lower:.0f} <= {self.assigned(a):.0f} <= {self.upper:.0f}')
+        ok = 'OK' if self.feasible(a) else 'NO'
+        print(f'G {ok}: {self.lower:.0f} <= {self.assigned(a):.0f} <= {self.upper:.0f}')
         
     def feasible(self, a):
         t = self.assigned(a)
