@@ -9,6 +9,16 @@ from random import shuffle, choice, randint
 verbose = True
 details = False
 
+def display(d, title):
+    if max(d.values()) > 1:
+        nonunit = list()
+        for k in d:
+            v = d[k]
+            if v > 1:
+                nonunit.append(f'{k.__name__} = {v}')
+        lst = '\n'.join(nonunit)
+        print(f'{title}:\n{lst}')
+
 def roulette(rank):
     candidates = list(rank.keys())
     total = sum(rank.values())
@@ -80,103 +90,252 @@ def prune(included):
 
 # Shake heuristics
 
-def swapRandom(sol):
-    return sol.swap()
+def swapRandom(original):
+    shaken = original.swap()
+    if details:
+        print(f'Shake swapRandom\n{original.included()}\n{shaken.included()}')
+    return shaken
 
-def swapQuarter(sol):
-    return sol.swap(count = 1/4)
+def swapQuarter(original):
+    shaken = original.swap(count = 1/4)
+    if details:
+        print(f'Shake swapQuarter\n{original.included()}\n{shaken.included()}')
+    return shaken    
 
-def swapThird(sol):
-    return sol.swap(count = 1/3)
+def swapThird(original):
+    shaken = original.swap(count = 1/3)
+    if details:
+        print(f'Shake swapThird\n{original.included()}\n{shaken.included()}')
+    return shaken
 
-def swapHalf(sol):
-    return sol.swap(count = 1/2)
+def swapHalf(original):
+    shaken = original.swap(count = 1/2)
+    if details:
+        print(f'Shake swapHalf\n{original.included()}\n{shaken.included()}')
+    return shaken
 
-def swapGroup(sol):
-    return sol.swap(count = 0)
+def swapGroup(original):
+    shaken = original.swap(count = 0)
+    if details:
+        print(f'Shake swapGroup\n{original.included()}\n{shaken.included()}')
+    return shaken
 
-def swapAll(sol):
-    return sol.swap(count = -1)
-
-SHAKE = [ swapRandom, swapQuarter, swapThird, swapHalf, swapAll, swapGroup ]
+SHAKE = [ swapRandom, swapQuarter, swapThird, swapHalf, swapGroup ]
 
 # Local search heuristics
 
-def swapOne(sol):
-    return sol.swap(count = 1)
+def swapOne(original):
+    neighbor = original.swap(count = 1)
+    if details:
+        print(f'Search swapOne\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def inclRnd(sol):
-    return sol.add()
+def inclRndMin(original):
+    neighbor = original.add(level = MINIMUM)
+    if details:
+        print(f'Search inclRndMin\n{original.included()}\n{neighbor.included()}')
+    return neighbor
 
-def exclRnd(sol):
-    return sol.remove()
+def inclRndMax(original):
+    neighbor = original.add(level = MAXIMUM)
+    if details:
+        print(f'Search inclRndMax\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def inclLow(sol):  
-    return sol.fitExtreme(high = False)
-    
-def inclHigh(sol):
-    return sol.fitExtreme()
+def inclRndRnd(original):
+    neighbor = original.add(level = RANDOM)
+    if details:
+        print(f'Search inclRndRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor
 
-def exclHigh(sol):
-    return sol.dropExtreme()
+def exclRnd(original):
+    neighbor = original.remove()
+    if details:
+        print(f'Search exclRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def exclLow(sol):
-    return sol.dropExtreme(high = False)
+def inclLowMin(original):  
+    neighbor = original.fitExtreme(high = False, level = MINIMUM)
+    if details:
+        print(f'Search inclLowMin\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def lowRnd(sol):
-    return sol.rand(level = 0)
+def inclLowMax(original):  
+    neighbor = original.fitExtreme(high = False, level = MAXIMUM)
+    if details:
+        print(f'Search inclLowMax\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def highRnd(sol):
-    return sol.rand(level = 1)
+def inclLowRnd(original):  
+    neighbor = original.fitExtreme(high = False, level = RANDOM)
+    if details:
+        print(f'Search inclLowRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def fundRnd(sol):
-    return sol.rand(level = -1)
+def inclHighMin(original):
+    neighbor = original.fitExtreme(high = True, level = MINIMUM)
+    if details:
+        print(f'Search inclHighMin\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def inclHighMax(original):
+    neighbor = original.fitExtreme(high = True, level = MAXIMUM)
+    if details:
+        print(f'Search inclHighMax\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def inclHighRnd(original):
+    neighbor = original.fitExtreme(high = True, level = RANDOM)
+    if details:
+        print(f'Search inclHighRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def exclHigh(original):
+    neighbor = original.dropExtreme()
+    if details: # the change is best seen in the assignment
+        print(f'Search exclHigh\n{original.allocation()}\n{neighbor.allocation()}')
+    return neighbor    
+
+def exclLow(original):
+    neighbor = original.dropExtreme(high = False)
+    if details:
+        print(f'Search exclLow\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def fundAtMin(original):
+    neighbor = original.alter(MINIMUM)
+    if details: # it is the amount that may change, not the activation
+        print(f'Search fundAtMin\n{original.evaluate()}\n{neighbor.evaluate()}')
+    return neighbor    
+
+def fundAtMax(original):
+    neighbor = original.alter(MAXIMUM)
+    if details: # it is the amount that may change, not the activation
+        print(f'Search fundAtMax\n{original.evaluate()}\n{neighbor.evaluate()}')
+    return neighbor    
+
+def fundAtRnd(original):
+    neighbor = original.alter(RANDOM)
+    if details: # it is the amount that may change, not the activation
+        print(f'Search fundAtRnd\n{original.evaluate()}\n{neighbor.evaluate()}')
+    return neighbor    
 
 ## Group-level local search heuristics
 
-def incrGroup(sol):
-    return sol.modGroup(decr = False)
-    
-def decrGroup(sol):  
-    return sol.modGroup()
+def inflGrMin(original):
+    neighbor = original.modify(high = True, level = MINIMUM)
+    if details:
+        print(f'Search inflGrMin\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-def alterGroup(sol):
-    return sol.alterGroup()
+def inflGrMax(original):
+    neighbor = original.modify(high = True, level = MAXIMUM)
+    if details:
+        print(f'Search inflGrMax\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
 
-LOCAL = [ swapOne, inclRnd, exclRnd, 
-          inclLow, inclHigh, exclLow, exclHigh,
-          lowRnd, highRnd, fundRnd,
-          incrGroup, decrGroup, alterGroup ]
+def inflGrRnd(original):
+    neighbor = original.modify(high = True, level = RANDOM)
+    if details:
+        print(f'Search inflGrRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def deflGrMin(original):  
+    neighbor = original.modify(high = False, level = MINIMUM)
+    if details:
+        print(f'Search deflGrMin\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def deflGrMax(original):  
+    neighbor = original.modify(high = False, level = MAXIMUM)
+    if details:
+        print(f'Search deflGrMax\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def deflGrRnd(original):  
+    neighbor = original.modify(high = False, level = RANDOM)
+    if details:
+        print(f'Search deflGrRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+def exchGrMin(original):
+    neighbor = original.exchange(level = MINIMUM)
+    if details:
+        print(f'Search exchGrMin\n{original.included()}\n{neighbor.included()}')
+    return neighbor
+
+def exchGrMax(original):
+    neighbor = original.exchange(level = MAXIMUM)
+    if details:
+        print(f'Search exchGrMax\n{original.included()}\n{neighbor.included()}')
+    return neighbor
+
+def exchGrRnd(original):
+    neighbor = original.exchange(level = RANDOM)
+    if details:
+        print(f'Search exchGrRnd\n{original.included()}\n{neighbor.included()}')
+    return neighbor    
+
+LOCAL = [ swapOne,
+          inclRndMin, inclRndMax, inclRndRnd,
+          inclLowMin, inclLowMax, inclLowRnd,
+          inclHighMin, inclHighMax, inclHighRnd,
+          fundAtMin, fundAtMax, fundAtRnd,
+          exclRnd, exclLow, exclHigh,
+          inflGrMin, inflGrMax, inflGrRnd,
+          deflGrMin, deflGrMax, deflGrRnd,
+          exchGrMin, exchGrMax, exchGrRnd ]
 
 # Fill (budget-exhausting) heuristics
 
 from solution import MINIMUM, MAXIMUM, RANDOM
 
-def fillIncrMin(sol):
+def incrMin(sol):
+    if details:
+        print(f'Fill incrMin\n{sol.included()}')
     sol.fill(level = MINIMUM, active = False, sort = True)
+    if details:
+        print(sol.included())
      
-def fillIncrMax(sol):
+def incrMax(sol):
+    if details:
+        print(f'Fill incrMax\n{sol.included()}')
     sol.fill(level = MAXIMUM, active = False, sort = True)
+    if details:
+        print(sol.included())
     
-def fillIncrRnd(sol):
+def incrRnd(sol):
+    if details:
+        print(f'Fill incrRnd\n{sol.included()}')
     sol.fill(level = RANDOM, active = False, sort = True)
+    if details:
+        print(sol.included())    
 
-def fillRndMin(sol):
+def rndMin(sol):
+    if details:
+        print(f'Fill rndMin\n{sol.included()}')
     sol.fill(level = MINIMUM, active = False, sort = False)
+    if details:
+        print(sol.included())    
 
-def fillRndMax(sol):
+def rndMax(sol):
+    if details:
+        print(f'Fill rndMax\n{sol.included()}')
     sol.fill(level = MAXIMUM, active = False, sort = False)
+    if details:
+        print(sol.included())
 
-def fillRndRnd(sol):
+def rndRnd(sol):
+    if details:
+        print(f'Fill rndRnd\n{sol.included()}')
     sol.fill(level = RANDOM, active = False, sort = False)
+    if details:
+        print(sol.included())
     
-def fillLift(sol):
-    sol.fill(level = MAXIMUM, active = True, sort = False)
+FILL = [ incrMin, incrMax, incrRnd, \
+         rndMin, rndMax, rndRnd ]
 
-FILL = [ fillIncrMin, fillIncrMax, fillIncrRnd, \
-         fillRndMin, fillRndMax, fillRndRnd ]
-
-def score(alt, orig, big = 1, intermediate = 0.2, small = 0.1):
+def score(alt, orig, big = 2, intermediate = 0.5, small = 0.1):
     a = 0
     for s in orig:
         comp = compare(alt, s)
@@ -198,15 +357,15 @@ class Adjustment():
         self.limit = sec * n # seconds per project
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
-        self.goal = 10 # how many solutions we would like to have in the front at minimum
+        self.goal = 5 # how many solutions we would like to have in the front at minimum
         self.maxiter = 2 * seed
         if verbose:
             print(f'Executing at most {self.maxiter} iterations')        
         self.stall = 0 # executions with no improvement
         # shake stall
-        self.maxshake = len(SHAKE) + self.maxiter // 2
-        # search stall maximum        
-        self.maxsearch = max([ len(LOCAL), len(FILL) ]) + self.maxiter // 8 
+        self.maxshake = 3 * len(SHAKE)
+        # search stall maximum
+        self.maxsearch = len(LOCAL) + len(FILL)
         if verbose:
             print(f'Stall limit is {self.maxshake} for shake and {self.maxsearch} for search')                
         self.target = t
@@ -214,7 +373,8 @@ class Adjustment():
         self.shakerank = { h : 1 for h in SHAKE } # initial unit shake ranks
         self.searchrank = { h : 1 for h in LOCAL } # initial unit search ranks
         self.fillrank = { h : 1 for h in FILL } # initial unit fill ranks
-        self.chosen = None # last used shake heuristic
+        self.shaker = None # last used shake heuristic
+        self.filler = None # last used fill heuristic
         # larger fronts are easier to get with multiple objectives
         # more objectives -> less initial solutions        
         if verbose:
@@ -234,8 +394,9 @@ class Adjustment():
         if verbose:
             print(f'Final front size {len(sol)}')
             print(f'Took {t:.0f} seconds of the {self.limit} permitted')
-            for s in sol:
-                print(s.included(), s.evaluate())
+            if details:
+                for s in sol:
+                    print(s.included(), s.evaluate())
         evaluation = np.matrix([ s.evaluate() for s in sol ])
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
@@ -274,32 +435,34 @@ class Adjustment():
         return h
             
     def shake(self):
-        self.chosen = self.pick(self.shakerank)
+        self.shaker = self.pick(self.shakerank)
+        self.filler = self.pick(self.fillrank)
         shaken = set()
         repetitions = max(2, self.goal - (len(self.front) if self.front is not None else 0))
         for s in self.front:
             for r in range(repetitions):
-                result = self.chosen(s) # shake it
-                result.fix() # make it feasible
-                fillLift(result) # fill it (fixed rule)
+                result = self.shaker(s) # shake it
                 if details:
-                    print(result.included(), result.evaluate())
+                    print(r, result.included(), result.allocation())
+                result.fix() # make feasible
+                self.filler(result)
                 shaken.add(result)
         k = len(shaken)
         pl = 's' if k > 1 else ''
-        print(f'Shaking with {self.chosen.__name__} yielded {k} alternative{pl}')
         if details:
+            print(f'Shaking with {self.shaker.__name__} yielded {k} alternative{pl}')
             for s in shaken:
                 print(s.included())
         missing = 2 * self.goal - k
         if missing > 0: # too few, add new random solutions
             shaken |= set([ Solution(self.portfolio) for s in range(missing) ])
-            pl = 's' if missing > 1 else ''            
-            print(f'Adding {missing} new solution{pl}')            
+            if details:
+                pl = 's' if missing > 1 else ''            
+                print(f'Adding {missing} new solution{pl}')            
         return shaken # note that these may be INFEASIBLE
 
     def search(self, shaken):
-        if self.chosen is None:
+        if details and self.shaker is None:
             print(f'Executing local search on the initial solutions')
         lstall = 0 # search stall counter resets each stage
         ok = True # whether the time limit is respected
@@ -311,16 +474,17 @@ class Adjustment():
                 ok = False # no time left
                 break
             local = set() # gather the variants here
-            lsh = self.pick(self.searchrank) # pick a search heuristic
-            fh = self.pick(self.fillrank) # a fill one, too
-            print(f'Using {lsh.__name__} to search and {fh.__name__} to fill')
+            searcher = self.pick(self.searchrank) # pick a search heuristic
+            helper = self.pick(self.fillrank) # a fill one, too
+            if details:
+                print(f'Using {searcher.__name__} to search and {helper.__name__} to fill')
             repetitions = max(2, self.goal - (len(self.front) if self.front is not None else 0))
             for sol in shaken:
                 for r in range(repetitions):                
-                    ls = lsh(sol) # create an alternative solution
-                    ls.fix() #  ensure feasibility
-                    fh(ls) # fill it
-                    local.add(ls) # record it
+                    neighbor = searcher(sol) # create an alternative solution
+                    neighbor.fix() #  ensure feasibility
+                    helper(neighbor) # fill it
+                    local.add(neighbor) # record it
             k = len(local) # check how many there are
             stalled = True
             if k > 0: # examine them
@@ -329,47 +493,47 @@ class Adjustment():
                 result = prune(local | curr)
                 if result == self.front:
                     lstall += 1
-                    print(f'The Pareto front did not change; stall counter {lstall}/{self.maxsearch}')
+                    if details:
+                        print(f'The Pareto front did not change; stall counter {lstall}/{self.maxsearch}')
                     # losing rank
-                    self.searchrank[lsh] = max(1, self.searchrank[lsh] // 2)
-                    self.fillrank[fh] = max(1, self.fillrank[fh] // 2)
+                    self.searchrank[searcher] = max(1, self.searchrank[searcher] // 2)
+                    self.fillrank[helper] = max(1, self.fillrank[helper] // 2)
                 else:
                     self.front = result # update the front                    
                     # compare against ORIGINAL front
-                    adj = sum([ score(s, curr) for s in local] )
+                    adj = round(sum([ score(s, curr) for s in local] )/ len(local))
                     if adj > 0: # these heuristics gain rank
-                        self.searchrank[lsh] += adj
-                        self.fillrank[fh] += adj
-                    lst = '\n'.join([ f'{k.__name__} = {v}' for k, v in self.searchrank.items() ])
-                    print(f'Search ranks:\n{lst}')
-                    lst = '\n'.join([ f'{k.__name__} = {v}'  for k, v in self.fillrank.items() ])
-                    print(f'Fill ranks:\n{lst}')
+                        self.searchrank[searcher] += adj
+                        self.fillrank[helper] += adj
+                    display(self.searchrank, 'Search ranks')
+                    display(self.fillrank, 'Fill ranks')
                     lstall = 0 # reset the counter
                     altered += 1 # the front has changed
-                    print(f'Altered the Pareto front')
-                    for s in result:
-                        print('F', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
-                    if details: 
+                    if details:
+                        print(f'Altered the Pareto front')
+                        for s in result:
+                            print('F', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
                         for s in curr:
                             print('C', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
                         for s in local:
                             print('L', s.included(), ' '.join([ f'{v:.0f}' for v in s.evaluate() ]))
         if altered > 0:
-            if self.chosen is not None:
-                self.shakerank[self.chosen] += altered # gain rank
-                lst = '\n'.join([ f'{k.__name__} = {v}' for k, v in self.shakerank.items() ])
-                print(f'Shake ranks:\n{lst}') 
+            if self.shaker is not None:
+                self.shakerank[self.shaker] += altered # gain rank
+                display(self.shakerank, 'Shake ranks')
                 self.stall = 0 # reset shaking
-            f = len(self.front)
-            pl = 's' if f > 1 else ''
-            if self.chosen is not None:
-                print(f'After shaking with {self.chosen.__name__}, the front has {f} non-dominated solution{pl}')
-            else:
-                print(f'The initial solutions gave rise to a front with {f} non-dominated solution{pl}')                
-        elif self.chosen is not None:
-            print(f'Shaking with {self.chosen.__name__} resulted in no alterations of the front')
+            if details:
+                f = len(self.front)
+                pl = 's' if f > 1 else ''
+                if self.shaker is not None:
+                    print(f'After shaking with {self.shaker.__name__}, the front has {f} non-dominated solution{pl}')
+                else:
+                    print(f'The initial solutions gave rise to a front with {f} non-dominated solution{pl}')                
+        elif self.shaker is not None:
+            if details:
+                print(f'Shaking with {self.shaker.__name__} resulted in no alterations of the front')
             self.stall += 1
-            self.shakerank[self.chosen] = max(1, self.shakerank[self.chosen] // 2)
+            self.shakerank[self.shaker] = max(1, self.shakerank[self.shaker] // 2)
         return ok
         
     def step(self, printout):
@@ -387,7 +551,8 @@ class Adjustment():
         for i in range(self.maxiter):
             k = len(self.front)
             pl = 's' if k > 1 else ''
-            print(f'Iteration {i+1} with {k} non-dominated solution{pl}')
+            if details:
+                print(f'Iteration {i+1} with {k} non-dominated solution{pl}')
             out = i == o
             if out: # output on iterations that are powers of two
                 print(f'w;{i}', file = self.target)

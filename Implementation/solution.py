@@ -1,10 +1,16 @@
 import operator
-from math import ceil, log
+from math import ceil, log, fabs
 from random import random, choice, shuffle, sample
 
 MINIMUM = 0
 MAXIMUM = 1
-RANDOM = 1
+RANDOM = 2
+
+# comparing floating-point numbers for equality
+# is in general a poor choice; in this scenario,
+# we are not interested in tiny changes
+def differ(one, another, precision):
+    return fabs(one - another) > precision
 
 class Solution():
 
@@ -112,37 +118,53 @@ class Solution():
             chosen = choice(list(opt))
         return chosen
                 
-    def alterGroup(self, level = 0):
-        if len(self.portfolio.groups) > 1:
-            other = self.clone()
-            gr = sample(self.portfolio.groups, 2) # any two groups
-            other.disactivate(self.select(gr[0].members)) # exclude
-            other.activate(self.select(gr[1].members, active = False)) #include
-            return other
-        return self # cannot be done
-
-    def modGroup(self, decr = True):
-        p = choice(choice(self.portfolio.partitions)) # areas or regions
-        gr = p.members
-        act = self.actives()
-        exiting = list(act & gr)
-        ia = set(self.portfolio.projects) - act
-        entering = list(ia & gr)
+    def modify(self, level = MINIMUM, high = True):
         other = self.clone()
-        for first in entering:
-            for second in exiting:
-                above = self.allocation() > second.minBudget
-                if (decr and above) or (not decr and not above):
-                    other.disactivate(first)
-                    other.activate(second)
-                    return other
-        return self # was not possible to perform
+        group  = choice(self.portfolio.groups)
+        act = self.actives() & group.members
+        if len(act) == 0:
+            return self # cannot be done
+        leaving = choice(list(act)) # this leaves
+        amount = leaving.assigned(self.assignment) # how much it had
+        other = self.clone()
+        other.disactivate(leaving) # unfund
+        inact = group.members - act # presently unfunded
+        target = None
+        for peer in inact:
+            if (high and peer.maxBudget > amount) or \
+               (not high and peer.minBudget < amount): 
+                target = peer
+                break
+        if target is not None:
+            other.activate(target, level)
+        return other
+
+    def exchange(self, level = MINIMUM):
+        p = choice(self.portfolio.partitions) # areas or regions
+        chosen = sample(p, 2) # two groups of the same kind
+        losing = chosen[0].members
+        act = self.actives() # actives overall
+        candidates = act & losing # actives on the losing side
+        if len(candidates) == 0:
+            return self # cannot be done
+        other = self.clone()
+        other.disactivate(choice(list(candidates))) # removed
+        gaining = chosen[1].members
+        candidates = gaining - act # inactives on the gaining side
+        if len(candidates) > 0:
+            other.activate(choice(list(candidates)), level = level)
+        return other
     
     def extreme(self, high = True, active = True):
-        prices = {p:  p.minBudget for p in (self.inactives() \
-                                            if not active else self.actives())}
-        if len(prices) == 0: # no candidates
-            return (None, None)
+        candidates = self.inactives() if not active else self.actives()
+        if len(candidates) == 0:
+            return (None, None) # nothing can be done
+        # for the unfunded, we look at the budget; for the funded, we look at the funds assigned
+        prices = None
+        if active:
+            prices = { p: p.assigned(self.assignment) for p in candidates }
+        else: # inactive, we use the minimum or the maximum budget
+            prices = { p: p.maxBudget if high else p.minBudget for p in candidates }             
         most = max(prices.items(), key = operator.itemgetter(1))[0]
         return (most, prices.get(most, None))
 
@@ -153,23 +175,26 @@ class Solution():
         alt = self.clone()
         alt.disactivate(most)
         return alt
-    
-    def rand(self, level = 0):
-        target = None
-        if level != -1:
-            (target, price) = self.extreme(high = (level == 1))
-        else: # random one
-            cand = self.actives(aslist = True)
-            if len(cand) > 0:
-                target = choice(cand)
-        if target is None:
-            return self # nothing can be done            
-        alt = self.clone()
-        alt.disactivate(target) # reset funding
-        alt.activate(target, level = 2) # set a random level
-        return alt
 
-    def fitExtreme(self, high = True):
+    def alter(self, level):
+        cand = self.actives(aslist = True)
+        margin = self.remaining()        
+        for target in cand:
+            current = target.assigned(self.assignment)
+            goal = 0
+            if level == MAXIMUM:
+                goal = target.maxBudget
+            elif level == MINIMUM:
+                goal = target.minBudget
+            if level == RANDOM or differ(current, goal, 0.1):
+                if goal < margin + current: # will be possible to assign
+                    alt = self.clone() 
+                    alt.disactivate(target) # reset funding
+                    alt.activate(target, level = level) # assign funds
+                    return alt
+        return self # discard the clone, no changes were made
+
+    def fitExtreme(self, high = True, level = MINIMUM):
         other = self.clone()
         (most, price) = self.extreme(high = high, active = False)
         if most is None:
@@ -179,7 +204,7 @@ class Solution():
             if len(cand) == 0:
                 return self # modification unsuccessfull
             other.disactivate(choice(cand))
-        other.activate(most, price) # it fits now
+        other.activate(most, level = level) # it fits now
         return other
 
     def actives(self, aslist = False):
@@ -195,7 +220,7 @@ class Solution():
         else:
             return set(self.portfolio.projects) - self.actives()
         
-    def add(self, level = 0):
+    def add(self, level = MINIMUM):
         other = self.clone()
         cand = self.inactives(aslist = True)
         if len(cand) == 0:
@@ -214,19 +239,18 @@ class Solution():
         other.disactivate(p)
         return other
     
-    def swap(self, count = None, level = 0):
+    def swap(self, count = None, level = MINIMUM):
         selection = None
-        if count is not None and count < 1: # swap all
-            selection = set(self.portfolio.projects)
-        else: # swap some
-            selection = set(self.portfolio.sample(count)) \
-                if count is not None else self.portfolio.random()
+        if count is None:
+            selection = self.portfolio.random()
+        else:
+            selection = set(self.portfolio.sample(count))
         other = self.clone() # another solution
         exiting = selection & self.actives()
         entering = list(selection - exiting)
-        shuffle(entering) # in random order
-        for p in exiting: # liberate funds
+        for p in exiting: # liberate funds (these are always the same)
             other.disactivate(p) # unfund 
+        shuffle(entering) # fund in random order
         for p in entering:
             other.activate(p, level)
         return other 

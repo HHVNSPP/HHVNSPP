@@ -4,7 +4,7 @@ from parser import loadA, loadB, loadC
 from portfolio import Portfolio, Project, Activity, Synergy
 
 verbose = True
-replicas = 30 if not verbose else 1 # testing with just one
+replicas = 30 if not verbose else 3 # testing with less
 prefixes = [ 'P', 'o', 'm' ] # we conserve the filenames of the cited authors 
 filetypes = [ '.dat', '.txt', '.txt' ] # however inconsistent those may be
 load = { 'A': loadA, 'B': loadB, 'C': loadC } # parsing routines

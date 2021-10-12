@@ -93,9 +93,9 @@ class Project():
         pot = '|'.join([ str(p) for p in self.pot ])
         k = len(self.tasks)
         act = f'({k})' if k > 0 else ''
-        r = f'={self.minBudget}'
+        r = f'={self.minBudget:.2f}'
         if  self.minBudget < self.maxBudget:        
-            r = f'=[{self.minBudget:.0f}, {self.maxBudget:.0f}]'
+            r = f'=[{self.minBudget:.2f}, {self.maxBudget:.2f}]'
         return 'P' + r + act + pot
 
     def assigned(self, assignment):
@@ -246,6 +246,8 @@ class Portfolio():
         self.order = None
         self.partitions = part
         self.groups = list()
+        for p in self.partitions: # make a list of the groups for ease of access
+            self.groups += p
         self.synergies = s
 
     def included(self, active):
@@ -271,7 +273,11 @@ class Portfolio():
         if count < 1: # expressed as a fraction
             count *= len(self.projects)
             count = int(ceil(count)) # an integer (rounded up)
-        return sample(self.projects, count)
+        included = list()
+        for i in self.permutation()[:count]:
+            included.append(self.projects[i])
+        assert len(included) == count
+        return included
     
     def random(self):
         chosen = set()
