@@ -335,7 +335,7 @@ def rndRnd(sol):
 FILL = [ incrMin, incrMax, incrRnd, \
          rndMin, rndMax, rndRnd ]
 
-def score(alt, orig, big = 2, intermediate = 0.5, small = 0.1):
+def score(alt, orig, big = 4, intermediate = 2, small = 1):
     a = 0
     for s in orig:
         comp = compare(alt, s)
