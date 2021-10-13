@@ -386,7 +386,7 @@ class Adjustment():
         self.limit = sec * n * k # maximum permitted runtime
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
-        self.goal = 10 # goal for the front size
+        self.goal = 5 # goal for the front size
         self.maxiter = it # maximum permitted iterations
         f = len(FILL) # how many fill heuristics are there
         self.maxshake = len(SHAKE) + f # permitted stall while shaking
@@ -410,18 +410,18 @@ class Adjustment():
     def postprocess(self, i):
         if details:
             self.check()
+        t = time() - self.start
         if verbose:
             pl = 's' if i > 0 else ''
-            print(f'Terminated after {i+1} iteration{pl}', file = stderr) 
-        t = time() - self.start
-        print(f'final;{t}/{self.limit};{i}/{self.maxiter};{self.shakestall}/{self.maxshake}', file = self.target)
+            print(f'{t:.0f} / {self.limit} seconds', file = stderr)            
+            print(f'{i} / {self.maxiter} iterations', file = stderr)            
+            print(f'{self.shakestall} / {self.maxshake} shake stall', file = stderr)
+            print(f'{len(self.front)} / {self.goal} front size', file = stderr)            
+        print(f'final;{t:.3f}/{self.limit};{i}/{self.maxiter};{self.shakestall}/{self.maxshake}', file = self.target)
         sol = list(self.front)
-        if verbose:
-            print(f'Final front size {len(sol)}')
-            print(f'Took {t:.0f} seconds of the {self.limit} permitted')
-            if details:
-                for s in sol:
-                    print(s.included(), s.evaluate())
+        if details:
+            for s in sol:
+                print(s.included(), s.evaluate())
         evaluation = np.matrix([ s.evaluate() for s in sol ])
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
@@ -449,7 +449,8 @@ class Adjustment():
     def select(self):
         k = len(self.front)
         if k <= self.goal:
-            return self.front
+            return self.front # use all if not many
+        # downsample if more than needed
         return sample(list(self.front), self.goal)
         
     def shake(self):
@@ -457,22 +458,22 @@ class Adjustment():
         self.filler = pick(self.shakefillrank, self.shakeusage)
         shaken = set()
         repetitions = max(1, self.goal - (len(self.front) if self.front is not None else 0))
-        for s in self.select(): # a random sample of solutions to shake
-            for r in range(repetitions):
-                result = self.shaker(s) # shake it
+        for s in self.select(): # shake some of the front for diversity
+            for r in range(repetitions): # repeat when the front is small
+                result = self.shaker(s) # shake the solution
                 if details:
                     print(r, result.included(), result.allocation())
                 result.fix() # make it feasible
                 self.filler(result) # fill it
-                shaken.add(result)
-        k = len(shaken)
+                shaken.add(result) # record it
+        k = len(shaken) # how many are there
         if details:
             pl = 's' if k > 1 else ''
             print(f'Shaking with {self.shaker.__name__} yielded {k} alternative{pl}')
             for s in shaken:
                 print(s.included())
-        missing = self.goal - k
-        if missing > 0: # too few, add new random solutions 
+        missing = self.goal - k # check if there are too few
+        if missing > 0: # if so, generate new random solutions 
             shaken |= set([ Solution(self.portfolio) for s in range(missing) ])
             pl = 's' if missing > 1 else ''            
             print(f'Added {missing} new solution{pl}')            
