@@ -1,4 +1,5 @@
 import os
+from sys import stderr
 from tools import Adjustment
 from parser import loadA, loadB, loadC
 from portfolio import Portfolio, Project, Activity, Synergy
@@ -14,16 +15,12 @@ for s in 'ABC':
     output = f'../Results/{s}/'
     prefix = prefixes.pop(0)
     ending = filetypes.pop(0)
-    if verbose:
-        print('Scanning for problem instances in', directory)
     for filename in os.listdir(directory):
         if filename.startswith(prefix) and filename.endswith(ending):
             instance = directory + filename
-            if verbose:
-                print(f'Processing instance {instance}')
             portfolio = load[s](instance)
             n = len(portfolio.projects)
             for r in range(1, replicas + 1):
-                print(f'Executing replica {r} for {filename} in {directory}')
+                print(f'Executing replica {r} for {filename} in {directory}', file = stderr)
                 with open(output + f'r{r}_' + filename, 'w') as target:
                     Adjustment(portfolio, target).run()

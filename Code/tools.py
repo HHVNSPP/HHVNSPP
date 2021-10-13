@@ -387,7 +387,8 @@ class Adjustment():
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
         self.goal = 5 # goal for the front size
-        self.maxiter = it # maximum permitted iterations
+        self.maxitershake = it # maximum permitted shake iterations
+        self.maxitersearch = 10 # maximum permitted search iterations
         f = len(FILL) # how many fill heuristics are there
         self.maxshake = len(SHAKE) + f # permitted stall while shaking
         self.maxsearch = len(LOCAL) + f # permitted stall while searching
@@ -414,10 +415,10 @@ class Adjustment():
         if verbose:
             pl = 's' if i > 0 else ''
             print(f'{t:.0f} / {self.limit} seconds', file = stderr)            
-            print(f'{i} / {self.maxiter} iterations', file = stderr)            
+            print(f'{i} / {self.maxitershake} shakes', file = stderr)            
             print(f'{self.shakestall} / {self.maxshake} shake stall', file = stderr)
             print(f'{len(self.front)} / {self.goal} front size', file = stderr)            
-        print(f'final;{t:.3f}/{self.limit};{i}/{self.maxiter};{self.shakestall}/{self.maxshake}', file = self.target)
+        print(f'final;{t:.3f}/{self.limit};{i}/{self.maxitershake};{self.shakestall}/{self.maxshake}', file = self.target)
         sol = list(self.front)
         if details:
             for s in sol:
@@ -543,7 +544,7 @@ class Adjustment():
         self.searchstall = 0 # search stall counter resets each stage
         ok = True # whether the time limit is respected
         altered = 0 # how many times the front changes
-        for i in range(self.maxiter): # permitted iterations
+        for i in range(self.maxitersearch): # permitted iterations
             if time() - self.start > self.limit: 
                 if verbose:
                     print('#search;runtime', file = self.target)
@@ -583,11 +584,11 @@ class Adjustment():
 
     def run(self):
         o = 1
-        for i in range(self.maxiter):
+        for i in range(self.maxitershake):
             out = (i + 1) == o
             if out: # output on iterations that are powers of two
                 # progress indication print-out
-                print(f'Iteration {i + 1} of {self.maxiter}', file = stderr)
+                print(f'Iteration {i + 1} of {self.maxitershake}', file = stderr)
                 print(f'w;{i + 1}', file = self.target)
                 o *= 2
                 if details:
