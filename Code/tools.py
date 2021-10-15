@@ -499,7 +499,9 @@ class Adjustment():
                 print(f'The front is stable; stall counter {self.searchstall}/{self.maxsearch}')
             return False # no change
         else:
-            self.front = select(result, 2 * self.goal) # reduce the front size if needed
+            # reduce the front size if needed
+            (self.front, c) = select(result, 2 * self.goal)
+            print(f'#clust;{c};{len(result)}', file = self.target)
             if details:
                 self.check() # used when debugging to make sure none are dominated
             self.searchstall = 0 # reset the counter

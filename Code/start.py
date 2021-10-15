@@ -9,7 +9,7 @@ replicas = 3
 prefixes = [ 'P', 'o', 'm' ] # we conserve the filenames of the cited authors 
 filetypes = [ '.dat', '.txt', '.txt' ] # however inconsistent those may be
 load = { 'A': loadA, 'B': loadB, 'C': loadC } # parsing routines
-skip = '' # in case only partial experiments are desired
+skip = 'A' # in case only partial experiments are desired
 
 for s in 'ABC':
     directory = r'../Data/' + s + '/'
