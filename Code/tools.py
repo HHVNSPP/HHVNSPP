@@ -499,12 +499,15 @@ class Adjustment():
                 print(f'The front is stable; stall counter {self.searchstall}/{self.maxsearch}')
             return False # no change
         else:
-            # reduce the front size if needed
-            (self.front, c) = select(result, 2 * self.goal)
-            print(f'#clust;{c};{len(result)}', file = self.target)
+            k = len(result)
+            if k >= 2 * self.goal: # there are too many now
+                (self.front, c) = select(result, self.goal)
+                print(f'#clust;{c};{len(result)}', file = self.target)
+            else:
+                self.front = result # no need to cut it down yet
             if details:
                 self.check() # used when debugging to make sure none are dominated
-            self.searchstall = 0 # reset the counter
+            self.searchstall = 0 # reset the counter since the front changed
             # compare against ORIGINAL front 
             adj = round(sum([ score(s, curr) for s in local] )/ len(local))
             if adj > 0: # these heuristics gain rank
