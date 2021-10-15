@@ -1,7 +1,8 @@
 import numpy as np
 from time import time
 from sys import stderr
-from electre import electre
+from kmeans import select # for sparsifying
+from electre import electre # for ranking
 from solution import Solution
 from collections import defaultdict
 from random import shuffle, choice, randint, sample
@@ -447,7 +448,7 @@ class Adjustment():
         print(diff, file = self.target)
         print(self.evaluate(), file = self.target)
 
-    def select(self):
+    def subset(self):
         k = len(self.front)
         if k <= self.goal:
             return self.front # use all if not many
@@ -459,7 +460,7 @@ class Adjustment():
         self.filler = pick(self.shakefillrank, self.shakeusage)
         shaken = set()
         repetitions = max(1, self.goal - (len(self.front) if self.front is not None else 0))
-        for s in self.select(): # shake some of the front for diversity
+        for s in self.subset(): # shake some of the front for diversity
             for r in range(repetitions): # repeat when the front is small
                 result = self.shaker(s) # shake the solution
                 if details:
@@ -476,8 +477,7 @@ class Adjustment():
         missing = self.goal - k # check if there are too few
         if missing > 0: # if so, generate new random solutions 
             shaken |= set([ Solution(self.portfolio) for s in range(missing) ])
-            pl = 's' if missing > 1 else ''            
-            print(f'Added {missing} new solution{pl}')            
+            print(f'#added;{missing}', file = self.target)            
         return shaken
 
     def check(self): # ensure none of the solutions form a Pareto front
@@ -499,11 +499,11 @@ class Adjustment():
                 print(f'The front is stable; stall counter {self.searchstall}/{self.maxsearch}')
             return False # no change
         else:
-            self.front = result # update the front
+            self.front = select(result, 2 * self.goal) # reduce the front size if needed
             if details:
                 self.check() # used when debugging to make sure none are dominated
             self.searchstall = 0 # reset the counter
-            # compare against ORIGINAL front
+            # compare against ORIGINAL front 
             adj = round(sum([ score(s, curr) for s in local] )/ len(local))
             if adj > 0: # these heuristics gain rank
                 self.searchrank[searcher] += adj
