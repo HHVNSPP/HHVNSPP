@@ -51,7 +51,7 @@ def closest(x, candidates, values):
 
 # create the desired amount of clusters and return the members closest
 # to the center of each cluster as cluster representatives
-def select(options, count, maxiter = 30):
+def select(options, count, maxiter = 10):
     if len(options) <= count:
         return options # no need to cluster
     centers = sample(options, count)
@@ -63,6 +63,8 @@ def select(options, count, maxiter = 30):
         centers = [ closest(ce, cl, values) for (ce, cl) in zip(centers, clusters) ]
         if pick is not None:
             if set(centers) == pick:
+                print(f'Clustering took {i} iterations to converge')
                 return pick # convergence
         pick = set(centers)
+    print(f'Clustering did not converge')        
     return pick
