@@ -22,7 +22,8 @@ class Activity():
     def bounds(self, a):
         amount = a.get(self, 0)
         if amount > 0:
-            print(f'A {amount > 0}: {self.minBudget:.0f} <= {amount:.0f} <= {self.maxBudget:.0f}')
+            b = f'{self.minBudget:.0f} <= {amount:.0f} <= {self.maxBudget:.0f}'
+            print(f'A {amount > 0}: {b}')
     
     def feasible(self, a):
         amount = a.get(self, 0)
@@ -50,13 +51,12 @@ class Activity():
         i = []
         lacking = lvl < self.maxBudget
         if lacking: # partial assigment
-            multiple = fraction / self.diff
-            excess = lvl - self.minBudget
-            base = multiple * excess
+            prop = (lvl - self.minBudget) / self.diff
+            scaled = fraction * prop
         for (pot, part) in zip(self.pot, partial):
             rate = pot # all-or-nothing as default
             if part and lacking:
-                rate = base + (1 - fraction) * pot
+                rate = scaled * pot + (1 - fraction) * pot
             i.append(rate) 
         return i
 
@@ -104,7 +104,8 @@ class Project():
     def bounds(self, a):
         if not self.feasible(a):
             t = self.assigned(a)
-            print(f'P {t > 0}:  {self.minBudget:.0f} <= {t:.0f} <= {self.maxBudget:.0f}')
+            b = f'{self.minBudget:.0f} <= {t:.0f} <= {self.maxBudget:.0f}'
+            print(f'P {t > 0}: {b}')
             for act in self.tasks:
                 act.bounds(a)
     
