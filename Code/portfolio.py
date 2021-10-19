@@ -43,21 +43,19 @@ class Activity():
         span = high - low
         lvl = random() * span + low
         return round(lvl) if integer else lvl
-        
-    def impact(self, assignment, partial, fraction = 0.3):
-        lvl = assignment.get(self, 0)
-        if lvl == 0: # no funds, no impact
+
+    # the alpha of Litvinchev et al.
+    def impact(self, assignment, partial, alpha = 0.5):
+        x = assignment.get(self, 0)
+        if x == 0: # no funds, no impact
             return [0 for p in self.pot]
+        b = (1 - alpha) / self.diff if self.diff > 0 else 1
         i = []
-        lacking = lvl < self.maxBudget
-        if lacking: # partial assigment
-            prop = (lvl - self.minBudget) / self.diff
-            scaled = fraction * prop
         for (pot, part) in zip(self.pot, partial):
-            rate = pot # all-or-nothing as default
-            if part and lacking:
-                rate = scaled * pot + (1 - fraction) * pot
-            i.append(rate) 
+            if partial: # formulation of Litvinchev et al        
+                i.append(b * pot * x) # whole if no partial assignment
+            else:
+                i.append(1 * (x > 0)) # 1 if funded, 0 if not
         return i
 
     def deactivate(self, assignment):
@@ -86,6 +84,7 @@ class Project():
             assert minimum <= requested
         self.minBudget = minimum if minimum is not None else self.maxBudget
         assert self.minBudget <= self.maxBudget
+        self.diff = self.maxBudget - self.minBudget
         self.tasks = list()
         self.groups = groups
 
@@ -153,16 +152,25 @@ class Project():
         for a in self.tasks:
             a.deactivate(assignment)
             
-    def impact(self, assignment, partial, fraction = 0.3):
+    def impact(self, assignment, partial, alpha = 0.5):
         k = len(self.pot)
         pi = [0] * k
+        if self.assigned(assignment) < self.minBudget:
+            return pi # no impact, all zero
         for a in self.tasks:
-            imp = a.impact(assignment, partial, fraction)
+            imp = a.impact(assignment, partial, alpha)
             for pos in range(k):
-                if partial[pos]:
-                    pi[pos] += imp[pos] * self.pot[pos]
-                else:
-                    pi[pos] = max(pi[pos], imp[pos] * self.pot[pos])
+                if partial[pos]: # of Litvinchev et al
+                    pi[pos] += imp[pos] 
+                else: # 0 or 1 (1 if one task has 1)
+                    pi[pos] = max(pi[pos], imp[pos])
+        # partial assignment of Litvinchev et al.
+        a = alpha - ((self.minBudget * (1 - alpha)) / self.diff) if self.diff > 0 else 0
+        for pos in range(k):
+            if partial[pos]: # of Litvinchev et al
+                pi[pos] += a 
+            else:
+                pi[pos] *= self.pot[pos] # all/nothing of the whole potential
         return pi
                 
     def update(self):
@@ -174,22 +182,20 @@ class Project():
             self.tasks.sort(key = lambda a: a.pot, reverse = True)
             self.maxBudget = sum([ a.maxBudget for a in self.tasks ])
 
-class Synergy():
+class Synergy(): # we only implement technical synergies; feel free to add more options
 
-    def __init__(self, nombre, technical, value, kind,
-                 lowerThreshold, upperThreshold, elementCount, active = False):
-        self.nombre = nombre
-        self.technical = technical
+    def __init__(self, value, lower, upper):
         self.value = value
-        self.kind = kind
-        self.lowerThreshold = lowerThreshold
-        self.upperThreshold = upperThreshold
-        self.elementCount = elementCount
-        self.elements = []
-        self.active = active
+        self.lowerThreshold = lower
+        self.upperThreshold = upper
+        self.elements = set()
 
     def include(self, elem):
-        self.elements.append(elem)
+        self.elements.add(elem)
+
+    def active(self, activated):
+        count = len(activated & self.elements) # shared
+        return count >= self.lowerThreshold and count <= self.upperThreshold
 
 class Group():
 
@@ -236,7 +242,7 @@ class Group():
 
 class Portfolio():
 
-    def __init__(self, total, w, i, p, part = None, s = None):
+    def __init__(self, total, w, i, p, part = [], s = []):
         self.budget = total
         self.weights = w
         self.impact = i # all-or-nothing (F) / linear (T)
@@ -249,6 +255,9 @@ class Portfolio():
         self.groups = list()
         for p in self.partitions: # make a list of the groups for ease of access
             self.groups += p
+        if len(self.groups) == 0: # no partitions, no groups: make one for compatibility
+            self.groups = [ self.projects ]
+            self.partitions = [ self.groups ]
         self.synergies = s
 
     def included(self, active):
@@ -258,8 +267,10 @@ class Portfolio():
         return '#'.join([ p.funding(assignment) for p in self.projects ])    
         
     def __str__(self):
-        return f'PF w/ {len(self.projects)} P & B = {self.budget}'
-
+        s = f'PF w/ {len(self.projects)} P & B = {self.budget}\n'
+        s += '\n'.join(' '.join([ str(g) for g in p ]) for p in self.partitions)
+        return s
+    
     def __repr__(self):
         return str(self)
     
@@ -319,3 +330,20 @@ class Portfolio():
             self.order = [ i for i in range(len(self.projects)) ] 
         shuffle(self.order) # reorder
         return self.order
+
+    def evaluate(self, solution):
+        v = [0] * self.dim
+        funded = set()
+        added = 0
+        act = solution.actives()
+        for s in self.synergies:
+            if s.active(act):
+                added += s.value
+        for project in act:
+            ei = project.impact(solution.assignment, self.impact)
+            for i in range(self.dim):
+                v[i] += ei[i]
+        for i in range(self.dim): # partial objectives gain synergies
+            if self.impact[i]: # this objective is affected
+                v[i] += added
+        return v

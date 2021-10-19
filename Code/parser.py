@@ -2,51 +2,54 @@ from portfolio import Portfolio, Group, Project, Activity, Synergy
 
 verbose = False
 
-def loadC(filename):
+def loadC(filename, active): # instances with synergies, areas, and regions; pure partial assignment
     weights = None
     projects = []
     synergies = []
     areas = []
     regions = []
     with open(filename) as f:
-        numberOfProjects = int(f.readline())
-        b = float(f.readline())
-        A = { 1: Group(0.25 * b, 0.45 * b),
-              2: Group(0.30 * b, 0.45 * b),
-              3: Group(0.30 * b, 0.45 * b) }
-        R = { 1: Group(0.40 * b, 0.60 * b),
-              2: Group(0.40 * b, 0.60 * b) } 
-        weights = [ int(i) for i in (f.readline()).split(" ") ]
+        b = float(f.readline().split()[-1]) # total budget
+        weights = [ float(i) for i in (f.readline()).split(' ')[1:] ]
         n = len(weights)
-        numberOfSynergies = int(f.readline())
-        for i in range(numberOfSynergies):
-            line = f.readline()
+        for line in f:
             line = line.split()
-            synergies.append(Synergy(int(line[0]), int(line[1]), int(line[2]),
-                                     int(line[3]), int(line[4]), int(line[5]), []))
-            line = f.readline()
-            line = line.split()
-            for j in line:
-                synergies[i].include(int(j))                
-        for pID in range(numberOfProjects):
-            p = f.readline().split()
-            minB = float(p.pop(0))
-            maxB = float(p.pop(0))
-            a = int(p.pop(0)) 
-            r = int(p.pop(0))
-            # the contributions for the n objectives            
-            obj = [float(p.pop(0)) for i in range(n)] 
-            gr = [ A[a], R[r] ]
-            p = Project(obj, maxB, minB, gr)
-            projects.append(p)
-            for g in gr:
-                g.include(p)
+            element = line.pop(0)
+            if element == 'A': # an area
+                line.pop(0) # ignore the area label
+                areas.append(Group(float(line.pop(0)), float(line.pop(0))))
+            elif element == 'R': # a region
+                line.pop(0) # ignore the region label
+                regions.append(Group(float(line.pop(0)), float(line.pop(0))))                
+            elif element == 'P': # a project
+                line.pop(0) # ignore the project label
+                minB = float(line.pop(0))
+                maxB = float(line.pop(0))
+                a = int(line.pop(0)) - 1
+                r = int(line.pop(0)) - 1
+                # the contributions for the n objectives            
+                obj = [float(line.pop(0)) for i in range(n)] 
+                gr = [ areas[a], regions[r] ]
+                p = Project(obj, maxB, minB, gr)
+                projects.append(p)
+                for g in gr:
+                    g.include(p)
+            elif active and element == 'S': # a synergy (unless ignored)
+                line.pop(0) # ignore the synergy label
+                technical = int(line.pop(0)) == 1 # false or true
+                value = float(line.pop(0))
+                low = float(line.pop(0)) # lower activation threshold
+                high = float(line.pop(0)) # higher activation threshold
+                syn = Synergy(value, low, high) 
+                for j in line: # participants
+                    syn.include(projects[int(j) - 1])
+                synergies.append(syn)
     partial = [ True for w in weights ] # all objectives undergo partial impacts
-    partition = [ list(A.values()), list(R.values()) ]
+    partition = [ areas, regions ]
     print(f'{len(weights)} objectives and {len(projects)} projects parsed')
     return Portfolio(b, weights, partial, projects, partition, s = synergies) 
 
-def loadB(filename):
+def loadB(filename, active): # instances with areas, regions; no partial assignment
     budget = None
     w = None
     projects = []
@@ -75,15 +78,13 @@ def loadB(filename):
     partitions = [ list(A.values()), list(R.values()) ] # areas and regions
     return Portfolio(budget, w, partial, projects, partitions)
 
-def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore these synergies
+def loadA(filename, active): # instances with areas, tasks, partial and non-partial objectives
     budget = None
     areas = []
     areaCount = 0
     projects = []
     projectCount = 0
     activityCount = None
-    synergies = None
-    synergyCount = 0
     with open(filename) as data:
         while True:
             line = data.readline()
@@ -101,8 +102,6 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                     projectCount = int(content)
                 elif 'nactivities' in header:
                     activityCount = int(content)
-                elif 'nsynergies' in header:
-                    synergyCount = int(content)                
                 elif "Areas" in header:
                     if verbose:
                         print('Parsing the area data')                    
@@ -158,43 +157,13 @@ def loadA(filename, ignoreSynergies = True): # in our experiments, we ignore the
                         maxB = float(d.pop(0))
                         pr.tasks.append(Activity(pr, impact, maxB, minB))
                 elif 'Synergies' in header:
-                    if verbose:
-                        print('Parsing the synergy setup')
-                    synergies = []
-                    for i in range(synergyCount):
-                        d = data.readline().strip()
-                        d = d.replace('];', '') # the last one ends thus
-                        if d[-1] == ',':
-                            d = d[:-1] # trim trailing commas                        
-                        assert d[0] == '<' and d[-1] == '>'
-                        d = d[1:-1].split(',')            
-                        synergies.append(Synergy(int(d[0]), int(d[1]),
-                                                 int(float(d[2])), int(d[3]),
-                                                 int(d[4]), int(d[5]), int(d[6])))
-                    assert len(synergies) == synergyCount
-                elif 'SItems' in header:
-                    if verbose:
-                        print('Parsing the synergy details')                    
-                    for i in range(synergyCount):
-                        d = content if '[{' in content else data.readline().strip() 
-                        content = '' # blank this out
-                        start = d.index('{') + 1
-                        end = d.index('}')
-                        triplets = d[start:end].split('>,<')
-                        for triplet in triplets:
-                            t = triplet.replace('>', '').replace('<', '').strip()
-                            i = t.split(',')
-                            synergies[int(i[0]) - 1].include([int(i[0]), int(i[1]), int(i[2])])
+                    # we do NOT use the synergies of these instances
+                    print('Ignoring synergies')
+                    break
                 else:
                     print(f'Ignoring line <{header} = {content}>')
-    if verbose:
-        print('Done parsing')
-    if ignoreSynergies: # blank these out if requested
-        print('Ignoring synergies')
-        synergyCount = 0
-        synergies = []
     w = [ 0.5, 0.5 ] # two equally important objectives
     partial = [ False, True ] # no and yes
     if verbose:
         print(f'Including {len(areas)} areas')
-    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], s = synergies)                    
+    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], [])                    

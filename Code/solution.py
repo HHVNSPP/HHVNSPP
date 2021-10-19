@@ -274,18 +274,7 @@ class Solution():
         return self.portfolio.choice()
         
     def evaluate(self):
-        n = self.portfolio.dim
-        partial = self.portfolio.impact
-        v = [0] * n
-        funded = set()
-        for (element, funding) in self.assignment.items():
-            project = element.parent
-            funded.add(project)
-        for project in funded:
-            ei = project.impact(self.assignment, partial)
-            for i in range(n):
-                v[i] += ei[i]
-        return v
+        return self.portfolio.evaluate(self)
 
     def bounds(self):
         self.portfolio.bounds(self.assignment)
