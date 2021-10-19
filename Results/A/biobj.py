@@ -8,6 +8,11 @@ known = [ (67, 352), (75, 411), (68, 378), (74, 448), (79, 459),
 
 panels = dict()
 
+minCount = float('inf')
+maxCount = -minCount
+minBenefit = minCount
+maxBenefit = -minBenefit
+
 for filename in os.listdir('.'):
     if filename.startswith('r') and filename.endswith('.dat'):
         labels = filename.split('_')
@@ -16,6 +21,10 @@ for filename in os.listdir('.'):
         instance = int(labels[-1][:-4])
         if replica == 1: # print the gnuplot commands only for the first one
             (x, y) = known[instance - 1]
+            minCount = min(x, minCount)
+            maxCount = max(x, maxCount)
+            minBenefit = min(y, minBenefit)
+            maxBenefit = min(y, maxBenefit)
             panel = f'set title "A {instance}" font ",30"\n'
             panel += f'x={x}\n'
             panel += f'y={y}\n'
@@ -32,9 +41,21 @@ for filename in os.listdir('.'):
                 with open(f'A{instance}_r{replica}.csv', 'w') as target:
                     for line in source:
                         if 'electre' in line:
-                            values = line.split(';')[-1][2:-3]
-                            print(' '.join(values.replace('. ', '').split()), file = target)
+                            values = line.split(';')[-1][2:-3].split()
+                            count = int(values.pop(0)[:-1]) # skip the . at the end
+                            benefit = float(values.pop(0))
+                            print(f'{count} {benefit}', file = target)
+                            minCount = min(minCount, count)
+                            minBenefit = min(minBenefit, benefit)
+                            maxCount = max(maxCount, count)
+                            maxBenefit = max(maxBenefit, benefit)
 
+from math import floor, ceil
+countLow = floor(0.9 * minCount / 10) * 10
+countHigh = ceil(1.2 * maxCount / 10) * 10
+benefitLow = floor(0.9 * minBenefit / 100) * 100
+benefitHigh = ceil(1.2 * maxBenefit / 100) * 100
+                            
 with open('biobj.plot', 'w') as target:
     print('''set term postscript eps font ",20" size 12, 6 color
 set output "biobj.eps"
@@ -43,11 +64,11 @@ set xlabel "# of projects"
 set ylabel "Total benefit"
 set key outside Right
 set pointsize 1
-set key off
-set xrange [35:85]
-set xtics 40, 10
-set yrange [50:550]
-set ytics 100, 100''', file = target)
+set key off''', file = target)
+    print(f'set xrange [{countLow-5}:{countHigh+5}]', file = target)
+    print(f'set xtics {countLow}, 10', file = target)
+    print(f'set yrange [{benefitLow-50}:{benefitHigh+50}]', file = target)
+    print(f'set ytics {benefitLow}, 100', file = target)
     for instance in range(1, 16):
         print(panels.get(instance, ''), file = target)
     print('unset multiplot', file = target)
