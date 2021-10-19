@@ -46,21 +46,11 @@ class Activity():
         lvl = random() * span + low
         return round(lvl) if integer else lvl
 
-    # the alpha of Litvinchev et al.
-    def impact(self, assignment, partial, alpha = 0.5):
-        x = assignment.get(self, 0)
-        if x == 0: # no funds, no impact
-            return [0 for p in self.relativeImportance]
-        b = (1 - alpha) / self.diff if self.diff > 0 else 1
-        i = []
-        for (ri, pa) in zip(self.relativeImportance, partial):
-            if pa: # formulation of Litvinchev et al        
-                i.append(b * ri * x) # partial assignment
-            else:
-                i.append(ri * (x > 0)) 
-        if verbose:
-            print('A', i)
-        return i
+    def impact(self, assignment):
+        amount = assignment.get(self, 0)
+        funded = amount >= self.minBudget
+        assert funded or amount == 0 # there should be no funds then
+        return [ r * funded for r in self.relativeImportance ]
 
     def deactivate(self, assignment):
         if self in assignment:
@@ -82,18 +72,20 @@ class Activity():
 class Project():
     
     def __init__(self, imp, requested, minimum = None, groups = []):
-        self.potentialImpact = imp
+        self.socialImpact = imp
         self.maxBudget = requested
         if minimum is not None:
             assert minimum <= requested
+        self.diff = 0 if minimum is None else requested - minimum
         self.minBudget = minimum if minimum is not None else self.maxBudget
         assert self.minBudget <= self.maxBudget
-        self.diff = self.maxBudget - self.minBudget
         self.tasks = list()
         self.groups = groups
+        print(self)
+        quit()
 
     def __str__(self):
-        pot = '|'.join([ str(p) for p in self.potentialImpact ])
+        pot = '|'.join([ str(p) for p in self.socialImpact ])
         k = len(self.tasks)
         act = f'({k})' if k > 0 else ''
         r = f'={self.minBudget:.2f}'
@@ -157,37 +149,34 @@ class Project():
             a.deactivate(assignment)
             
     def impact(self, assignment, partial, alpha = 0.5):
-        k = len(self.potentialImpact)
-        pi = [0] * k
-        if self.assigned(assignment) < self.minBudget:
-            return pi # no impact, all zero
-        for a in self.tasks:
-            imp = a.impact(assignment, partial, alpha)
-            for pos in range(k):
-                if partial[pos]: # of Litvinchev et al
-                    pi[pos] += imp[pos] 
-                else: # 0 or 1 (1 if one task has 1)
-                    pi[pos] = max(pi[pos], imp[pos])
-        # partial assignment of Litvinchev et al.
-        a = None
-        if self.diff > 0:
+        k = len(self.socialImpact)
+        pi = [ 0 ] * k
+        amount = self.assigned(assignment)
+        if amount < self.minBudget:
+            for task in self.tasks:
+                assert task not in assignment
+            return pi # unfunded, no impact
+        for task in self.tasks: # per-task impact
+            ti = task.impact(assignment)
+            if verbose:
+                print('A', ti)
+            for i in range(k):
+                pi[i] += ti[i] # cumulative
+        a = 0         
+        b = 1
+        if self.diff > 0: # partial assignment of Litvinchev et al.
             a = alpha - ((self.minBudget * (1 - alpha)) / self.diff)
-        for pos in range(k):
-            if partial[pos]: 
-                if a is not None:
-                    pi[pos] += a 
-                else:
-                    pi[pos] *= self.potentialImpact[pos] # all/nothing of the whole potential
-            else:
-                pi[pos] = 1 # on or off impact
-        if verbose:
-            print('P', pi)
+            b = (1 - alpha) / self.diff 
+        pi = [ a + b * taskbased for taskbased in pi ]  # Litvinchev et al.
+        for i in range(k): # the latter option is when we just count projects
+            pi[i] = (self.socialImpact[i] * pi[i]) if partial[i] else 1
+        print('P', pi, a, b)
         return pi
                 
     def update(self):
         if len(self.tasks) == 0:
             # one activity = the whole project (in case there were none)
-            imp = [ 1 for p in self.potentialImpact ] # full impact 
+            imp = [ 1 for p in self.socialImpact ] # full impact 
             self.tasks = [ Activity(self, imp, self.maxBudget, self.minBudget) ]
         else: # sort in decreasing order of impact
             self.tasks.sort(key = lambda a: a.relativeImportance, reverse = True)
@@ -357,6 +346,5 @@ class Portfolio():
         for i in range(self.dim): # partial objectives gain synergies
             if self.impact[i]: # this objective is affected
                 v[i] += added
-        if verbose:
-            print('PF', v, self.impact)
+        print('PF', v, self.impact)
         return v

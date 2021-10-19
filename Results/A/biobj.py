@@ -44,10 +44,10 @@ set ylabel "Total benefit"
 set key outside Right
 set pointsize 1
 set key off
-set xrange [45:85]
-set xtics 50, 10
-set yrange [250:550]
-set ytics 200, 100''', file = target)
+set xrange [35:85]
+set xtics 40, 10
+set yrange [50:550]
+set ytics 100, 100''', file = target)
     for instance in range(1, 16):
         print(panels.get(instance, ''), file = target)
     print('unset multiplot', file = target)

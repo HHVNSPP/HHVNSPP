@@ -24,6 +24,7 @@ for s in 'ABC':
             # we use the set C both WITH and WITHOUT synergies, the others only without
             syn = [ True, False ] if s == 'C' else [ False ]
             for act in syn:
+                print(f'Instance {instance} with{"" if act else "out"} synergies')
                 portfolio = load[s](instance, act)
                 n = len(portfolio.projects)
                 for r in range(1, replicas + 1):

@@ -60,7 +60,13 @@ def normalize(data):
     n = dict()
     span = [ high[p] - low[p] for p in range(d) ]
     for (k, v) in data.items():
-        n[k] = [ (v[p] - low[p]) / span[p] for p in range(d) ]
+        nv = []
+        for p in range(d):
+            if span[p] > 0:
+                nv.append(v[p] - low[p] / span[p])
+            else:
+                nv.append(1) # this dimension is a constant
+        n[k] = nv
     return n
 
 # create the desired amount of clusters and return the members closest

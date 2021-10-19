@@ -132,7 +132,7 @@ def loadA(filename, active): # instances with areas, tasks, partial and non-part
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
                         a = int(d.pop(0)) - 1
-                        impact = [1, float(d.pop(0))]
+                        impact = [ 1, float(d.pop(0)) ]
                         p = Project(impact, maxB, minB, [ A[a] ])
                         A[a].include(p) # include into the area                        
                         projects.append(p)

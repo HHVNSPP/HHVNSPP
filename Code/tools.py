@@ -391,7 +391,7 @@ class Adjustment():
         self.maxitershake = it # maximum permitted shake iterations
         self.maxitersearch = 10 # maximum permitted search iterations
         f = len(FILL) # how many fill heuristics are there
-        self.maxshake = len(SHAKE) + f # permitted stall while shaking
+        self.maxshake = 2 * len(SHAKE) + f # permitted stall while shaking
         self.maxsearch = len(LOCAL) + f # permitted stall while searching
         self.shakestall = 0 # stall counter for shake
         self.searchstall = 0 # stall counter for search
