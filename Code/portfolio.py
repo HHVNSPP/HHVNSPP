@@ -81,8 +81,6 @@ class Project():
         assert self.minBudget <= self.maxBudget
         self.tasks = list()
         self.groups = groups
-        print(self)
-        quit()
 
     def __str__(self):
         pot = '|'.join([ str(p) for p in self.socialImpact ])
@@ -162,15 +160,17 @@ class Project():
                 print('A', ti)
             for i in range(k):
                 pi[i] += ti[i] # cumulative
-        a = 0         
-        b = 1
-        if self.diff > 0: # partial assignment of Litvinchev et al.
-            a = alpha - ((self.minBudget * (1 - alpha)) / self.diff)
-            b = (1 - alpha) / self.diff 
-        pi = [ a + b * taskbased for taskbased in pi ]  # Litvinchev et al.
+        proportion = 1
+        if self.diff > 0:
+            # Fig. 1 in https://doi.org/10.1109/TSMCA.2010.2041228
+            excess = amount - self.minBudget # how far into the interval
+            level = excess / self.diff # what proportion is this
+            extra = (1 - alpha) * level # how much of the scaled part is achieved
+            proportion = alpha + extra # base part plus the scaled part
         for i in range(k): # the latter option is when we just count projects
-            pi[i] = (self.socialImpact[i] * pi[i]) if partial[i] else 1
-        print('P', pi, a, b)
+            pi[i] = (proportion * self.socialImpact[i] * pi[i]) if partial[i] else 1
+        if verbose:
+            print('P', pi)
         return pi
                 
     def update(self):
@@ -346,5 +346,6 @@ class Portfolio():
         for i in range(self.dim): # partial objectives gain synergies
             if self.impact[i]: # this objective is affected
                 v[i] += added
-        print('PF', v, self.impact)
+        if verbose:
+            print('PF', v, self.impact)
         return v

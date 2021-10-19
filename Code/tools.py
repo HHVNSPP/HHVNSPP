@@ -351,7 +351,7 @@ def rndRnd(sol):
 def liftIncr(sol):
     if details: # this one adds more funds
         print(f'Fill liftIncr\n{sol.allocation()}')
-    sol.fill(level = MAXIMUM, active = True, sort = False)
+    sol.fill(level = MAXIMUM, active = True, sort = True)
     if details:
         print(sol.allocation())
 
@@ -363,7 +363,7 @@ def liftRnd(sol):
         print(sol.allocation())
     
 FILL = [ incrMin, incrMax, incrRnd,
-         rndMin, rndMax, rndRnd, 
+         rndMin, rndMax, rndRnd,
          liftIncr, liftRnd ]
 
 def score(alt, orig, big = 4, intermediate = 2, small = 1):
@@ -388,8 +388,8 @@ class Adjustment():
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
         self.goal = 5 # goal for the front size
-        self.maxitershake = it # maximum permitted shake iterations
-        self.maxitersearch = 10 # maximum permitted search iterations
+        self.itershake = it # maximum permitted shake iterations
+        self.itersearch = 10 # maximum permitted search iterations
         f = len(FILL) # how many fill heuristics are there
         self.maxshake = 2 * len(SHAKE) + f # permitted stall while shaking
         self.maxsearch = len(LOCAL) + f # permitted stall while searching
@@ -410,29 +410,29 @@ class Adjustment():
         self.output() # print-out of the initial population
 
     def postprocess(self, i):
-        if details:
-            self.check()
         t = time() - self.start
         if verbose:
             pl = 's' if i > 0 else ''
             print(f'{t:.0f} / {self.limit} seconds', file = stderr)            
-            print(f'{i} / {self.maxitershake} shakes', file = stderr)            
+            print(f'{i} / {self.itershake} shakes', file = stderr)            
             print(f'{self.shakestall} / {self.maxshake} shake stall', file = stderr)
-            print(f'{len(self.front)} / {self.goal} front size', file = stderr)            
-        print(f'final;{t:.3f}/{self.limit};{i}/{self.maxitershake};{self.shakestall}/{self.maxshake}', file = self.target)
+            print(f'{len(self.front)} / {self.goal} front size', file = stderr)
+        us = [ f'usage;shake;{k.__name__}={v}' for (k, v) in self.shakeusage.items() ]
+        print('\n'.join(us), file = self.target)
+        us = [ f'usage;search;{k.__name__}={v}' for (k, v) in self.searchusage.items() ]
+        print('\n'.join(us), file = self.target)
+        print(f'end;{t:.3f}/{self.limit};{i}/{self.itershake};{self.shakestall}/{self.maxshake}',
+              file = self.target)
         sol = list(self.front)
-        if details:
-            for s in sol:
-                print(s.included(), s.evaluate())
         evaluation = np.matrix([ s.evaluate() for s in sol ])
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
             assert(sol[i].feasible()) # make sure nothing is broken
             print(f'electre;{ranking[i]};{evaluation[i, :]}', file = self.target)
-        us = [ f'usage;shake;{k.__name__}={v}' for (k, v) in self.shakeusage.items() ]
-        print('\n'.join(us), file = self.target)
-        us = [ f'usage;search;{k.__name__}={v}' for (k, v) in self.searchusage.items() ]
-        print('\n'.join(us), file = self.target)
+        if details:
+            self.check()            
+            for s in sol:
+                print(s.included(), s.evaluate())
 
     def __str__(self):
         return f'{self.shakestall}\n' + '\n'.join([ str(sol) for sol in self.front ])
@@ -535,9 +535,10 @@ class Adjustment():
                 f = len(self.front)
                 pl = 's' if f > 1 else ''
                 if self.shaker is not None:
-                    print(f'After {self.shaker.__name__}, the front has {f} non-dominated solution{pl}')
+                    print(f'After {self.shaker.__name__},',
+                          'the front has {f} non-dominated solution{pl}')
                 else:
-                    print(f'Initialized a front with {f} non-dominated solution{pl}')                
+                    print(f'Initialized a front with {f} non-dominated solution{pl}')
         else: # no front changes occured
             self.shakestall += 1 # stalled, lower ranks
             self.shakerank[self.shaker] = max(1, self.shakerank[self.shaker] // 2)
@@ -549,7 +550,7 @@ class Adjustment():
         self.searchstall = 0 # search stall counter resets each stage
         ok = True # whether the time limit is respected
         altered = 0 # how many times the front changes
-        for i in range(self.maxitersearch): # permitted iterations
+        for i in range(self.itersearch): # permitted iterations
             if time() - self.start > self.limit: 
                 if verbose:
                     print('#search;runtime', file = self.target)
@@ -589,11 +590,11 @@ class Adjustment():
 
     def run(self):
         o = 1
-        for i in range(self.maxitershake):
+        for i in range(self.itershake):
             out = (i + 1) == o
             if out: # output on iterations that are powers of two
                 # progress indication print-out
-                print(f'Iteration {i + 1} of {self.maxitershake}', file = stderr)
+                print(f'Iteration {i + 1} of {self.itershake}', file = stderr)
                 print(f'w;{i + 1}', file = self.target)
                 o *= 2
                 if details:
@@ -601,5 +602,5 @@ class Adjustment():
                     pl = 's' if k > 1 else ''
                     print(f'Iteration {i+1} starts with {k} non-dominated solution{pl}')
             if not self.step(out):
-                self.postprocess(i)
-                return
+                break # stop condition reached
+        self.postprocess(i)
