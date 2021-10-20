@@ -50,7 +50,7 @@ class Activity():
         amount = assignment.get(self, 0)
         funded = amount >= self.minBudget
         assert funded or amount == 0 # there should be no funds then
-        return [ r * funded for r in self.relativeImportance ]
+        return [ r * funded if r is not None else None for r in self.relativeImportance ]
 
     def deactivate(self, assignment):
         if self in assignment:
@@ -159,7 +159,10 @@ class Project():
             if verbose:
                 print('A', ti)
             for i in range(k):
-                pi[i] += ti[i] # cumulative
+                if ti[i] is not None:
+                    pi[i] += ti[i] # cumulative
+                else:
+                    pi[i] = max(pi[i], 1) # project counter
         proportion = 1
         if self.diff > 0:
             # Fig. 1 in https://doi.org/10.1109/TSMCA.2010.2041228
@@ -167,8 +170,10 @@ class Project():
             level = excess / self.diff # what proportion is this
             extra = (1 - alpha) * level # how much of the scaled part is achieved
             proportion = alpha + extra # base part plus the scaled part
-        for i in range(k): # the latter option is when we just count projects
-            pi[i] = (proportion * self.socialImpact[i] * pi[i]) if partial[i] else 1
+        for i in range(k): 
+            pi[i] = self.socialImpact[i] * pi[i]
+            if partial[i]:
+                pi[i] *= proportion
         if verbose:
             print('P', pi)
         return pi

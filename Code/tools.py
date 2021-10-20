@@ -387,7 +387,7 @@ class Adjustment():
         self.limit = sec * n * k # maximum permitted runtime
         if verbose:
             print(f'Running for no more than {self.limit} seconds')
-        self.goal = 5 # goal for the front size
+        self.goal = 10 # goal for the front size
         self.itershake = it # maximum permitted shake iterations
         self.itersearch = 10 # maximum permitted search iterations
         f = len(FILL) # how many fill heuristics are there
@@ -447,6 +447,8 @@ class Adjustment():
         diff = time() - self.start        
         print(diff, file = self.target)
         print(self.evaluate(), file = self.target)
+        values = ';'.join([ 'f{s.allocation()}:.2f}' for s in self.front ])
+        print('budget;{values}', file = self.target)
 
     def subset(self):
         k = len(self.front)

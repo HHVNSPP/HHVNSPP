@@ -1,2 +1,0 @@
-ID, #iteración,tiempo,presupuesto, puntuación dada por ELECTRE, 
-beneficio para cada objetivo

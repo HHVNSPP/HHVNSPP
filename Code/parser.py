@@ -151,8 +151,7 @@ def loadA(filename, active): # instances with areas, tasks, partial and non-part
                         pID = int(d.pop(0)) - 1
                         pr = projects[pID]
                         d.pop(0) # activity IDs are not used
-                        # first binary, second linear                        
-                        impact = [ 1, float(d.pop(0)) ] 
+                        impact = [ None, float(d.pop(0)) ] # the first one is a counter
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
                         pr.tasks.append(Activity(pr, impact, maxB, minB))
