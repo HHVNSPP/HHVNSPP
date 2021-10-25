@@ -397,11 +397,11 @@ class Adjustment():
         self.searchstall = 0 # stall counter for search
         self.target = t # output file
         self.shakeusage = defaultdict(int) # counters
-        self.shakerank = { h : 1 for h in SHAKE } # initial unit shake ranks
-        self.shakefillrank = { h : 1 for h in FILL } # initial unit fill ranks        
+        self.shakerank = { h : 0 for h in SHAKE } # initial shake ranks
+        self.shakefillrank = { h : 0 for h in FILL } # initial fill ranks        
         self.searchusage = defaultdict(int) # counters
-        self.searchrank = { h : 1 for h in LOCAL } # initial unit search ranks
-        self.searchfillrank = { h : 1 for h in FILL } # initial unit fill ranks
+        self.searchrank = { h : 0 for h in LOCAL } # initial search ranks
+        self.searchfillrank = { h : 0 for h in FILL } # initial fill ranks
         self.shaker = None # last used shake heuristic
         self.filler = None # last used fill heuristic
         self.front = None # the storage for the front (none as of yet)
