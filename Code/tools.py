@@ -493,8 +493,7 @@ class Adjustment():
         curr = self.front if self.front is not None else set()
         result = prune(local | curr)
         if result == self.front:
-            if min(self.searchrank.values()) > 0:
-                self.searchstall += 1
+            self.searchstall += 1
             # losing rank
             self.searchrank[searcher] = max(1, self.searchrank[searcher] // 2)
             self.searchfillrank[helper] = max(1, self.searchfillrank[helper] // 2)            
@@ -543,7 +542,7 @@ class Adjustment():
                 else:
                     print(f'Initialized a front with {f} non-dominated solution{pl}')
         else: # no front changes occured
-            if min(self.shakerank.values()) > 0:
+            if min(self.shakeusage.values()) > 0: # only when everything has been tried already
                 self.shakestall += 1 # stalled
             self.shakerank[self.shaker] = 0
             self.shakefillrank[self.filler] = 0
