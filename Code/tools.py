@@ -428,7 +428,7 @@ class Adjustment():
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
             assert(sol[i].feasible()) # make sure nothing is broken
-            print(f'electre;{ranking[i]};{evaluation[i, :]}', file = self.target)
+            print(f'electre;{ranking[i]};{evaluation[i, :]};{sol[i].allocation()}', file = self.target)
         if details:
             self.check()            
             for s in sol:
@@ -447,8 +447,8 @@ class Adjustment():
         diff = time() - self.start        
         print(diff, file = self.target)
         print(self.evaluate(), file = self.target)
-        values = ';'.join([ 'f{s.allocation()}:.2f}' for s in self.front ])
-        print('budget;{values}', file = self.target)
+        values = ';'.join([ f'{s.allocation():.2f}' for s in self.front ])
+        print(f'budget;{values}', file = self.target)
 
     def subset(self):
         k = len(self.front)

@@ -56,9 +56,9 @@ countHigh = ceil(1.2 * maxCount / 10) * 10
 benefitLow = floor(0.9 * minBenefit / 100) * 100
 benefitHigh = ceil(1.2 * maxBenefit / 100) * 100
                             
-with open('biobj.plot', 'w') as target:
+with open('setA.plot', 'w') as target:
     print('''set term postscript eps font ",20" size 12, 6 color
-set output "biobj.eps"
+set output "setA.eps"
 set multiplot layout 3, 5
 set xlabel "# of projects"
 set ylabel "Total benefit"
