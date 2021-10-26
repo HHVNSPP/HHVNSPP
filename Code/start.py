@@ -8,7 +8,7 @@ verbose = True
 replicas = 3
 prefixes = [ 'P', 'k', 'C' ] 
 load = { 'A': loadA, 'B': loadB, 'C': loadC } # parsing routines
-skip = 'A' # in case only partial experiments are desired
+skip = '' # in case only partial experiments are desired
 suffix = '.txt'
 
 for s in 'ABC':
@@ -18,6 +18,7 @@ for s in 'ABC':
     if s in skip:
         continue
     for filename in os.listdir(directory):
+        print(filename)
         if filename.startswith(prefix) and filename.endswith(suffix):
             instance = directory + filename
             # we use the set C both WITH and WITHOUT synergies, the others only without
