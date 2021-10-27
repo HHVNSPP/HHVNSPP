@@ -414,8 +414,8 @@ class Adjustment():
         if verbose:
             pl = 's' if i > 0 else ''
             print(f'{t:.0f} / {self.limit} seconds', file = stderr)            
-            print(f'{i} / {self.itershake} shakes', file = stderr)            
-            print(f'{self.shakestall} / {self.maxshake} shake stall', file = stderr)
+            print(f'{i} / {self.itershake} iterations', file = stderr)            
+            print(f'{self.shakestall} / {self.maxshake} stall', file = stderr)
             print(f'{len(self.front)} / {self.goal} front size', file = stderr)
         us = [ f'usage;shake;{k.__name__}={v}' for (k, v) in self.shakeusage.items() ]
         print('\n'.join(us), file = self.target)
@@ -428,11 +428,8 @@ class Adjustment():
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
             assert(sol[i].feasible()) # make sure nothing is broken
-            print(f'electre;{ranking[i]};{evaluation[i, :]};{sol[i].allocation()}', file = self.target)
-        if details:
-            self.check()            
-            for s in sol:
-                print(s.included(), s.evaluate())
+            print(f'electre;{ranking[i]};{evaluation[i, :]};{sol[i].allocation()};{sol[i].count()}',
+                  file = self.target)
 
     def __str__(self):
         return f'{self.shakestall}\n' + '\n'.join([ str(sol) for sol in self.front ])
@@ -449,6 +446,12 @@ class Adjustment():
         print(self.evaluate(), file = self.target)
         values = ';'.join([ f'{s.allocation():.2f}' for s in self.front ])
         print(f'budget;{values}', file = self.target)
+        values = ';'.join([ f'{s.count()}' for s in self.front ])        
+        print(f'size;{values}', file = self.target)
+        if details:
+            self.check()            
+            for s in self.front:
+                print(s.included(), s.evaluate(), s.count())
 
     def subset(self):
         k = len(self.front)
@@ -504,7 +507,7 @@ class Adjustment():
             k = len(result)
             if k >= 2 * self.goal: # there are too many now
                 (self.front, c) = select(result, self.goal)
-                print(f'#clust;{c};{len(result)}', file = self.target)
+                print(f'#clust;conv{c};size{len(result)};goal{self.goal}', file = self.target)
             else:
                 self.front = result # no need to cut it down yet
             if details:

@@ -222,12 +222,15 @@ class Solution():
         other.activate(most, level = level) # it fits now
         return other
 
+    def count(self):
+        return len(self.actives())
+    
     def actives(self, aslist = False):
-        act = [a.parent for a in self.assignment.keys()]
+        act = { a.parent for a in self.assignment.keys() }
         if aslist:
-            return act
+            return list(act)
         else:
-            return set(act)
+            return act
 
     def inactives(self, aslist = False):
         if aslist:

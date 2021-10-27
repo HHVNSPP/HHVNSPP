@@ -4,7 +4,7 @@ from math import log, floor, ceil
 from collections import defaultdict
 
 def candlestick(d):
-    if d is None:
+    if d is None or len(d) == 0:
         return '0 0 0 0 0'
     data = np.array(d)
     low = min(data)
@@ -16,9 +16,9 @@ def candlestick(d):
 
 print('''set term postscript eps font ",12" size 32, 24 color
 set key off
-set boxwidth 0.6 relative
-set style fill solid border -1
 set logscale x
+set boxwidth 0.5 relative
+set style fill solid border -1
 set xtics 1, 2
 set xlabel "Iteration"
 c0="#dddddd"
@@ -30,7 +30,8 @@ c5="#006400"
 c6="#4b0082"
 c7="#a0522d"
 c8="#ff0000"
-c9="#0000dd"''')
+c9="#0000dd"
+c10="#33dd00"''')
 
 sets = [ (4, 20, 3),
          (9, 20, 3),
@@ -46,12 +47,12 @@ for panel in sets:
     k, n, instances = panel
     maxiter = 0
     for i in range(instances):
-        # replicas of instances in rows, objectives + budget in columns
         filename = f'k{k}n{n}i{i + 1}.txt'
         for r in range(replicas):
             iteration = 0
             objectives = defaultdict(list)
             budget = defaultdict(list)
+            size = defaultdict(list)
             combine = None
             with open(f'r{r + 1}_{filename}') as output:
                 for line in output:
@@ -70,12 +71,16 @@ for panel in sets:
                                 combine = line
                                 continue
                             line = line.split(';')
-                            budget[iteration].append(float(line[-1]))
-                            line = line[-2]
-                            line = line.replace('[', '')
-                            line = line.replace(']', '')
-                            line = line.split()
-                            values = [ int(f[:-1]) if f[-1] == '.' else float(f) for f in line ]
+                            if len(line) != 5:
+                                print('# ignoring old format', line)
+                                continue
+                            size[iteration].append(float(line[-1]))
+                            budget[iteration].append(float(line[-2]))
+                            l = line[-3]
+                            l = l.replace('[', '')
+                            l = l.replace(']', '')
+                            l = l.split()
+                            values = [ int(f[:-1]) if f[-1] == '.' else float(f) for f in l ]
                             assert k == len(values)
                             objectives[iteration].append(values)
                         elif 'budget' in line:
@@ -85,6 +90,13 @@ for panel in sets:
                             line = line.split(';')[1:]
                             values = [ float(f) for f in line ]
                             budget[iteration] += values
+                        elif 'size' in line:
+                            if '[' in line and ']' not in line:
+                                combine = line
+                                continue
+                            line = line.split(';')[1:]
+                            values = [ int(f) for f in line ]
+                            size[iteration] += values
                         elif 'usage' in line:
                             line = line.split(';')[1:]
                             stage = line.pop(0)
@@ -103,21 +115,28 @@ for panel in sets:
                             values = [ int(f[:-1]) if f[-1] == '.' else float(f) for f in line ]
                             assert k == len(values)
                             objectives[iteration].append(values)                            
-            for obj in range(k + 1): # budget will be objective k + 1 in these files
+            for obj in range(k + 2): # budget will be objective k + 1 and portfolio size k + 2 in these files
                 with open(f'parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt', 'w') as target:
                     for iteration in objectives:
-                        data = [ s[obj] for s in objectives[iteration] ] if obj < k else budget[iteration]
+                        data = None
+                        if obj < k:
+                            data = [ s[obj] for s in objectives[iteration] ]
+                        elif obj == k:
+                            data = budget[iteration]
+                        elif obj == k + 1:
+                            data = size[iteration]
                         values = candlestick(data)
                         print(f'{iteration} {values}', file = target)
     print(f'set output "B{k}_{n}.eps"')
     rows = replicas * instances
-    print(f'set multiplot layout {rows}, {k + 1}')
+    # replicas of instances in rows, objectives + budget + size in columns
+    print(f'set multiplot layout {rows}, {k + 2}')
     print(f'set xrange [0.5:1.5 * {maxiter}]')
     for i in range(instances):
         for r in range(replicas):
             print(f'set title "Instance {i + 1}, replica {r + 1}')
-            for obj in range(k + 1):
-                name = 'Budget' if obj == k else f'Objective {obj + 1}'
+            for obj in range(k + 2):
+                name = 'Budget' if obj == k else 'Portfolio size' if obj == k + 1 else f'Objective {obj + 1}'
                 print(f'set ylabel "{name}"')                
                 wb = f'u 1:3:2:6:5 with candlesticks lt -1 lw 2 lc rgb c{obj} whiskerbars, \\'
                 mb = f'"" u 1:4:4:4:4 with candlesticks lt -1 lw 3 lc rgb c{obj}'

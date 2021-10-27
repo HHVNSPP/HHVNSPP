@@ -24,10 +24,11 @@ for s in 'ABC':
             # we use the set C both WITH and WITHOUT synergies, the others only without
             syn = [ True, False ] if s == 'C' else [ False ]
             for act in syn:
+                ss = 's_' if syn else '_'
                 print(f'Instance {instance} with{"" if act else "out"} synergies')
                 portfolio = load[s](instance, act)
                 n = len(portfolio.projects)
                 for r in range(1, replicas + 1):
                     print(f'Executing replica {r} for {filename} in {directory}', file = stderr)
-                    with open(output + f'r{r}_' + filename, 'w') as target:
+                    with open(output + f'r{r}' + ss + filename, 'w') as target:
                         Adjustment(portfolio, target).run()
