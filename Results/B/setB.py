@@ -54,7 +54,7 @@ for panel in sets:
             budget = defaultdict(list)
             size = defaultdict(list)
             combine = None
-            with open(f'r{r + 1}_{filename}') as output:
+            with open(f'Replicas/r{r + 1}_{filename}') as output:
                 for line in output:
                     if '#' not in line:
                         if combine is not None:
@@ -116,7 +116,7 @@ for panel in sets:
                             assert k == len(values)
                             objectives[iteration].append(values)                            
             for obj in range(k + 2): # budget will be objective k + 1 and portfolio size k + 2 in these files
-                with open(f'parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt', 'w') as target:
+                with open(f'Parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt', 'w') as target:
                     for iteration in objectives:
                         data = None
                         if obj < k:
@@ -140,7 +140,7 @@ for panel in sets:
                 print(f'set ylabel "{name}"')                
                 wb = f'u 1:3:2:6:5 with candlesticks lt -1 lw 2 lc rgb c{obj} whiskerbars, \\'
                 mb = f'"" u 1:4:4:4:4 with candlesticks lt -1 lw 3 lc rgb c{obj}'
-                print(f'plot "parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt" {wb}\n{mb}')
+                print(f'plot "Parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt" {wb}\n{mb}')
     print('unset multiplot')
 
 heuristics = dict()
@@ -152,7 +152,7 @@ for stage in present:
 for panel in sets:
     k, n, c = panel
     for stage in present:
-        with open(f'parsed/h_B{k}_{n}_{stage}.txt', 'w') as target:
+        with open(f'Parsed/h_B{k}_{n}_{stage}.txt', 'w') as target:
             for (heur, c) in zip(heuristics[stage], counter[stage]):
                 data = uses[panel].get((stage, heur), None)
                 lst = candlestick(data)
@@ -162,11 +162,11 @@ wb = { 'shake': 'using 1:3:2:6:5 notitle with candlesticks lt -1 lw 2 lc "#ffff0
        'search': 'using 1:3:2:6:5 notitle with candlesticks lt -1 lw 2 lc "#00ffff" whiskerbars, \\' }
 mb = '"" using 1:4:4:4:4 notitle with candlesticks lt -1 lw 3 lc rgb "#000000"'
                 
-with open('heur.plot', 'w') as target:
+with open('setBh.plot', 'w') as target:
     print('''set term postscript eps font ",20" size 16, 16 color
     set boxwidth 0.6 relative
     set style fill solid border -1
-    set output "heur.eps"
+    set output "setBh.eps"
     set key off
     set ylabel "Number of uses"''', file = target)
     print(f'set multiplot layout {len(sets)}, 2', file = target)
@@ -177,5 +177,5 @@ with open('heur.plot', 'w') as target:
             lst = ','.join([ f'"{h}" {c}' for (h, c) in zip(heuristics[stage], counter[stage]) ])
             print(f'set xtics ({lst}) rotate by 90 right offset 0,-1', file = target)
             print(f'set title "{n} projects, {k} objectives: {stage}"', file = target)
-            print(f'plot "parsed/h_B{k}_{n}_{stage}.txt" {wb[stage]}\n{mb}', file = target)
+            print(f'plot "Parsed/h_B{k}_{n}_{stage}.txt" {wb[stage]}\n{mb}', file = target)
 
