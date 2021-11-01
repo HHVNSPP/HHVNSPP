@@ -13,10 +13,14 @@ maxCount = -minCount
 minBenefit = minCount
 maxBenefit = -minBenefit
 
-for filename in os.listdir('.'):
-    if filename.startswith('r') and filename.endswith('.dat'):
+for filename in os.listdir('Replicas/'):
+    if filename.startswith('r') and filename.endswith('.txt'):
         labels = filename.split('_')
-        replica = int(labels[0][1:])
+        rl = labels[0][1:]
+        if 's' not in rl:
+            replica = int(rl)
+        else:
+            continue # we do not analyze the ones with synergies since we have no baseline for them
         label = labels[1]
         instance = int(labels[-1][:-4])
         if replica == 1: # print the gnuplot commands only for the first one
@@ -30,18 +34,18 @@ for filename in os.listdir('.'):
             panel += f'y={y}\n'
             panel += f'set arrow {instance} from x, graph 0 to x, graph 1 nohead lt -1 lw 3 lc rgb "#999999"\n'
             # draw only the first three replicas (to avoid clutter)
-            panel += f'plot "A{instance}_r1.csv" using 1:2 with points pt 7 lc rgb "#0000ff", y with lines lt -1 lw 3 lc rgb "#999999", \\\n'
-            panel += f'     "A{instance}_r2.csv" using 1:2 with points pt 5 lc rgb "#ff0000", \\\n'
-            panel += f'     "A{instance}_r3.csv" using 1:2 with points pt 7 lc rgb "#00ff00"\n'
+            panel += f'plot "Parsed/A{instance}_r1.txt" using 1:2 with points pt 7 lc rgb "#0000ff", y with lines lt -1 lw 3 lc rgb "#999999", \\\n'
+            panel += f'     "Parsed/A{instance}_r2.txt" using 1:2 with points pt 5 lc rgb "#ff0000", \\\n'
+            panel += f'     "Parsed/A{instance}_r3.txt" using 1:2 with points pt 7 lc rgb "#00ff00"\n'
             panel += f'show arrow {instance}\n'
             panel += f'unset arrow {instance}\n'
             panels[instance] = panel
-        if replica < 4: # make the CSV files that gnuplot will read
-            with open(filename) as source:
-                with open(f'A{instance}_r{replica}.csv', 'w') as target:
+        if replica < 4: # make the TXT files that gnuplot will read
+            with open('Replicas/' + filename) as source:
+                with open(f'Parsed/A{instance}_r{replica}.txt', 'w') as target:
                     for line in source:
                         if 'electre' in line:
-                            values = line.split(';')[-1][2:-3].split()
+                            values = line.split(';')[2][2:-3].split()
                             count = int(values.pop(0)[:-1]) # skip the . at the end
                             benefit = float(values.pop(0))
                             print(f'{count} {benefit}', file = target)

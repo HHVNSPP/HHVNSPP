@@ -1,307 +1,306 @@
+#clust;conv1;size24;goal10
+#clust;conv2;size21;goal10
 #search;maxiter
-1.9318790435791016
-[[32.95       38.3        37.35       38.25      ]
- [33.45       37.2        36.65       39.3       ]
- [34.05       39.5        36.7        38.3       ]
- [34.42080721 38.77080721 38.19664577 37.67080721]
- [33.1        39.8        37.95       35.8       ]
- [33.35       38.35       38.45       38.2       ]
- [33.2        37.8        36.75       38.25      ]
- [34.05       39.5        37.6        37.4       ]
- [33.15       39.65       37.85       36.25      ]
- [32.85       38.67173325 37.2934665  38.0934665 ]]
-budget;1996.34;1992.87;1993.46;1996.26;1995.42;1989.53;1993.18;1995.04;1994.94;1993.07
-size;126;124;122;121;123;124;125;124;123;123
+3.395286798477173
+[[33.1        37.6        41.         38.95      ]
+ [33.4        40.65       37.7        36.95      ]
+ [33.47311051 40.44622102 38.84622102 38.7692442 ]
+ [36.         38.05       38.         38.3       ]
+ [34.45       39.5        38.5        38.55      ]
+ [34.25       39.1        37.45       39.05      ]
+ [35.3        40.45       39.25       38.        ]
+ [33.55       40.4        41.25       37.55      ]
+ [33.1        40.6        39.6        37.6       ]
+ [34.35       39.2        36.95       39.05      ]]
+budget;1992.05;1993.41;1996.05;1993.58;1994.94;1993.51;1995.88;1991.79;1995.55;1996.43
+size;124;123;123;121;125;124;121;122;123;124
 w;1
 #search;maxiter
-2.859832763671875
-[[32.95       38.3        37.35       38.25      ]
- [33.45       37.2        36.65       39.3       ]
- [34.05       39.5        36.7        38.3       ]
- [34.42080721 38.77080721 38.19664577 37.67080721]
- [33.1        39.8        37.95       35.8       ]
- [33.35       38.35       38.45       38.2       ]
- [33.2        37.8        36.75       38.25      ]
- [34.05       39.5        37.6        37.4       ]
- [33.15       39.65       37.85       36.25      ]
- [32.85       38.67173325 37.2934665  38.0934665 ]]
-budget;1996.34;1992.87;1993.46;1996.26;1995.42;1989.53;1993.18;1995.04;1994.94;1993.07
-size;126;124;122;121;123;124;125;124;123;123
+4.365878582000732
+[[33.1        37.6        41.         38.95      ]
+ [33.4        40.65       37.7        36.95      ]
+ [33.47311051 40.44622102 38.84622102 38.7692442 ]
+ [36.         38.05       38.         38.3       ]
+ [34.45       39.5        38.5        38.55      ]
+ [34.25       39.1        37.45       39.05      ]
+ [35.3        40.45       39.25       38.        ]
+ [33.55       40.4        41.25       37.55      ]
+ [33.1        40.6        39.6        37.6       ]
+ [34.35       39.2        36.95       39.05      ]]
+budget;1992.05;1993.41;1996.05;1993.58;1994.94;1993.51;1995.88;1991.79;1995.55;1996.43
+size;124;123;123;121;125;124;121;122;123;124
 w;2
 #search;maxiter
-3.852440357208252
-[[32.95       38.3        37.35       38.25      ]
- [33.45       37.2        36.65       39.3       ]
- [34.05       39.5        36.7        38.3       ]
- [34.42080721 38.77080721 38.19664577 37.67080721]
- [33.1        39.8        37.95       35.8       ]
- [33.35       38.35       38.45       38.2       ]
- [33.2        37.8        36.75       38.25      ]
- [34.05       39.5        37.6        37.4       ]
- [33.15       39.65       37.85       36.25      ]
- [32.85       38.67173325 37.2934665  38.0934665 ]]
-budget;1996.34;1992.87;1993.46;1996.26;1995.42;1989.53;1993.18;1995.04;1994.94;1993.07
-size;126;124;122;121;123;124;125;124;123;123
+5.572154760360718
+[[36.1        36.95       36.6        36.6       ]
+ [33.4        40.65       37.7        36.95      ]
+ [33.1        37.6        41.         38.95      ]
+ [33.47311051 40.44622102 38.84622102 38.7692442 ]
+ [36.         38.05       38.         38.3       ]
+ [34.35       39.2        36.95       39.05      ]
+ [29.65       36.4        36.05       39.2       ]
+ [34.45       39.5        38.5        38.55      ]
+ [34.25       39.1        37.45       39.05      ]
+ [35.3        40.45       39.25       38.        ]
+ [33.1        40.6        39.6        37.6       ]
+ [33.55       40.4        41.25       37.55      ]]
+budget;1979.96;1993.41;1992.05;1996.05;1993.58;1996.43;1949.63;1994.94;1993.51;1995.88;1995.55;1991.79
+size;107;123;124;123;121;124;108;125;124;121;123;122
 #search;maxiter
 w;4
 #search;maxiter
-5.845613956451416
-[[32.95       38.3        37.35       38.25      ]
- [33.45       37.2        36.65       39.3       ]
- [34.05       39.5        36.7        38.3       ]
- [34.42080721 38.77080721 38.19664577 37.67080721]
- [33.1        39.8        37.95       35.8       ]
- [33.35       38.35       38.45       38.2       ]
- [33.2        37.8        36.75       38.25      ]
- [34.05       39.5        37.6        37.4       ]
- [33.15       39.65       37.85       36.25      ]
- [32.85       38.67173325 37.2934665  38.0934665 ]]
-budget;1996.34;1992.87;1993.46;1996.26;1995.42;1989.53;1993.18;1995.04;1994.94;1993.07
-size;126;124;122;121;123;124;125;124;123;123
+9.278410911560059
+[[33.65       37.         38.9        39.1       ]
+ [36.1        36.95       36.6        36.6       ]
+ [34.3        39.7        39.3        38.95      ]
+ [33.1        37.6        41.         38.95      ]
+ [33.47311051 40.44622102 38.84622102 38.7692442 ]
+ [36.         38.05       38.         38.3       ]
+ [34.85       41.         38.8        39.1       ]
+ [35.3        40.45       39.25       38.        ]
+ [33.1        40.6        39.6        37.6       ]
+ [32.5        36.65       40.45       39.6       ]
+ [33.55       40.4        41.25       37.55      ]
+ [35.4        38.65       37.75       38.95      ]
+ [32.65       37.05       39.2        39.6       ]]
+budget;1990.28;1979.96;1995.62;1992.05;1996.05;1993.58;1995.60;1995.88;1995.55;1990.61;1991.79;1995.65;1865.68
+size;124;107;125;124;123;121;126;121;123;125;122;122;127
 #search;maxiter
+#added;1
 #search;maxiter
+#added;1
 #search;maxiter
 w;8
+#added;1
 #search;maxiter
-9.739212989807129
-[[32.95       38.3        37.35       38.25      ]
- [33.45       37.2        36.65       39.3       ]
- [34.05       39.5        36.7        38.3       ]
- [34.42080721 38.77080721 38.19664577 37.67080721]
- [33.1        39.8        37.95       35.8       ]
- [33.35       38.35       38.45       38.2       ]
- [33.2        37.8        36.75       38.25      ]
- [34.05       39.5        37.6        37.4       ]
- [33.15       39.65       37.85       36.25      ]
- [32.85       38.67173325 37.2934665  38.0934665 ]]
-budget;1996.34;1992.87;1993.46;1996.26;1995.42;1989.53;1993.18;1995.04;1994.94;1993.07
-size;126;124;122;121;123;124;125;124;123;123
+14.171358346939087
+[[35.65       40.1        37.65       40.25      ]
+ [33.47311051 40.44622102 38.84622102 38.7692442 ]
+ [36.21405346 40.27026729 42.77026729 40.17026729]
+ [34.85       41.         38.8        39.1       ]
+ [34.86405346 39.37026729 41.42026729 40.87026729]
+ [35.3        40.45       39.25       38.        ]
+ [33.1        40.6        39.6        37.6       ]
+ [33.55       40.4        41.25       37.55      ]
+ [37.0264818  40.37237088 39.87237088 39.7       ]]
+budget;1996.07;1996.05;1994.72;1995.60;1995.91;1995.88;1995.55;1991.79;1994.32
+size;118;123;122;126;123;121;123;122;120
+#added;1
+#search;maxiter
+#added;1
+#search;maxiter
+#added;1
+#search;maxiter
+#added;1
 #search;maxiter
 #search;maxiter
+#clust;conv1;size22;goal10
 #search;maxiter
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#clust;conv1;size20;goal10
 #search;maxiter
 w;16
 #clust;conv2;size20;goal10
-#search;maxiter
-24.089761972427368
-[[35.49397542 39.66171465 36.27515024 38.9906593 ]
- [34.00724275 39.42897101 37.85       38.83621376]
- [33.25       41.45       36.4        35.3       ]
- [32.45       42.25       36.6        34.35      ]
- [34.4        35.8        38.6        37.        ]
- [33.44152615 35.05381539 39.00381539 37.76610462]
- [35.83734988 38.54683747 37.14683747 37.76709367]
- [32.25       41.45       36.75       34.6       ]
- [32.35       42.25       36.4        34.7       ]
- [33.8        38.5        38.7        39.7       ]
- [32.45       41.95       35.95       35.3       ]
- [32.71730876 39.69817201 40.14732842 37.5369235 ]
- [34.         36.3        38.6        36.65      ]
- [33.31730876 40.19817201 39.64732842 36.9369235 ]
- [34.4        36.15       38.3        36.65      ]
- [32.67261244 36.27816053 39.05381539 38.32153605]]
-budget;1996.30;1995.42;1994.09;1991.78;1990.08;1993.86;1993.01;1996.38;1993.69;1994.79;1994.99;1994.07;1992.56;1991.88;1994.66;1991.38
-size;123;125;115;115;116;112;122;115;115;126;115;126;117;126;117;114
-#clust;conv1;size22;goal10
 #clust;conv1;size20;goal10
 #search;maxiter
-#clust;conv1;size20;goal10
-#search;maxiter
-#clust;conv2;size20;goal10
-#search;maxiter
+29.928072690963745
+[[36.5        42.5        42.05       38.3       ]
+ [34.75       42.35       42.15       39.7       ]
+ [35.7        41.39772613 42.69772613 38.94772613]
+ [37.8        42.         42.2        40.3       ]
+ [36.5        42.45       41.9        40.95      ]
+ [35.65       42.         42.1        40.45      ]
+ [36.7        42.25       41.2        41.2       ]
+ [37.64152643 42.94152643 41.74576321 39.38830529]
+ [35.65       41.1        42.25       41.65      ]
+ [37.19152643 42.14152643 41.99576321 38.23830529]
+ [35.7        42.3        42.55       39.8       ]
+ [37.01405346 41.32026729 42.72026729 39.87026729]
+ [38.55       41.6        41.5        39.2       ]
+ [35.6        42.55       40.85       40.35      ]
+ [36.21405346 40.27026729 42.77026729 40.17026729]
+ [38.04152643 42.29152643 41.64576321 38.38830529]
+ [36.85       42.1        41.15       41.55      ]
+ [37.05       41.15       42.25       38.6       ]
+ [37.49152643 42.04152643 42.09576321 38.28830529]]
+budget;1996.33;1994.16;1992.09;1995.53;1993.10;1993.96;1994.70;1996.07;1994.44;1996.16;1990.65;1994.78;1994.72;1991.53;1994.72;1995.90;1995.94;1990.44;1990.50
+size;126;124;123;126;126;128;126;126;127;125;126;123;125;125;122;126;127;125;125
+#clust;conv2;size22;goal10
 #clust;conv3;size20;goal10
 #search;maxiter
+#search;maxiter
+#clust;conv3;size22;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv4;size21;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv1;size20;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv1;size21;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv1;size20;goal10
+#clust;conv3;size20;goal10
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv2;size21;goal10
+#search;maxiter
+w;32
+#clust;conv2;size20;goal10
+#search;maxiter
+76.08013319969177
+[[39.45       41.65       39.65       41.7       ]
+ [39.35       41.5        42.15       42.75      ]
+ [38.45       42.45       43.65       40.95      ]
+ [37.5        43.9        43.65       40.4       ]
+ [36.85       43.25       42.6        40.55      ]
+ [37.65       42.55       41.1        41.85      ]
+ [38.05       41.4        42.64708483 41.59708483]
+ [39.55       44.05       42.55       41.25      ]
+ [37.37956966 42.14182786 43.10913931 42.15913931]
+ [38.65       41.95       39.95       41.3       ]
+ [38.3        42.05       43.75       40.55      ]
+ [36.1        41.95       41.85       42.8       ]
+ [38.85       42.45       43.5        40.45      ]]
+budget;1992.53;1993.04;1993.63;1990.89;1996.08;1991.25;1993.57;1993.11;1993.36;1994.81;1990.12;1994.37;1990.25
+size;125;128;128;125;126;126;128;125;127;127;127;123;127
+#search;maxiter
+#search;maxiter
 #clust;conv1;size22;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv1;size20;goal10
+#search;maxiter
 #clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv3;size24;goal10
 #clust;conv2;size21;goal10
 #search;maxiter
-#search;maxiter
-#search;maxiter
-#clust;conv2;size23;goal10
-#clust;conv2;size21;goal10
 #clust;conv2;size20;goal10
+#clust;conv1;size20;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+#clust;conv3;size21;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#search;maxiter
 #search;maxiter
 #clust;conv1;size21;goal10
 #search;maxiter
 #clust;conv2;size22;goal10
-#clust;conv2;size22;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv2;size21;goal10
+#clust;conv2;size20;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#search;maxiter
+#clust;conv3;size20;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
 #search;maxiter
 #clust;conv1;size23;goal10
 #search;maxiter
 #search;maxiter
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
 #clust;conv1;size20;goal10
 #search;maxiter
+#search;maxiter
+#clust;conv3;size24;goal10
+#clust;conv2;size20;goal10
+#clust;conv3;size21;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
 #search;maxiter
 #clust;conv5;size20;goal10
 #search;maxiter
-w;32
-#search;maxiter
-68.82638120651245
-[[32.34734146 36.45711035 39.63006589 38.34612439]
- [34.5        40.35       39.7        37.9       ]
- [32.5604692  36.65711035 39.97423688 38.23501338]
- [32.25       41.45       36.75       34.6       ]
- [34.05       40.05       39.3        38.35      ]
- [32.3        38.15       36.2        38.6       ]
- [31.83998704 38.37986767 37.18990838 38.49183231]
- [31.61015094 39.19406038 37.72030189 39.11015094]
- [34.2        39.2        37.05       38.45      ]
- [35.35       41.05       39.55       38.2       ]
- [32.35233837 37.27156026 38.29780177 40.96015094]
- [36.25       40.4        38.9        37.35      ]
- [35.97858091 37.63056867 37.15       38.78840979]
- [34.14375129 37.47156026 39.02633406 40.92580261]
- [36.9        39.6        38.05       36.5       ]
- [32.13998704 38.86999352 36.33998704 38.74198963]]
-budget;1996.08;1990.90;1995.19;1996.38;1990.39;1995.90;1991.23;1994.13;1995.10;1994.67;1992.07;1994.82;1993.60;1996.09;1989.75;1990.66
-size;118;128;118;115;123;120;118;124;119;122;122;122;123;121;114;118
-#clust;conv2;size20;goal10
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#clust;conv2;size21;goal10
-#search;maxiter
-#search;maxiter
-#clust;conv3;size20;goal10
-#search;maxiter
-#clust;conv1;size20;goal10
-#search;maxiter
-#clust;conv1;size20;goal10
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#clust;conv2;size21;goal10
-#clust;conv3;size20;goal10
-#clust;conv3;size20;goal10
-#search;maxiter
-#search;maxiter
-#search;maxiter
-#clust;conv1;size20;goal10
-#clust;conv1;size20;goal10
-#clust;conv1;size21;goal10
-#search;maxiter
-#clust;conv1;size23;goal10
-#clust;conv3;size23;goal10
-#search;maxiter
-#clust;conv1;size21;goal10
-#clust;conv1;size22;goal10
-#search;maxiter
-#clust;conv2;size21;goal10
-#search;maxiter
-#clust;conv1;size21;goal10
-#search;maxiter
-#search;maxiter
-#clust;conv2;size21;goal10
-#search;maxiter
-#clust;conv4;size23;goal10
-#clust;conv2;size20;goal10
-#search;maxiter
-#clust;conv2;size21;goal10
-#search;maxiter
-#clust;conv3;size20;goal10
-#clust;conv2;size20;goal10
+#clust;conv3;size21;goal10
 #search;maxiter
 #clust;conv2;size20;goal10
-#search;maxiter
-#clust;conv1;size20;goal10
-#search;maxiter
-#clust;conv2;size20;goal10
-#search;maxiter
-#clust;conv1;size20;goal10
-#clust;conv2;size20;goal10
-#clust;conv3;size22;goal10
-#search;maxiter
 #search;maxiter
 w;64
+#clust;conv1;size20;goal10
 #search;maxiter
-163.6675570011139
-[[37.20043486 42.40173943 41.85       41.05217429]
- [35.4        42.85       42.8        37.2       ]
- [37.         41.2        41.15       41.2       ]
- [35.79492948 42.8297179  42.7        40.42464738]
- [37.37690963 39.20763852 41.3        41.18454815]
- [37.25       42.05       41.35       41.1       ]
- [37.75       41.9        40.95       39.9       ]
- [37.7        41.2        40.6        41.4       ]
- [37.99805727 41.74222908 41.         40.44028634]
- [37.26042259 42.29169036 40.7        40.90211295]
- [36.67690963 40.70763852 42.1        41.28454815]
- [36.1        43.92746368 41.1        39.37746368]
- [35.60043486 41.15173943 42.25       40.80217429]
- [36.25       43.57746368 42.25       39.87746368]
- [36.474937   40.85173943 41.88625536 41.85018286]
- [36.75       42.75       41.95       41.45      ]
- [37.35       43.05       42.35       37.6       ]]
-budget;1995.89;1994.22;1995.75;1996.46;1992.95;1995.79;1993.28;1995.74;1995.33;1994.41;1996.28;1981.89;1996.14;1988.92;1989.33;1995.11;1991.74
-size;128;128;128;127;125;128;127;126;128;128;127;127;126;128;127;127;128
-usage;shake;swapRandom=4
-usage;shake;swapQuarter=21
-usage;shake;swapThird=2
-usage;shake;swapHalf=34
-usage;shake;swapGroup=3
-usage;shake;incrMin=33
+175.5111367702484
+[[38.3        43.3        41.1        41.5       ]
+ [37.75       44.5        43.95       41.35      ]
+ [38.65       41.25       39.2        42.55      ]
+ [38.55       43.85       42.65       40.5       ]
+ [38.7        42.8        43.05       42.05      ]
+ [38.7531929  43.78298224 42.9531929  40.0531929 ]
+ [38.25       43.85       43.6        41.        ]
+ [38.1        42.5        42.5        42.2       ]
+ [37.9        42.85       42.45       41.3       ]
+ [36.2        42.6        43.5        41.7       ]]
+budget;1996.30;1993.40;1992.02;1995.84;1991.59;1992.60;1991.19;1989.98;1995.25;1994.83
+size;126;128;126;128;128;127;127;128;127;128
+usage;shake;swapRandom=2
+usage;shake;swapQuarter=52
+usage;shake;swapThird=1
+usage;shake;swapHalf=5
+usage;shake;swapGroup=4
+usage;shake;incrMin=17
 usage;shake;incrMax=1
-usage;shake;incrRnd=3
-usage;shake;rndMin=21
+usage;shake;incrRnd=1
+usage;shake;rndMin=40
 usage;shake;rndMax=1
 usage;shake;rndRnd=1
 usage;shake;liftIncr=2
-usage;shake;liftRnd=2
-usage;search;swapOne=9
-usage;search;inclRndMin=22
-usage;search;inclRndMax=5
-usage;search;inclRndRnd=1
-usage;search;inclLowMin=59
-usage;search;inclLowMax=35
-usage;search;inclLowRnd=15
-usage;search;inclHighMin=41
-usage;search;inclHighMax=9
-usage;search;inclHighRnd=3
-usage;search;fundAtMin=69
-usage;search;fundAtMax=9
-usage;search;fundAtRnd=73
-usage;search;exclRnd=20
-usage;search;exclLow=29
-usage;search;exclHigh=41
-usage;search;inflGrMin=55
-usage;search;inflGrMax=28
-usage;search;inflGrRnd=11
-usage;search;deflGrMin=4
-usage;search;deflGrMax=25
-usage;search;deflGrRnd=3
-usage;search;exchGrMin=55
-usage;search;exchGrMax=20
-usage;search;exchGrRnd=9
-usage;search;incrMin=27
-usage;search;incrMax=28
-usage;search;incrRnd=25
-usage;search;rndMin=20
-usage;search;rndMax=24
-usage;search;rndRnd=29
-usage;search;liftIncr=71
-usage;search;liftRnd=426
-end;163.673/512;63/64;0/18
-electre;-4.0;[[37.20043486 42.40173943 41.85       41.05217429]];1995.8919450428639;128
-electre;2.0;[[35.4  42.85 42.8  37.2 ]];1994.2199999999996;128
-electre;5.0;[[37.   41.2  41.15 41.2 ]];1995.7499999999989;128
-electre;-10.0;[[35.79492948 42.8297179  42.7        40.42464738]];1996.4551815121445;127
-electre;2.0;[[37.37690963 39.20763852 41.3        41.18454815]];1992.9534501620274;125
-electre;-1.0;[[37.25 42.05 41.35 41.1 ]];1995.7899999999995;128
-electre;7.0;[[37.75 41.9  40.95 39.9 ]];1993.2799999999995;127
-electre;6.0;[[37.7 41.2 40.6 41.4]];1995.7399999999984;126
-electre;3.0;[[37.99805727 41.74222908 41.         40.44028634]];1995.329819902206;128
-electre;11.0;[[37.26042259 42.29169036 40.7        40.90211295]];1994.4056712712747;128
-electre;-5.0;[[36.67690963 40.70763852 42.1        41.28454815]];1996.2834501620273;127
-electre;9.0;[[36.1        43.92746368 41.1        39.37746368]];1981.8861563234918;127
-electre;1.0;[[35.60043486 41.15173943 42.25       40.80217429]];1996.1419450428643;126
-electre;-11.0;[[36.25       43.57746368 42.25       39.87746368]];1988.9161563234925;128
-electre;-4.0;[[36.474937   40.85173943 41.88625536 41.85018286]];1989.334170057387;127
-electre;-10.0;[[36.75 42.75 41.95 41.45]];1995.1099999999992;127
-electre;-1.0;[[37.35 43.05 42.35 37.6 ]];1991.7399999999993;128
+usage;shake;liftRnd=1
+usage;search;swapOne=1
+usage;search;inclRndMin=12
+usage;search;inclRndMax=15
+usage;search;inclRndRnd=18
+usage;search;inclLowMin=27
+usage;search;inclLowMax=5
+usage;search;inclLowRnd=4
+usage;search;inclHighMin=109
+usage;search;inclHighMax=6
+usage;search;inclHighRnd=17
+usage;search;fundAtMin=9
+usage;search;fundAtMax=48
+usage;search;fundAtRnd=2
+usage;search;exclRnd=6
+usage;search;exclLow=42
+usage;search;exclHigh=8
+usage;search;inflGrMin=97
+usage;search;inflGrMax=7
+usage;search;inflGrRnd=36
+usage;search;deflGrMin=56
+usage;search;deflGrMax=28
+usage;search;deflGrRnd=2
+usage;search;exchGrMin=5
+usage;search;exchGrMax=48
+usage;search;exchGrRnd=42
+usage;search;incrMin=26
+usage;search;incrMax=26
+usage;search;incrRnd=19
+usage;search;rndMin=19
+usage;search;rndMax=14
+usage;search;rndRnd=18
+usage;search;liftIncr=151
+usage;search;liftRnd=377
+end;175.514/512;63/64;0/18
+electre;5.0;[[38.3 43.3 41.1 41.5]];1996.2999999999997;126
+electre;-9.0;[[37.75 44.5  43.95 41.35]];1993.3999999999999;128
+electre;7.0;[[38.65 41.25 39.2  42.55]];1992.02;126
+electre;0.0;[[38.55 43.85 42.65 40.5 ]];1995.8400000000006;128
+electre;-5.0;[[38.7  42.8  43.05 42.05]];1991.5899999999995;128
+electre;-1.0;[[38.7531929  43.78298224 42.9531929  40.0531929 ]];1992.5972716114675;127
+electre;-7.0;[[38.25 43.85 43.6  41.  ]];1991.1899999999998;127
+electre;3.0;[[38.1 42.5 42.5 42.2]];1989.98;128
+electre;6.0;[[37.9  42.85 42.45 41.3 ]];1995.2500000000002;127
+electre;1.0;[[36.2 42.6 43.5 41.7]];1994.83;128

@@ -22,9 +22,9 @@ for s in 'ABC':
         if filename.startswith(prefix) and filename.endswith(suffix):
             instance = directory + filename
             # we use the set C both WITH and WITHOUT synergies, the others only without
-            syn = [ True, False ] if s == 'C' else [ False ]
+            syn = [ True, False ] if s == 'C' else [ False ] 
             for act in syn:
-                ss = 's_' if syn else '_'
+                ss = 's_' if act else '_'
                 print(f'Instance {instance} with{"" if act else "out"} synergies')
                 portfolio = load[s](instance, act)
                 n = len(portfolio.projects)
