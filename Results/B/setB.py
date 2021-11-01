@@ -17,7 +17,7 @@ def candlestick(d):
 print('''set term postscript eps font ",12" size 32, 24 color
 set key off
 set logscale x
-set boxwidth 0.5 relative
+set boxwidth 0.1 absolute
 set style fill solid border -1
 set xtics 1, 2
 set xlabel "Iteration"
@@ -41,12 +41,16 @@ replicas = 3
 
 uses = dict()
 present = { 'shake': set(), 'search': set() }
-
+maxcount = {'shake': 0, 'search': 0 }
+objlow = dict()
+objhigh = dict()
 for panel in sets:
     uses[panel] = defaultdict(list)
     k, n, instances = panel
     maxiter = 0
     for i in range(instances):
+        objlow[i] = dict()
+        objhigh[i] = defaultdict(int)
         filename = f'k{k}n{n}i{i + 1}.txt'
         for r in range(replicas):
             iteration = 0
@@ -103,6 +107,7 @@ for panel in sets:
                             line = line[0].strip().split('=')
                             heur = line.pop(0)
                             count = int(line.pop(0))
+                            maxcount[stage] = max(count, maxcount[stage])
                             uses[panel][(stage, heur)].append(count) # combine all replicas of the same instance type
                             present[stage].add(heur)
                         elif '[' in line:
@@ -126,18 +131,23 @@ for panel in sets:
                         elif obj == k + 1:
                             data = size[iteration]
                         values = candlestick(data)
+                        if obj not in objlow[i]:
+                            objlow[i][obj] = float('inf')
+                        objlow[i][obj] = min(objlow[i][obj], min(data))
+                        objhigh[i][obj] = max(objhigh[i][obj], max(data))                        
                         print(f'{iteration} {values}', file = target)
     print(f'set output "B{k}_{n}.eps"')
     rows = replicas * instances
     # replicas of instances in rows, objectives + budget + size in columns
     print(f'set multiplot layout {rows}, {k + 2}')
-    print(f'set xrange [0.5:1.5 * {maxiter}]')
+    print(f'set xrange [0.5 : 1.5 * {maxiter}]')
     for i in range(instances):
         for r in range(replicas):
             print(f'set title "Instance {i + 1}, replica {r + 1}')
             for obj in range(k + 2):
                 name = 'Budget' if obj == k else 'Portfolio size' if obj == k + 1 else f'Objective {obj + 1}'
-                print(f'set ylabel "{name}"')                
+                print(f'set ylabel "{name}"')
+                print(f'set yrange [{0.9 * objlow[i][obj]}:{1.1 * objhigh[i][obj]}]')                
                 wb = f'u 1:3:2:6:5 with candlesticks lt -1 lw 2 lc rgb c{obj} whiskerbars, \\'
                 mb = f'"" u 1:4:4:4:4 with candlesticks lt -1 lw 3 lc rgb c{obj}'
                 print(f'plot "Parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt" {wb}\n{mb}')
@@ -174,6 +184,7 @@ with open('setBh.plot', 'w') as target:
         k, n, c = panel
         for stage in present:
             print(f'set xrange [0.1:{len(heuristics[stage])+0.9}]', file = target)
+            print(f'set yrange [{-0.1 * maxcount[stage]}:{1.1 * maxcount[stage]}]', file = target)
             lst = ','.join([ f'"{h}" {c}' for (h, c) in zip(heuristics[stage], counter[stage]) ])
             print(f'set xtics ({lst}) rotate by 90 right offset 0,-1', file = target)
             print(f'set title "{n} projects, {k} objectives: {stage}"', file = target)
