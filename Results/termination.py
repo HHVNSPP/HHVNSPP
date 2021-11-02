@@ -12,7 +12,6 @@ for s in 'ABC':
         case = s + ('s' if 'WithS' in c else '')
         counters[case] = { c : 0 for c in conditions }
         directory = base + c
-        print(s, case, directory)
         for filename in os.listdir(directory):
             if filename.startswith('r') and filename.endswith('.txt'):
                 f = filename.split('_')
