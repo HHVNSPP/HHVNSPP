@@ -20,11 +20,11 @@ powers = [ p for p in range(6, 10) ]
 maxiter = 0
 for p in powers:
     n = 2**p
-    with open(f'setC{n}.plot', 'w') as target:
-        print(f'set term postscript eps size 24, 12 color\nset output "setC{n}.eps"', file = target)
+    with open(f'setC{n}.plot', 'w') as combined:
+        print(f'set term postscript eps size 24, 12 color\nset output "setC{n}.eps"', file = combined)
         print('''set logscale x\nset boxwidth 0.06 absolute\nset style fill solid border -1
-set xtics 1, 2\nset xlabel "Iteration"''', file = target)
-        print(f'set multiplot layout {instances}, {2 * replicas}', file = target)
+set xtics 1, 2\nset xlabel "Iteration"''', file = combined)
+        print(f'set multiplot layout {instances}, {2 * replicas}', file = combined)
         for i in range(instances):
             for syn in [ 's', '' ]: # with, without
                 suffix = '' if syn == 's' else 'out'
@@ -74,50 +74,62 @@ set xtics 1, 2\nset xlabel "Iteration"''', file = target)
                             b = budget[iteration]
                             s = size[iteration]
                             print(f'{iteration} {candlestick(b)} {candlestick(s)}', file = parsed)
-            print(f'set xrange [0.6:{1.9 * (maxiter + 0.1)}]', file = target)
+            print(f'set xrange [0.6:{1.9 * (maxiter + 0.1)}]', file = combined)
             for r in range(replicas): # two plots per replica
-                for kind in [ 'Front size', 'Budget' ]:
-                    red = 99
-                    blue = 33
-                    med = 4
-                    if kind == 'Front size':
-                        if n == 64: # manually adjusted for maximum aesthetic
-                            print('set yrange [35:70]', file = target)
-                        elif n == 128:
-                            print('set yrange [90:140]', file = target)
-                        elif n == 256:
-                            print('set yrange [170:270]', file = target)
-                        elif n == 512:
-                            print('set yrange [450:530]', file = target)                            
-                        red = 33
-                        blue = 99
-                        print(f'set title "{n} projects, instance {i + 1}, replica {r + 1}"', file = target)
-                        med = 9
-                    else:
-                        if n == 64:
-                            print('set yrange [870:1050]', file = target)
-                        elif n == 128:
-                            print('set yrange [1700:2050]', file = target)
-                        elif n == 256:
-                            print('set yrange [3650:3920]', file = target)                            
-                        elif n == 512:
-                            print('set yrange [7200:7900]', file = target)
-                        print(f'set ylabel "{kind}"', file = target)
-                    cols = f'{med - 1}:{med - 2}:{med + 2}:{med + 1}'
-                    for syn in [ 's', '' ]:
-                        cont = ''
-                        filename = f'Parsed/r{r + 1}{syn}_C{n}_{i + 1}.txt'
-                        mult = 1.2
-                        if syn == 's':
-                            mult = 0.7
-                            c = f'lc rgb "#{red}66{blue}"'
-                            print(f'plot "{filename}" u ({mult} * ($1 + 0.1)):{cols} t "with" with candlesticks lt -1 lw 1 {c} whiskerbars, \\', \
-                                  file = target)
-                            cont = ',\\'
+                with open(f'setC{n}_{i + 1}_{r + 1}.plot', 'w') as individual:
+                    print(f'set term postscript eps size 4, 4 color\nset output "setC{n}_{i + 1}_{r + 1}.eps"', file = individual)
+                    print(f'set xrange [0.6:{1.9 * (maxiter + 0.1)}]\nset multiplot layout 2, 1', file = individual)
+                    print('''set logscale x\nset boxwidth 0.06 absolute\nset style fill solid border -1
+                    set xtics 1, 2\nset xlabel "Iteration"''', file = individual)                    
+                    plots = [ combined, individual ]
+                    for kind in [ 'Front size', 'Budget' ]:
+                        red = 99
+                        blue = 33
+                        med = 4
+                        if kind == 'Front size':
+                            for target in plots:
+                                if n == 64: # manually adjusted for maximum aesthetic
+                                    print('set yrange [35:70]', file = target)
+                                elif n == 128:
+                                    print('set yrange [90:140]', file = target)
+                                elif n == 256:
+                                    print('set yrange [170:270]', file = target)
+                                elif n == 512:
+                                    print('set yrange [450:530]', file = target)                            
+                            red = 33
+                            blue = 99
+                            print(f'set title "{n} projects, instance {i + 1}, replica {r + 1}"', file = combined)
+                            med = 9
                         else:
-                            c = f'lc rgb "#{red}00{blue}"'                                
-                            print(f'     "{filename}" u ({mult} * ($1 + 0.1)):{cols} t "without" with candlesticks lt -1 lw 1 {c} whiskerbars, \\',
-                                  file = target)
-                        print(f'     "" u ({mult} * ($1 + 0.1)):{med}:{med}:{med}:{med} notitle with candlesticks lt -1 lw 2 {c} {cont}',
-                              file = target) # median bar
-        print('unset multiplot', file = target)
+                            for target in plots:
+                                if n == 64:
+                                    print('set yrange [870:1050]', file = target)
+                                elif n == 128:
+                                    print('set yrange [1700:2050]', file = target)
+                                elif n == 256:
+                                    print('set yrange [3650:3920]', file = target)                            
+                                elif n == 512:
+                                    print('set yrange [7200:7900]', file = target)
+                        for target in plots:
+                            print(f'set ylabel "{kind}"', file = target)
+                        cols = f'{med - 1}:{med - 2}:{med + 2}:{med + 1}'
+                        for syn in [ 's', '' ]:
+                            cont = ''
+                            filename = f'Parsed/r{r + 1}{syn}_C{n}_{i + 1}.txt'
+                            mult = 1.2
+                            if syn == 's':
+                                mult = 0.7
+                                c = f'lc rgb "#{red}66{blue}"'
+                                for target in plots:
+                                    print(f'plot "{filename}" u ({mult} * ($1 + 0.1)):{cols} t "with" with candlesticks lt -1 lw 1 {c} whiskerbars, \\', \
+                                          file = target)
+                                cont = ',\\'
+                            else:
+                                c = f'lc rgb "#{red}00{blue}"'
+                                for target in plots:
+                                    print(f'     "{filename}" u ({mult} * ($1 + 0.1)):{cols} t "without" with candlesticks lt -1 lw 1 {c} whiskerbars, \\',
+                                          file = target)
+                            for target in plots:
+                                print(f'     "" u ({mult} * ($1 + 0.1)):{med}:{med}:{med}:{med} notitle with candlesticks lt -1 lw 2 {c} {cont}',
+                                  file = target) # median bar
+        print('unset multiplot', file = combined)

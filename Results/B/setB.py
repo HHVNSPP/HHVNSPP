@@ -1,7 +1,7 @@
 import os
 import numpy as np
-from math import log, floor, ceil
 from collections import defaultdict
+from math import log, floor, ceil, sqrt
 
 def candlestick(d):
     if d is None or len(d) == 0:
@@ -20,18 +20,9 @@ set logscale x
 set boxwidth 0.1 absolute
 set style fill solid border -1
 set xtics 1, 2
-set xlabel "Iteration"
-c0="#dddddd"
-c1="#ff4500"
-c2="#009999"
-c3="#a020f0"
-c4="#1e90ff"
-c5="#006400"
-c6="#4b0082"
-c7="#a0522d"
-c8="#ff0000"
-c9="#0000dd"
-c10="#33dd00"''')
+set xlabel "Iteration"''')
+palette = 'c0="#dddddd"\nc1="#ff4500"\nc2="#009999"\nc3="#a020f0"\nc4="#1e90ff"\nc5="#006400"\nc6="#4b0082"\nc7="#a0522d"\nc8="#ff0000"\nc9="#0000dd"\nc10="#33dd00"'
+print(palette)
 
 sets = [ (4, 20, 3),
          (9, 20, 3),
@@ -39,13 +30,9 @@ sets = [ (4, 20, 3),
          (9, 100, 5) ]
 replicas = 3
 
-uses = dict()
-present = { 'shake': set(), 'search': set() }
-maxcount = {'shake': 0, 'search': 0 }
 objlow = dict()
 objhigh = dict()
 for panel in sets:
-    uses[panel] = defaultdict(list)
     k, n, instances = panel
     maxiter = 0
     for i in range(instances):
@@ -101,15 +88,6 @@ for panel in sets:
                             line = line.split(';')[1:]
                             values = [ int(f) for f in line ]
                             size[iteration] += values
-                        elif 'usage' in line:
-                            line = line.split(';')[1:]
-                            stage = line.pop(0)
-                            line = line[0].strip().split('=')
-                            heur = line.pop(0)
-                            count = int(line.pop(0))
-                            maxcount[stage] = max(count, maxcount[stage])
-                            uses[panel][(stage, heur)].append(count) # combine all replicas of the same instance type
-                            present[stage].add(heur)
                         elif '[' in line:
                             if ']' not in line:
                                 combine = line
@@ -141,52 +119,41 @@ for panel in sets:
     # replicas of instances in rows, objectives + budget + size in columns
     print(f'set multiplot layout {rows}, {k + 2}')
     print(f'set xrange [0.5 : 1.5 * {maxiter}]')
+    l = int(ceil(sqrt(k + 2)))
+    w = l
+    h = l
+    while w * h > k + 2:
+        if w * h % 2 == 0 and w > 2:
+            w -= 1
+            if w * h < k + 2:
+                w += 1
+                break
+        elif h > 1:
+            h -= 1
+            if w * h < k + 2:
+                h += 1
+                break            
+        else:
+            break
     for i in range(instances):
         for r in range(replicas):
             print(f'set title "Instance {i + 1}, replica {r + 1}')
-            for obj in range(k + 2):
-                name = 'Budget' if obj == k else 'Portfolio size' if obj == k + 1 else f'Objective {obj + 1}'
-                print(f'set ylabel "{name}"')
-                print(f'set yrange [{0.9 * objlow[i][obj]}:{1.1 * objhigh[i][obj]}]')                
-                wb = f'u 1:3:2:6:5 with candlesticks lt -1 lw 2 lc rgb c{obj} whiskerbars, \\'
-                mb = f'"" u 1:4:4:4:4 with candlesticks lt -1 lw 3 lc rgb c{obj}'
-                print(f'plot "Parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt" {wb}\n{mb}')
+            with open(f'B{k}_{n}_{i + 1}_{r + 1}.plot', 'w') as individual:
+                print(f'set term postscript eps font ",12" size {2 * w}, {2 * h} color', file = individual)
+                print(f'set output "B{k}_{n}_{i + 1}_{r + 1}.eps"', file = individual)
+                print(f'set xrange [0.5 : 1.5 * {maxiter}]', file = individual)    
+                print('set key off\nset logscale x\nset boxwidth 0.1 absolute\nset style fill solid border -1', file = individual)
+                print(f'set xtics 1, 2\nset xlabel "Iteration"\nset multiplot layout {h}, {w}', file = individual)
+                print(palette, file = individual)
+                for obj in range(k + 2):
+                    name = 'Budget' if obj == k else 'Portfolio size' if obj == k + 1 else f'Objective {obj + 1}'
+                    wb = f'u 1:3:2:6:5 with candlesticks lt -1 lw 2 lc rgb c{obj} whiskerbars, \\'
+                    mb = f'"" u 1:4:4:4:4 with candlesticks lt -1 lw 3 lc rgb c{obj}'
+                    print(f'set ylabel "{name}"')
+                    print(f'set yrange [{0.7 * objlow[i][obj]}:{1.1 * objhigh[i][obj]}]')                
+                    print(f'plot "Parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt" {wb}\n{mb}')
+                    print(f'set ylabel "{name}"', file = individual)                    
+                    print(f'set yrange [{0.7 * objlow[i][obj]}:{1.1 * objhigh[i][obj]}]', file = individual)                
+                    print(f'plot "Parsed/r{r + 1}_B{k}_{n}_i{i + 1}_{obj + 1}.txt" {wb}\n{mb}', file = individual)
     print('unset multiplot')
-
-heuristics = dict()
-counter = dict()
-for stage in present:
-    heuristics[stage] = sorted(list(present[stage]))
-    counter[stage] = [ c + 1 for c in range(len(heuristics[stage])) ]
-
-for panel in sets:
-    k, n, c = panel
-    for stage in present:
-        with open(f'Parsed/h_B{k}_{n}_{stage}.txt', 'w') as target:
-            for (heur, c) in zip(heuristics[stage], counter[stage]):
-                data = uses[panel].get((stage, heur), None)
-                lst = candlestick(data)
-                print(f'{c} {lst}', file = target)
-
-wb = { 'shake': 'using 1:3:2:6:5 notitle with candlesticks lt -1 lw 2 lc "#ffff00" whiskerbars, \\',
-       'search': 'using 1:3:2:6:5 notitle with candlesticks lt -1 lw 2 lc "#00ffff" whiskerbars, \\' }
-mb = '"" using 1:4:4:4:4 notitle with candlesticks lt -1 lw 3 lc rgb "#000000"'
-                
-with open('setBh.plot', 'w') as target:
-    print('''set term postscript eps font ",20" size 16, 16 color
-    set boxwidth 0.6 relative
-    set style fill solid border -1
-    set output "setBh.eps"
-    set key off
-    set ylabel "Number of uses"''', file = target)
-    print(f'set multiplot layout {len(sets)}, 2', file = target)
-    for panel in uses:
-        k, n, c = panel
-        for stage in present:
-            print(f'set xrange [0.1:{len(heuristics[stage])+0.9}]', file = target)
-            print(f'set yrange [{-0.1 * maxcount[stage]}:{1.1 * maxcount[stage]}]', file = target)
-            lst = ','.join([ f'"{h}" {c}' for (h, c) in zip(heuristics[stage], counter[stage]) ])
-            print(f'set xtics ({lst}) rotate by 90 right offset 0,-1', file = target)
-            print(f'set title "{n} projects, {k} objectives: {stage}"', file = target)
-            print(f'plot "Parsed/h_B{k}_{n}_{stage}.txt" {wb[stage]}\n{mb}', file = target)
 
