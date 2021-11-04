@@ -380,7 +380,7 @@ def score(alt, orig, big = 4, intermediate = 2, small = 1):
 
 class Adjustment():
     
-    def __init__(self, pf, t, sec = 1, goal = 5, it = 64):
+    def __init__(self, pf, t, sec = 2, goal = 5, it = 64):
         self.portfolio = pf # the problem instance to optimize
         n = len(self.portfolio.projects) # number of projects
         k = len(self.portfolio.weights) # number of objectives
@@ -428,8 +428,8 @@ class Adjustment():
         ranking = electre(self.portfolio.weights, evaluation)
         for i in range(len(ranking)):
             assert(sol[i].feasible()) # make sure nothing is broken
-            print(f'electre;{ranking[i]};{evaluation[i, :]};{sol[i].allocation()};{sol[i].count()}',
-                  file = self.target)
+            s =f'{ranking[i]};{evaluation[i, :]};{sol[i].allocation()};{sol[i].count()}'
+            print(f'electre;{s}', file = self.target)
 
     def __str__(self):
         return f'{self.shakestall}\n' + '\n'.join([ str(sol) for sol in self.front ])
