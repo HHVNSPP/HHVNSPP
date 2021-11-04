@@ -26,7 +26,7 @@ for s in 'ABC':
         if filename.startswith(prefix) and filename.endswith(suffix):
             instance = directory + filename
             for k in keep[s]:
-                ks = ''.join(f'{1 * b}' for b in keep) if False in k else ''
+                ks = ''.join(f'{1 * b}' for b in k) if False in k else ''
                 # we use the set C both WITH and WITHOUT synergies, the others only without
                 syn = [ True, False ] if s == 'C' else [ False ]
                 for act in syn:
