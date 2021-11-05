@@ -94,6 +94,8 @@ def loadA(filename, active, keep): # instances with areas, tasks, partial and no
     projects = []
     projectCount = 0
     activityCount = None
+    synergyCount = 0
+    syn = []
     with open(filename) as data:
         while True:
             line = data.readline()
@@ -111,6 +113,8 @@ def loadA(filename, active, keep): # instances with areas, tasks, partial and no
                     projectCount = int(content)
                 elif 'nactivities' in header:
                     activityCount = int(content)
+                elif 'nsynergies' in header:
+                    synergyCount = int(content)
                 elif "Areas" in header:
                     if verbose:
                         print('Parsing the area data')                    
@@ -170,9 +174,35 @@ def loadA(filename, active, keep): # instances with areas, tasks, partial and no
                         maxB = float(d.pop(0))
                         pr.tasks.append(Activity(pr, obj, maxB, minB))
                 elif 'Synergies' in header:
-                    # we do NOT use the synergies of these instances
-                    print('Ignoring synergies')
-                    break
+                    count = dict()
+                    for i in range(synergyCount):
+                         d = data.readline().strip()[1:-2]
+                         if d[-1] == '>':
+                             d = d[:-1]
+                         f = d.split(',')
+                         label = int(f.pop(0)) - 1 # synergy ID
+                         assert f.pop(0).strip() == '0' # we only have technical synergies
+                         value = float(f.pop(0))
+                         kind = int(f.pop(0)) # UNSURE WHAT THIS IS FOR
+                         low = int(f.pop(0))
+                         high = int(f.pop(0))
+                         count[label] = int(f.pop(0)) 
+                         syn.append(Synergy(value, low, high))
+                    for line in data:
+                        if '{' in line:
+                            start = line.index('{') + 1
+                            end = line.index('}')
+                            d = line[start:end].replace(',', ' ')
+                            d = d.replace('<', '')
+                            for triplet in d.split('>'):
+                                f = triplet.split()
+                                if len(f) == 3:
+                                    s = int(f.pop(0)) - 1
+                                    p = int(f.pop(0)) - 1
+                                    t = int(f.pop(0)) - 1
+                                    syn[s].include(projects[p].tasks[t])
+                    for s in range(synergyCount):
+                        assert len(syn[s].elements) == count[s]
                 else:
                     print(f'Ignoring line <{header} = {content}>')
     count = 2 if len(keep) == 0 else sum(keep)
@@ -183,4 +213,4 @@ def loadA(filename, active, keep): # instances with areas, tasks, partial and no
         partial = list(compress(partial, keep)) # no and yes (partial impact)
     if verbose:
         print(f'Including {len(areas)} areas')
-    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], [])                    
+    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], syn)                    
