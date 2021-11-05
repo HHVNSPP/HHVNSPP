@@ -29,7 +29,7 @@ for s in 'ABC':
             for k in keep[s]:
                 ks = ''.join(f'{1 * b}' for b in k) if False in k else ''
                 # we use the set C both WITH and WITHOUT synergies, the others only without
-                for act in syn.get(s, [ True ]): # A and B just run as they are (A has them, B does not)
+                for act in synergies.get(s, [ True ]): # A and B just run as they are (A has them, B does not)
                     ss = 's_' if act else '_'
                     print(f'Instance {instance} with{"" if act else "out"} synergies')
                     portfolio = load[s](instance, act, k)
