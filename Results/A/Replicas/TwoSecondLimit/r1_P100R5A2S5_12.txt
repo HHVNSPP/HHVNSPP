@@ -1,0 +1,172 @@
+#search;maxiter
+8.384084939956665
+[[ 72.         306.14872565]
+ [ 64.         326.40203101]
+ [ 68.         322.67941868]
+ [ 69.         319.23731177]
+ [ 70.         311.29597248]
+ [ 73.         299.52948   ]]
+budget;49524.25;49973.07;49470.16;49629.47;49611.58;49724.88
+size;72;64;68;69;70;73
+w;1
+#search;maxiter
+15.137064933776855
+[[ 72.         306.14872565]
+ [ 64.         326.40203101]
+ [ 68.         322.67941868]
+ [ 69.         319.23731177]
+ [ 70.         311.29597248]
+ [ 73.         299.52948   ]]
+budget;49524.25;49973.07;49470.16;49629.47;49611.58;49724.88
+size;72;64;68;69;70;73
+w;2
+#search;maxiter
+25.05823278427124
+[[ 72.         306.14872565]
+ [ 64.         326.40203101]
+ [ 68.         322.67941868]
+ [ 69.         319.23731177]
+ [ 70.         311.29597248]
+ [ 73.         299.52948   ]]
+budget;49524.25;49973.07;49470.16;49629.47;49611.58;49724.88
+size;72;64;68;69;70;73
+#search;maxiter
+w;4
+#search;maxiter
+49.16558384895325
+[[ 74.         309.5643126 ]
+ [ 64.         326.40203101]
+ [ 68.         322.67941868]
+ [ 69.         319.23731177]
+ [ 71.         312.71784646]]
+budget;49944.54;49973.07;49470.16;49629.47;49898.12
+size;74;64;68;69;71
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;8
+#search;maxiter
+97.43234395980835
+[[ 74.         309.5643126 ]
+ [ 66.         333.76313006]
+ [ 68.         322.67941868]
+ [ 71.         312.71784646]
+ [ 69.         319.48022365]]
+budget;49944.54;49850.48;49470.16;49898.12;49420.00
+size;74;66;68;71;69
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;16
+#search;maxiter
+173.25560688972473
+[[ 74.         309.5643126 ]
+ [ 66.         333.76313006]
+ [ 68.         322.67941868]
+ [ 71.         312.71784646]
+ [ 70.         315.93014047]
+ [ 69.         319.48022365]]
+budget;49944.54;49850.48;49470.16;49898.12;48883.46;49420.00
+size;74;66;68;71;70;69
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;32
+#search;maxiter
+303.95840787887573
+[[ 71.         321.96225801]
+ [ 74.         309.5643126 ]
+ [ 66.         333.76313006]
+ [ 73.         310.04087202]
+ [ 68.         322.67941868]
+ [ 70.         322.0740759 ]
+ [ 72.         318.23000214]
+ [ 69.         322.43025736]]
+budget;49881.88;49944.54;49850.48;49609.11;49470.16;49967.42;49989.06;49948.92
+size;71;74;66;73;68;70;72;69
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;runtime
+#search;maxiter
+usage;shake;swapRandom=18
+usage;shake;swapQuarter=3
+usage;shake;swapThird=14
+usage;shake;swapHalf=7
+usage;shake;swapGroup=7
+usage;shake;incrMin=13
+usage;shake;incrMax=8
+usage;shake;incrRnd=4
+usage;shake;rndMin=3
+usage;shake;rndMax=5
+usage;shake;rndRnd=5
+usage;shake;liftIncr=3
+usage;shake;liftRnd=8
+usage;search;swapOne=20
+usage;search;inclRndMin=22
+usage;search;inclRndMax=21
+usage;search;inclRndRnd=13
+usage;search;inclLowMin=20
+usage;search;inclLowMax=25
+usage;search;inclLowRnd=12
+usage;search;inclHighMin=21
+usage;search;inclHighMax=21
+usage;search;inclHighRnd=24
+usage;search;fundAtMin=19
+usage;search;fundAtMax=22
+usage;search;fundAtRnd=17
+usage;search;exclRnd=26
+usage;search;exclLow=22
+usage;search;exclHigh=16
+usage;search;inflGrMin=19
+usage;search;inflGrMax=22
+usage;search;inflGrRnd=16
+usage;search;deflGrMin=22
+usage;search;deflGrMax=23
+usage;search;deflGrRnd=22
+usage;search;exchGrMin=18
+usage;search;exchGrMax=14
+usage;search;exchGrRnd=19
+usage;search;incrMin=48
+usage;search;incrMax=65
+usage;search;incrRnd=70
+usage;search;rndMin=57
+usage;search;rndMax=52
+usage;search;rndRnd=62
+usage;search;liftIncr=68
+usage;search;liftRnd=74
+end;400.899/400;48/64;1/18
+electre;0.0;[[ 71.         328.15936976]];49969.5553510325;71
+electre;3.0;[[ 66.         333.76313006]];49850.48042161702;66
+electre;-1.0;[[ 73.         323.32875442]];49931.01;73
+electre;-1.0;[[ 74.         318.53139782]];49581.039999999986;74
+electre;-1.0;[[ 72.         324.58189673]];49961.47999999999;72

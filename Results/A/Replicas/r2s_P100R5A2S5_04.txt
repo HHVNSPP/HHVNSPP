@@ -1,0 +1,179 @@
+#search;maxiter
+8.856726884841919
+[[ 68.         309.30916519]
+ [ 73.         301.33329525]]
+budget;49653.73;49647.87
+size;68;73
+w;1
+#search;maxiter
+20.42070698738098
+[[ 68.         309.30916519]
+ [ 73.         301.33329525]]
+budget;49653.73;49647.87
+size;68;73
+w;2
+#search;maxiter
+28.6788330078125
+[[ 69.         311.55629351]
+ [ 68.         314.20558484]
+ [ 73.         301.33329525]
+ [ 71.         304.29431784]]
+budget;49876.05;49742.87;49647.87;49144.53
+size;69;68;73;71
+#search;maxiter
+w;4
+#search;maxiter
+43.27067804336548
+[[ 69.         311.55629351]
+ [ 68.         314.20558484]
+ [ 73.         301.33329525]
+ [ 71.         304.29431784]]
+budget;49876.05;49742.87;49647.87;49144.53
+size;69;68;73;71
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;8
+#search;maxiter
+84.26102590560913
+[[ 69.         311.55629351]
+ [ 68.         314.20558484]
+ [ 73.         301.33329525]
+ [ 71.         304.29431784]]
+budget;49876.05;49742.87;49647.87;49144.53
+size;69;68;73;71
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;16
+#search;maxiter
+165.41177701950073
+[[ 69.         311.55629351]
+ [ 68.         314.20558484]
+ [ 73.         301.33329525]
+ [ 71.         304.29431784]]
+budget;49876.05;49742.87;49647.87;49144.53
+size;69;68;73;71
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;32
+#search;maxiter
+335.5443971157074
+[[ 67.         326.03806908]
+ [ 74.         303.95498866]
+ [ 68.         324.44135106]
+ [ 72.         316.19080099]
+ [ 73.         312.94031032]
+ [ 71.         323.99243573]]
+budget;49619.12;49484.58;49955.24;49736.39;49523.18;49563.97
+size;67;74;68;72;73;71
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;64
+#search;maxiter
+615.7041521072388
+[[ 73.         320.94493194]
+ [ 75.         314.90472653]
+ [ 69.         329.11611117]
+ [ 74.         316.33888292]
+ [ 72.         328.0112317 ]]
+budget;49075.20;49595.46;49958.05;49952.66;49994.23
+size;73;75;69;74;72
+usage;shake;swapRandom=11
+usage;shake;swapQuarter=23
+usage;shake;swapThird=11
+usage;shake;swapHalf=10
+usage;shake;swapGroup=9
+usage;shake;incrMin=16
+usage;shake;incrMax=9
+usage;shake;incrRnd=7
+usage;shake;rndMin=6
+usage;shake;rndMax=5
+usage;shake;rndRnd=3
+usage;shake;liftIncr=12
+usage;shake;liftRnd=6
+usage;search;swapOne=17
+usage;search;inclRndMin=25
+usage;search;inclRndMax=27
+usage;search;inclRndRnd=28
+usage;search;inclLowMin=35
+usage;search;inclLowMax=32
+usage;search;inclLowRnd=25
+usage;search;inclHighMin=26
+usage;search;inclHighMax=34
+usage;search;inclHighRnd=31
+usage;search;fundAtMin=16
+usage;search;fundAtMax=28
+usage;search;fundAtRnd=26
+usage;search;exclRnd=20
+usage;search;exclLow=37
+usage;search;exclHigh=55
+usage;search;inflGrMin=29
+usage;search;inflGrMax=26
+usage;search;inflGrRnd=33
+usage;search;deflGrMin=9
+usage;search;deflGrMax=27
+usage;search;deflGrRnd=32
+usage;search;exchGrMin=1
+usage;search;exchGrMax=23
+usage;search;exchGrRnd=8
+usage;search;incrMin=92
+usage;search;incrMax=73
+usage;search;incrRnd=92
+usage;search;rndMin=83
+usage;search;rndMax=77
+usage;search;rndRnd=86
+usage;search;liftIncr=59
+usage;search;liftRnd=88
+end;615.708/800;63/64;3/18
+electre;-1.0;[[ 73.         320.94493194]];49075.20029356816;73
+electre;0.0;[[ 75.         314.90472653]];49595.46437797296;75
+electre;2.0;[[ 69.         329.11611117]];49958.052922868475;69
+electre;1.0;[[ 74.         316.33888292]];49952.66029356815;74
+electre;-2.0;[[ 72.        328.0112317]];49994.23430969259;72

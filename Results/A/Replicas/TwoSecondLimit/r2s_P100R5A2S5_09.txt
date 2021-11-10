@@ -1,0 +1,140 @@
+#search;maxiter
+7.836203098297119
+[[ 70.         288.61775872]
+ [ 68.         295.45304294]
+ [ 69.         292.9441292 ]]
+budget;49277.05;49392.14;49480.18
+size;70;68;69
+w;1
+#search;maxiter
+22.556112051010132
+[[ 68.         295.45304294]
+ [ 70.         295.33806816]]
+budget;49392.14;49645.05
+size;68;70
+w;2
+#search;maxiter
+34.60985517501831
+[[ 68.         295.45304294]
+ [ 70.         295.33806816]]
+budget;49392.14;49645.05
+size;68;70
+#search;maxiter
+w;4
+#search;maxiter
+54.62298822402954
+[[ 68.         295.45304294]
+ [ 70.         295.33806816]]
+budget;49392.14;49645.05
+size;68;70
+#added;6
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;8
+#search;maxiter
+94.56597805023193
+[[ 68.         295.45304294]
+ [ 70.         295.33806816]]
+budget;49392.14;49645.05
+size;68;70
+#added;6
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;16
+#search;maxiter
+173.41835498809814
+[[ 68.         295.45304294]
+ [ 70.         295.33806816]]
+budget;49392.14;49645.05
+size;68;70
+#added;6
+#search;maxiter
+#search;maxiter
+#added;6
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#added;4
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#added;4
+#search;maxiter
+w;32
+#added;4
+#search;maxiter
+318.3331961631775
+[[ 66.         299.28527552]
+ [ 68.         295.45304294]
+ [ 70.         295.33806816]]
+budget;49297.47;49392.14;49645.05
+size;66;68;70
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+usage;shake;swapRandom=7
+usage;shake;swapQuarter=9
+usage;shake;swapThird=5
+usage;shake;swapHalf=8
+usage;shake;swapGroup=10
+usage;shake;incrMin=5
+usage;shake;incrMax=8
+usage;shake;incrRnd=1
+usage;shake;rndMin=6
+usage;shake;rndMax=6
+usage;shake;rndRnd=5
+usage;shake;liftIncr=6
+usage;shake;liftRnd=2
+usage;search;swapOne=8
+usage;search;inclRndMin=15
+usage;search;inclRndMax=18
+usage;search;inclRndRnd=20
+usage;search;inclLowMin=20
+usage;search;inclLowMax=18
+usage;search;inclLowRnd=17
+usage;search;inclHighMin=12
+usage;search;inclHighMax=20
+usage;search;inclHighRnd=17
+usage;search;fundAtMin=13
+usage;search;fundAtMax=19
+usage;search;fundAtRnd=21
+usage;search;exclRnd=18
+usage;search;exclLow=21
+usage;search;exclHigh=18
+usage;search;inflGrMin=1
+usage;search;inflGrMax=17
+usage;search;inflGrRnd=13
+usage;search;deflGrMin=22
+usage;search;deflGrMax=17
+usage;search;deflGrRnd=19
+usage;search;exchGrMin=15
+usage;search;exchGrMax=20
+usage;search;exchGrRnd=1
+usage;search;incrMin=57
+usage;search;incrMax=51
+usage;search;incrRnd=39
+usage;search;rndMin=37
+usage;search;rndMax=55
+usage;search;rndRnd=62
+usage;search;liftIncr=55
+usage;search;liftRnd=44
+end;400.732/400;38/64;14/18
+electre;2.0;[[ 66.         299.28527552]];49297.46715138742;66
+electre;0.0;[[ 68.         295.45304294]];49392.13999999999;68
+electre;-2.0;[[ 70.         295.33806816]];49645.04715138744;70

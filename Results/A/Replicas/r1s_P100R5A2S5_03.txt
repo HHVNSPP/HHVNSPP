@@ -1,0 +1,146 @@
+#search;maxiter
+7.211061000823975
+[[ 75.         312.92692356]]
+budget;49486.39
+size;75
+w;1
+#added;1
+#search;maxiter
+13.2258141040802
+[[ 75.         312.92692356]]
+budget;49486.39
+size;75
+w;2
+#added;1
+#search;maxiter
+19.505736112594604
+[[ 75.         312.92692356]]
+budget;49486.39
+size;75
+#added;2
+#search;maxiter
+w;4
+#added;1
+#search;maxiter
+31.214311122894287
+[[ 75.         312.92692356]]
+budget;49486.39
+size;75
+#added;1
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;8
+#added;4
+#search;maxiter
+62.745522260665894
+[[ 75.         312.92692356]
+ [ 72.         314.85456535]
+ [ 76.         303.17401276]]
+budget;49486.39;49684.11;49159.01
+size;75;72;76
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;16
+#search;maxiter
+135.98581910133362
+[[ 70.         319.34305262]
+ [ 75.         313.1040968 ]
+ [ 72.         314.85456535]
+ [ 76.         303.17401276]
+ [ 73.         313.58760952]]
+budget;49674.20;49749.50;49684.11;49159.01;49321.42
+size;70;75;72;76;73
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;32
+#search;maxiter
+299.16000413894653
+[[ 75.         329.38664304]
+ [ 76.         304.28432263]
+ [ 65.         336.28666451]
+ [ 70.         333.89804572]]
+budget;49706.23;49728.28;49940.24;49956.34
+size;75;76;65;70
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#shake;stall
+usage;shake;swapRandom=6
+usage;shake;swapQuarter=9
+usage;shake;swapThird=4
+usage;shake;swapHalf=12
+usage;shake;swapGroup=13
+usage;shake;incrMin=9
+usage;shake;incrMax=5
+usage;shake;incrRnd=9
+usage;shake;rndMin=4
+usage;shake;rndMax=6
+usage;shake;rndRnd=5
+usage;shake;liftIncr=2
+usage;shake;liftRnd=4
+usage;search;swapOne=24
+usage;search;inclRndMin=25
+usage;search;inclRndMax=24
+usage;search;inclRndRnd=26
+usage;search;inclLowMin=19
+usage;search;inclLowMax=15
+usage;search;inclLowRnd=16
+usage;search;inclHighMin=17
+usage;search;inclHighMax=17
+usage;search;inclHighRnd=16
+usage;search;fundAtMin=16
+usage;search;fundAtMax=20
+usage;search;fundAtRnd=21
+usage;search;exclRnd=14
+usage;search;exclLow=30
+usage;search;exclHigh=24
+usage;search;inflGrMin=23
+usage;search;inflGrMax=17
+usage;search;inflGrRnd=1
+usage;search;deflGrMin=20
+usage;search;deflGrMax=11
+usage;search;deflGrRnd=17
+usage;search;exchGrMin=7
+usage;search;exchGrMax=13
+usage;search;exchGrRnd=17
+usage;search;incrMin=72
+usage;search;incrMax=63
+usage;search;incrRnd=59
+usage;search;rndMin=45
+usage;search;rndMax=48
+usage;search;rndRnd=51
+usage;search;liftIncr=55
+usage;search;liftRnd=57
+end;426.303/800;43/64;18/18
+electre;-2.0;[[ 75.         329.38664304]];49706.23431762809;75
+electre;1.0;[[ 76.         304.28432263]];49728.28031135189;76
+electre;1.0;[[ 65.         336.28666451]];49940.235174037036;65
+electre;0.0;[[ 70.         333.89804572]];49956.33976645115;70

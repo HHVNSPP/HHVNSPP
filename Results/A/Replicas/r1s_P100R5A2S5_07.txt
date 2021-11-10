@@ -1,0 +1,64 @@
+#search;maxiter
+5.268123149871826
+[[ 67.         292.21473058]
+ [ 64.         295.58545026]
+ [ 69.         290.01875006]]
+budget;49632.76;49591.39;49368.64
+size;67;64;69
+w;1
+#search;maxiter
+16.66819977760315
+[[ 67.         292.21473058]
+ [ 64.         295.58545026]
+ [ 69.         290.01875006]]
+budget;49632.76;49591.39;49368.64
+size;67;64;69
+w;2
+#search;maxiter
+25.70590591430664
+[[ 67.         292.21473058]
+ [ 64.         295.58545026]
+ [ 69.         290.01875006]]
+budget;49632.76;49591.39;49368.64
+size;67;64;69
+#search;maxiter
+w;4
+#search;maxiter
+49.924463987350464
+[[ 67.         292.21473058]
+ [ 64.         295.58545026]
+ [ 69.         290.01875006]]
+budget;49632.76;49591.39;49368.64
+size;67;64;69
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;8
+#search;maxiter
+100.22855806350708
+[[ 70.         296.70588485]
+ [ 63.         299.14879321]
+ [ 66.         298.03836242]]
+budget;49350.29;49856.75;49972.17
+size;70;63;66
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+w;16
+#search;maxiter
+164.3198959827423
+[[ 67.         303.39676007]
+ [ 70.         302.00027392]]
+budget;49738.60;49930.97
+size;67;70
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
+#search;maxiter
