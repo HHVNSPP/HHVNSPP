@@ -3,7 +3,8 @@ from itertools import compress
 
 verbose = False
 
-def loadC(filename, active, keep): # instances with synergies, areas, and regions; pure partial assignment
+# instances with synergies, areas, and regions; pure partial assignment
+def loadC(filename, active, keep): 
     weights = None
     projects = []
     synergies = []
@@ -87,7 +88,8 @@ def loadB(filename, active, keep): # instances with areas, regions; no partial a
     partitions = [ list(A.values()), list(R.values()) ] # areas and regions
     return Portfolio(budget, w, partial, projects, partitions)
 
-def loadA(filename, active, keep): # instances with areas, tasks, partial and non-partial objectives
+# instances with areas, tasks, partial and non-partial objectives
+def loadA(filename, active, keep, ignore = True): # do NOT use activity weights
     budget = None
     areas = []
     areaCount = 0
@@ -168,6 +170,8 @@ def loadA(filename, active, keep): # instances with areas, tasks, partial and no
                         d.pop(0) # activity IDs are not used
                         # the first one is a counter with unit impact                        
                         obj = [ None, float(d.pop(0)) ]
+                        if ignore: # all activities have the same weight
+                            obj[-1] = 1.0 / activityCount 
                         if len(keep) > 0:
                             obj = list(compress(obj, keep))
                         minB = float(d.pop(0))
