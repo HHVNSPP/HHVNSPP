@@ -1,4 +1,5 @@
 import numpy as np
+from math import sqrt
 from time import time
 from sys import stderr
 from kmeans import select # for sparsifying
@@ -380,13 +381,13 @@ def score(alt, orig, big = 4, intermediate = 2, small = 1):
 
 class Adjustment():
     
-    def __init__(self, pf, t, sec = 2, goal = 5, it = 64):
+    def __init__(self, pf, t, sec = 5, goal = 5, it = 64):
+        print('Preparing an instance for execution')
         self.portfolio = pf # the problem instance to optimize
         n = len(self.portfolio.projects) # number of projects
         k = len(self.portfolio.weights) # number of objectives
-        self.limit = sec * n * k # maximum permitted runtime
-        if verbose:
-            print(f'Running for no more than {self.limit} seconds')
+        self.limit = sec * sqrt(n) * k # maximum permitted runtime
+        print(f'Executing up to {self.limit} seconds')
         self.goal = 10 # goal for the front size
         self.itershake = it # maximum permitted shake iterations
         self.itersearch = 10 # maximum permitted search iterations
@@ -557,7 +558,7 @@ class Adjustment():
         ok = True # whether the time limit is respected
         altered = 0 # how many times the front changes
         for i in range(self.itersearch): # permitted iterations
-            if time() - self.start > self.limit: 
+            if (time() - self.start) > self.limit: 
                 if verbose:
                     print('#search;runtime', file = self.target)
                 ok = False # no time left
@@ -591,7 +592,7 @@ class Adjustment():
         progress = self.shakestall < self.maxshake
         if not progress:
             print(f'#shake;stall', file = self.target)
-        fast = time() - self.start < self.limit
+        fast = (time() - self.start) < self.limit
         return progress and fast # true to continue
 
     def run(self):
@@ -606,7 +607,7 @@ class Adjustment():
                 if details:
                     k = len(self.front)
                     pl = 's' if k > 1 else ''
-                    print(f'Iteration {i+1} starts with {k} non-dominated solution{pl}')
+                    print(f'Iteration {i + 1} starts with {k} non-dominated solution{pl}')
             if not self.step(out):
                 break # stop condition reached
         self.postprocess(i)
