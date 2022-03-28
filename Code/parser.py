@@ -89,7 +89,8 @@ def loadB(filename, active, keep): # instances with areas, regions; no partial a
     return Portfolio(budget, w, partial, projects, partitions)
 
 # instances with areas, tasks, partial and non-partial objectives
-def loadA(filename, active, keep, ignore = True): # do NOT use activity weights
+def loadA(filename, active, keep, ignore = True): # ignore means "do NOT use activity weights"
+    total = 0
     budget = None
     areas = []
     areaCount = 0
@@ -148,6 +149,7 @@ def loadA(filename, active, keep, ignore = True): # do NOT use activity weights
                         maxB = float(d.pop(0))
                         a = int(d.pop(0)) - 1
                         obj = [ 1, float(d.pop(0)) ]
+                        total += obj[-1]
                         if len(keep) > 0:
                             obj = list(compress(obj, keep))
                         p = Project(obj, maxB, minB, [ A[a] ])
@@ -217,4 +219,5 @@ def loadA(filename, active, keep, ignore = True): # do NOT use activity weights
         partial = list(compress(partial, keep)) # no and yes (partial impact)
     if verbose:
         print(f'Including {len(areas)} areas')
+    print(f'Funding all {len(projects)} projects would yield a total benefit of {total}')
     return Portfolio(budget, w, partial, projects, [ list(A.values()) ], syn)                    
