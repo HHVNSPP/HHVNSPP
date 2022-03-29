@@ -431,6 +431,7 @@ class Adjustment():
             assert(sol[i].feasible()) # make sure nothing is broken
             s =f'{ranking[i]};{evaluation[i, :]};{sol[i].allocation()};{sol[i].count()}'
             print(f'electre;{s}', file = self.target)
+            print(f'included;{sol}', file = self.target)
 
     def __str__(self):
         return f'{self.shakestall}\n' + '\n'.join([ str(sol) for sol in self.front ])

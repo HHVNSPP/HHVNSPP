@@ -38,6 +38,9 @@ class Solution():
         return self.portfolio.included(self.actives())
                 
     def __str__(self):
+        return self.included()
+
+    def assigned(self):
         return self.portfolio.funding(self.assignment)
 
     def __repr__(self):

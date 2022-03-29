@@ -10,11 +10,12 @@ prefixes = [ 'P', 'k', 'C' ]
 load = { 'A': loadA, 'B': loadB, 'C': loadC } # parsing routines
 skip = 'BC' # in case only partial experiments are desired
 suffix = '.txt'
-# for A, we also run mono-objective variants for comparison for the set A
-keep = { 'A': [ [], [ False, True ], [ True, False ] ],
+# one could also run mono-objective variants if needed or some other subsets
+keep = { 'A': [ [] ], # , [ False, True ], [ True, False ] ],
          'B': [ [] ],
          'C': [ [] ] }
-synergies = { 'C': [ True, False ] } # with and without for set C
+synergies = { 'A': [ False, True ], # without and then with for set A (set B has no synergies)
+              'C': [ True, False ] } # first with and then without for set C 
 
 for s in 'ABC':
     directory = r'../Data/' + s + '/'
@@ -28,8 +29,7 @@ for s in 'ABC':
             instance = directory + filename
             for k in keep[s]:
                 ks = ''.join(f'{1 * b}' for b in k) if False in k else ''
-                # we use the set C both WITH and WITHOUT synergies, the others only without
-                for act in synergies.get(s, [ True ]): # A and B just run as they are (A has them, B does not)
+                for act in synergies.get(s, [ True ]): 
                     ss = 's_' if act else '_'
                     print(f'Instance {instance} with{"" if act else "out"} synergies')
                     portfolio = load[s](instance, act, k)
@@ -37,5 +37,5 @@ for s in 'ABC':
                     for r in range(1, replicas + 1):
                         print(f'Executing replica {r} for {filename} in {directory}', file = stderr)
                         with open(output + f'r{r}' + ss + ks + filename, 'w') as target:
-                            Adjustment(portfolio, target).run()
-
+                            a = Adjustment(portfolio, target)
+                            a.run()
