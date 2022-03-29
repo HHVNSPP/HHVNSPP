@@ -1,12 +1,28 @@
 # parse the result files to construct the illustration
 import os
 
-minCount = float('inf')
-maxCount = -minCount
-minBenefit = minCount
-maxBenefit = -minCount
 
 
+minCount = 0
+maxCount = 100
+minBenefit = 0
+maxBenefit = 500
+
+with open('../../Code/log.txt') as source:
+    for line in source:
+        if 'Funding all' in line:
+            fields = line.split()
+            # Funding all 100 projects would yield a total benefit of 638.1700000000001 for ../Data/A/P100R5A2S5_10.txt            
+            count = int(fields[2])
+            benefit = float(fields[10]) 
+            print(count, benefit)
+            minCount = min(minCount, count)
+            maxCount = max(maxCount, count)
+            minBenefit = min(minBenefit, benefit)
+            maxBenefit = max(maxBenefit, benefit)
+print(f'Maximum project count for funding everything: {maxCount}')
+print(f'Maximum benefit for funding everything: {maxBenefit}')
+            
 # ideal solutions optimizing each objective separately
 known = dict()
 for filename in os.listdir('Ideal/'):
@@ -18,9 +34,12 @@ for filename in os.listdir('Ideal/'):
             source.readline() # [OBJECTIVE VALUES]
             num = int(source.readline().strip().split('=')[-1][:-2]) # NUM. PROJECTS=80.0
             imp = float(source.readline().strip().split('=')[-1]) # IMPACT=2653.4322294150666
-            maxCount = max(num, maxCount)
-            maxBenefit = max(imp, maxBenefit)
+            imp /= 5 # there was a bug that made them five? times the intended value CHECK THIS!
             known[instance] = (num, imp)
+            minCount = min(minCount, num)
+            maxCount = max(maxCount, num)
+            minBenefit = min(minBenefit, imp)
+            maxBenefit = max(maxBenefit, imp)            
             print(f'Instance {instance}: ideally {num} / {imp:.2f}')
 
 panels = dict()
@@ -40,10 +59,6 @@ for filename in os.listdir(folder):
         print(f'Parsing replica {replica} for instance {instance}')
         if replica == 1: # print the gnuplot commands only for the first one
             (x, y) = known[instance]
-            minCount = min(x, minCount)
-            maxCount = max(x, maxCount)
-            minBenefit = min(y, minBenefit)
-            maxBenefit = max(y, maxBenefit)
             panel = f'set title "A {instance}" font ",30"\n'
             panel += f'x={x}\n'
             panel += f'y={y}\n'
@@ -64,10 +79,6 @@ for filename in os.listdir(folder):
                             count = int(values.pop(0)[:-1]) # skip the . at the end
                             benefit = float(values.pop(0))
                             print(f'{count} {benefit}', file = target)
-                            minCount = min(minCount, count)
-                            minBenefit = min(minBenefit, benefit)
-                            maxCount = max(maxCount, count)
-                            maxBenefit = max(maxBenefit, benefit)
 
 from math import floor, ceil
 countLow = floor(0.9 * minCount / 10) * 10
@@ -85,7 +96,7 @@ set key outside Right
 set pointsize 1
 set key off''', file = target)
     print(f'set xrange [{countLow-5}:{countHigh+5}]', file = target)
-    print(f'set xtics {countLow}, 10', file = target)
+    print(f'set xtics {countLow}, 20', file = target)
     print(f'set yrange [{benefitLow-100}:{benefitHigh+100}]', file = target)
     print(f'set ytics {benefitLow}, 1000', file = target)
     for instance in range(1, 16):
