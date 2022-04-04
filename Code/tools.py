@@ -392,7 +392,7 @@ class Adjustment():
         self.itershake = it # maximum permitted shake iterations
         self.itersearch = 10 # maximum permitted search iterations
         f = len(FILL) # how many fill heuristics are there
-        self.maxshake = 2 * len(SHAKE) + f # permitted stall while shaking
+        self.maxshake = 2 * len(SHAKE) + 2 * f # permitted stall while shaking
         self.maxsearch = len(LOCAL) + f # permitted stall while searching
         self.shakestall = 0 # stall counter for shake
         self.searchstall = 0 # stall counter for search
@@ -445,11 +445,15 @@ class Adjustment():
     def output(self):
         diff = time() - self.start        
         print(diff, file = self.target)
-        print(self.evaluate(), file = self.target)
-        values = ';'.join([ f'{s.allocation():.2f}' for s in self.front ])
-        print(f'budget;{values}', file = self.target)
-        values = ';'.join([ f'{s.count()}' for s in self.front ])        
-        print(f'size;{values}', file = self.target)
+        results = self.evaluate()
+        print(results, file = self.target)
+        bvalues = ';'.join([ f'{s.allocation():.2f}' for s in self.front ])
+        print(f'budget;{bvalues}', file = self.target)
+        svalues = ';'.join([ f'{s.count()}' for s in self.front ])        
+        print(f'size;{svalues}', file = self.target)
+        if verbose:
+            print(results)
+            print(bvalues)
         if details:
             self.check()            
             for s in self.front:

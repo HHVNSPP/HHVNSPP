@@ -1,12 +1,30 @@
 from random import shuffle, choice, random, sample
-from math import ceil, sqrt
+from math import ceil, fabs
 from gurobipy import GRB
 import gurobipy as gp
 from solution import Solution
 
 verbose = False
 
-class Activity():
+def same(x, y, epsilon = 0.001):
+    return fabs(x - y) < epsilon
+
+def zero(x):
+    return same(x, 0)
+
+def above(x, y):
+    if same(x, y):
+        return True
+    else:
+        return x > y
+
+def below(x, y):
+    if same(x, y):
+        return True
+    else:
+        return x < y
+
+class Activity(): # these are the tasks 
 
     def __init__(self, project, imp, maximum, minimum = 0):
         self.parent = project
@@ -32,9 +50,8 @@ class Activity():
     
     def feasible(self, a):
         amount = a.get(self, 0)
-        active = amount > 0
-        if active: # if funded, check the levels
-            return amount >= self.minBudget and amount <= self.maxBudget
+        if not zero(amount): # if funded, check the levels
+            return above(amount, self.minBudget) and above(self.maxBudget, amount)
         return True # this is inactive
     
     def __repr__(self):
@@ -50,11 +67,12 @@ class Activity():
         return round(lvl) if integer else lvl
 
     # cf. Fig. 1 in https://doi.org/10.1109/TSMCA.2010.2041228        
-    def impact(self, amount, i, alpha = 0.5): # for objective at index i
+    def impact(self, active, amount, i, alpha = 0.5): # for objective at index i
         span = self.maxBudget - self.minBudget
         excess = amount - self.minBudget
         scaled = (1 - alpha) * (excess / span)
-        return self.relativeImportance[i] * (alpha + scaled) 
+        total = alpha + scaled
+        return active * self.parent.socialImpact[i] * self.relativeImportance[i] * total
 
     def deactivate(self, assignment):
         if self in assignment:
@@ -108,12 +126,20 @@ class Project():
     
     def feasible(self, a):
         t = self.assigned(a)
-        inactive = t == 0
-        if not inactive: # check levels if funded
-            if t < self.minBudget or t > self.maxBudget:
+        if not zero(t):
+            if not above(t, self.minBudget):
+                if verbose:
+                    print('too little', t, self.minBudget)                    
+                return False
+            if not below(t, self.maxBudget):
+                if verbose:
+                    print('too much', t, self.maxBudget)
                 return False
             # check also tasks
-            return all ([ act.feasible(a) for act in self.tasks ])
+            ca = [ act.feasible(a) for act in self.tasks ]
+            if verbose:
+                print('activities', ca)
+            return all(ca)
         return True # not active, hence feasible at zero
         
     def underfunded(self, a):
@@ -150,26 +176,26 @@ class Project():
         for a in self.tasks:
             a.deactivate(assignment)
             
-    def impact(self, assignment, partial, alpha = 0.5):
+    def impact(self, assignment, alpha = 0.5):
         k = len(self.socialImpact)
         pi = [ 0 ] * k
-        amount = self.assigned(assignment)
-        if amount < self.minBudget:
-            for task in self.tasks:
-                assert task not in assignment
+        amount = self.assigned(assignment)        
+        if not above(amount, self.minBudget):
+            assert zero(amount)
+            for t in self.tasks: # make sure there are no funds
+                assert assignment.get(t, 0) == 0
             return pi # unfunded, no impact, all zeroes
         for task in self.tasks: # accumulate over tasks
             for i in range(k):
                 a = assignment.get(task, 0)
-                if a > 0: # if there are funds
-                    assert a >= task.minBudget # make sure it is enough
+                if not zero(a): # if there are funds
+                    assert above(a, task.minBudget) # make sure it is enough
+                    assert below(a, task.maxBudget) # make sure it is not too much
                     if self.socialImpact[i] is not None: 
                         # linear objectives: compute numerical impact
-                        pi[i] += task.impact(a, i)
+                        pi[i] += task.impact(1, a, i) # only active tasks
                     else: # for counters, just count
                         pi[i] = max(pi[i], 1) 
-        if verbose:
-            print('P', pi)
         return pi
                 
     def update(self):
@@ -223,8 +249,8 @@ class Group():
     def feasible(self, a):
         t = self.assigned(a)
         p = [ p.feasible(a) for p in self.members ]
-        bot = self.lower is None or t >= self.lower
-        top = self.upper is None or t <= self.upper
+        bot = self.lower is None or above(t, self.lower)
+        top = self.upper is None or above(self.upper, t)
         return all([ bot, top ] + p)
 
     def permutation(self):
@@ -319,10 +345,16 @@ class Portfolio():
     
     def feasible(self, a):
         assigned = sum(a.values())
-        if self.budget < assigned:
-            return False
-        gOK = all([ g.feasible(a) for g in self.groups ])
-        pOK = all([ p.feasible(a) for p in self.projects ])
+        if not below(assigned, self.budget):
+            return False # too much has been spent
+        gc = [ g.feasible(a) for g in self.groups ] 
+        if verbose:
+            print('groups', gc)       
+        gOK = all(gc)
+        pc = [ p.feasible(a) for p in self.projects ]
+        if verbose:
+            print('projects', pc)
+        pOK = all(pc)
         return gOK and pOK
     
     def permutation(self):
@@ -343,11 +375,10 @@ class Portfolio():
             ei = project.impact(solution.assignment, self.impact)
             for i in range(self.dim):
                 v[i] += ei[i]
-        for i in range(self.dim): # partial objectives gain synergies
-            if self.impact[i]: # this objective is affected
-                v[i] += added
-        if verbose:
-            print('PF', v, self.impact)
+        if len(self.synergies) > 0:
+            for i in range(self.dim): # partial objectives gain synergies
+                if self.impact[i]: # this objective is affected
+                    v[i] += added
         return v
 
     def hypothetical(self):
@@ -373,55 +404,97 @@ class Portfolio():
     def ideal(self, alpha = 0.5): # this computation IGNORES synergies
         print('GUROBI output starts')
         m = gp.Model("MIP model")
-        tasks = [ ] # a list of all tasks
+        tasks = list() # all tasks
         for p in self.projects:
             tasks += p.tasks
-        # incorporate variables into the model 
-        ta = m.addVars(self.projects, tasks, name= 'ta') # task-level fund assignment amounts
-        pa = m.addVars(self.projects, name = 'pa') # project-level fund assignment amounts
-        pf = m.addVars(self.projects, vtype = GRB.BINARY, name= 'pf') # project-level funded yes/no
-        tf = m.addVars(self.projects, tasks, vtype = GRB.BINARY, name= 'tf') # task-level fund yes/no
-        m.update() # variables now completed
-        initial = Solution(self)
-        print(f'{initial.allocation()}/{self.budget} allocated to {initial.count()}/{len(self.projects)} projects')
-        print('objectives:', self.evaluate(initial))
-        m.addConstr(gp.quicksum(ta[p, t] for p in self.projects for t in tasks) <= self.budget, 'b') # budget
+        assert len(tasks) == len(set(tasks)) # ensure unique tasks
+        # funding-level variables
+        ta = m.addVars(self.projects, tasks) # task-level fund assignment amounts
+        pa = m.addVars(self.projects) # project-level fund assignment amounts
+        # indicator varibles
+        pi = m.addVars(self.projects, vtype = GRB.BINARY) # project-level funded yes/no
+        ti = m.addVars(self.projects, tasks, vtype = GRB.BINARY) # task-level fund yes/no
+        # respect the total budget
+        m.addConstr(gp.quicksum(ta[p, t] for p in self.projects for t in tasks) <= self.budget) 
         for g in self.groups: # groups = areas and/or regions
-            # lower limit            
-            m.addConstr(g.lower <= gp.quicksum(ta[p, t] for p in g.members for t in p.tasks), 'gl')
-            # upper limit            
-            m.addConstr(g.upper >= gp.quicksum(ta[p, t] for p in g.members for t in p.tasks), 'gh') 
-        for p in self.projects: # consistency between tasks and projects
-            # project-to-task consistency            
-            m.addConstr(pa[p] <= gp.quicksum(ta[p, t] for t in tasks), 'cpt')
-            # task-to-project consistency            
-            m.addConstr(gp.quicksum(tf[p, t] for t in tasks) <= pf[p] * len(p.tasks), 'ctp') 
+            # lower limit of each area/region            
+            m.addConstr(g.lower <= gp.quicksum(ta[p, t] for p in g.members for t in tasks))
+            # upper limit of each area/region                        
+            m.addConstr(g.upper >= gp.quicksum(ta[p, t] for p in g.members for t in tasks)) 
+        for p in self.projects: # consistency between ALL tasks and projects
+            # project-to-task consistency: a project is funded only when at least one task is funded          
+            m.addConstr(pi[p] <= gp.quicksum(ti[p, t] for t in tasks))
+            # task-to-project consistency: the number of tasks funded does not exceed the tasks in the project            
+            m.addConstr(gp.quicksum(ti[p, t] for t in tasks) <= pi[p] * len(p.tasks))
             # minimum budget for project
-            m.addConstr(gp.quicksum(ta[p, t] for t in tasks) >= pf[p] * p.minBudget, 'pl')
+            m.addConstr(gp.quicksum(ta[p, t] for t in tasks) >= pi[p] * p.minBudget)
             # maximum budget for project            
-            m.addConstr(gp.quicksum(ta[p, t] for t in tasks) <= pf[p] * p.maxBudget, 'ph') 
-            for t in p.tasks: 
-                m.addConstr(ta[p, t] >= tf[p, t] * t.minBudget, 'tl') # minimum budget for task
-                m.addConstr(ta[p, t] <= tf[p, t] * t.maxBudget, 'th') # maximum budget for task
-                # project assignment is equal to the sum of tasks                
-            m.addConstr(pa[p] == gp.quicksum(ta[p, t] for t in tasks), 'pa') 
+            m.addConstr(gp.quicksum(ta[p, t] for t in tasks) <= pi[p] * p.maxBudget)
+            # project assignment is equal to the sum of tasks                
+            m.addConstr(pa[p] == gp.quicksum(ta[p, t] for t in tasks))             
+            for t in tasks:
+                # a task can be funded only if the project is funded
+                m.addConstr(ti[p, t] <= pi[p])
+                if t in tasks: # for each task
+                    m.addConstr(ta[p, t] >= ti[p, t] * t.minBudget) # minimum budget for task
+                    m.addConstr(ta[p, t] <= ti[p, t] * t.maxBudget) # maximum budget for task
+                    m.addConstr(ti[p, t] <= pi[p]) # task can be active only if project is active
+                    if t not in p.tasks: # for tasks of OTHER projects
+                        m.addConstr(ta[p, t] == 0) # no funds can be allocated
         # objectives: first the project count, then the ones in the instance, all treated as partially affected
-        obj = [ gp.quicksum(pf[p] for p in self.projects) ]
+        obj = list()
         for i in range(self.dim):
-            if self.impact[i]: # if False, it would be a counter (like the one we already added)
-                obj.append(gp.quicksum(p.socialImpact[i] * gp.quicksum(t.impact(ta[p, t], i) for t in p.tasks) for p in self.projects))
+            if self.impact[i]: # affected by partial funding
+                obj.append(gp.quicksum(gp.quicksum(t.impact(ti[p, t], ta[p, t], i) for t in p.tasks) for p in self.projects))
+            else: # these are counters
+                obj.append(gp.quicksum(pi[p] for p in self.projects)) # count the projects
         for o in obj: # single-objective ideal points
-            m.update() # constraints are now complete
-            m.presolve()            
             m.setObjective(o, GRB.MAXIMIZE) # optimize number of projects included
+            m.update() 
+            m.presolve()            
             m.optimize()
             if m.status != GRB.OPTIMAL:
                 print(f'ERROR: gurobi exited with status {m.status}')
             else:
                 print(f'IDEAL POINT: {m.getObjective().getValue()}')
-                print('SELECTION:', ''.join('1' if pf[p].x > 0 else '0' for p in self.projects))
-                spent = sum(ta[p, t].x for p in self.projects for t in tasks)
+                print('COUNT:', sum(pi[p].X for p in self.projects))
+                spent = sum(ta[p, t].X for p in self.projects for t in tasks)
                 print(f'SPENDING: {spent:.0f} / {self.budget:.0f}')
+                # verify the solution
+                a = dict()
+                c = 0
+                for p in self.projects:
+                    total = pa[p].X # amount assigned by gurobi
+                    assert above(p.maxBudget, total) # not too much
+                    active = pi[p].X
+                    if not active:
+                        assert zero(total) # nothing if inactive
+                    else: # active
+                        assert above(total, p.minBudget) # not too little
+                    assert not active or total > 0 # marked as none unless there is some
+                    c += 1 if total > 0 else 0 # count those ones that have funds
+                    found = 0 # count funded tasks
+                    for t in tasks: # check ALL tasks
+                        amount = ta[p, t].X # check assigned funds
+                        if amount > 0:
+                            assert t in p.tasks # if there are funds, it must match
+                            assert pi[p].X > 0 # the project must be active
+                            assert amount > 0 # the task is inactive or has funds
+                            assert above(t.maxBudget, amount) # the upper limit is respected
+                            assert above(amount, t.minBudget) # the lower limit is respected             
+                            found += 1
+                            assert ti[p, t].X > 0 # this must be marked as funded
+                            a[t] = amount
+                        else:
+                            assert ti[p, t].X == 0 # this must not be marked as funded
+                    assert total == 0 or found > 0
+                comp = Solution(self, a)
+                e = self.evaluate(comp)
+                print('VERIFICATION:', e)
+                r = ''.join(f'{int(pi[p].X)}' for p in self.projects)
+                assert str(comp) == r
+                print('SELECTION:', r)
+                assert comp.feasible()
             m.reset()
         print('GUROBI output ends')            
 

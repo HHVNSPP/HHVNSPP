@@ -26,16 +26,16 @@ class Solution():
                         self.activate(p, level = MINIMUM)
                 elif any(high): # too much already
                     self.deactivate(p)
+        if not self.fix(): # ensure feasability
+            print('ERROR: unable to create a feasible initial solution')
+            self.bounds() # diagnose
+            quit() # unable to proceed
     
     def __init__(self, pf, a = None):
         self.portfolio = pf
         self.assignment = a
         if a is None: # not a clone, but a fresh fund assignment
             self.construct()
-        if not self.fix(): # ensure feasability
-            print('ERROR: unable to create a feasible initial solution')
-            self.bounds() # diagnose
-            quit() # unable to proceed
             
     def included(self):
         return self.portfolio.included(self.actives())

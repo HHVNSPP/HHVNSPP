@@ -4,7 +4,7 @@ from itertools import compress
 verbose = False
 
 # instances with synergies, areas, and regions; pure partial assignment
-def loadC(filename, active, keep): 
+def loadC(filename, active): 
     weights = None
     projects = []
     synergies = []
@@ -13,8 +13,6 @@ def loadC(filename, active, keep):
     with open(filename) as f:
         b = float(f.readline().split()[-1]) # total budget
         weights = [ float(v) for v in (f.readline()).split(' ')[1:] ]
-        if len(keep) > 0:
-            weights = list(compress(w, keep)) # only those that are marked as kept
         n = len(weights)
         for line in f:
             line = line.split()
@@ -33,8 +31,6 @@ def loadC(filename, active, keep):
                 r = int(line.pop(0)) - 1
                 # the contributions for the n objectives            
                 obj = [ float(line.pop(0)) for i in range(n) ]
-                if len(keep) > 0:
-                    obj = list(compress(obj, keep))
                 gr = [ areas[a], regions[r] ]
                 p = Project(obj, maxB, minB, gr)
                 projects.append(p)
@@ -55,7 +51,7 @@ def loadC(filename, active, keep):
     print(f'{len(weights)} objectives and {len(projects)} projects parsed')
     return Portfolio(b, weights, partial, projects, partition, s = synergies) 
 
-def loadB(filename, active, keep): # instances with areas, regions; no partial assignment
+def loadB(filename, active = False): # instances with areas, regions; no partial assignment
     budget = None
     w = None
     projects = []
@@ -68,8 +64,6 @@ def loadB(filename, active, keep): # instances with areas, regions; no partial a
         R = { 1: Group(0.40 * budget, 0.60 * budget),
               2: Group(0.40 * budget, 0.60 * budget) }         
         w = [ int(i) for i in (f.readline()).split() ]
-        if len(keep) > 0:
-            w = list(compress(w, keep))
         k = len(w)
         for pID in range(projectCount):
             d = f.readline().split()
@@ -77,8 +71,6 @@ def loadB(filename, active, keep): # instances with areas, regions; no partial a
             a = int(d.pop(0))
             r = int(d.pop(0))
             obj = [ float(d.pop(0)) for i in range(k) ]
-            if len(keep) > 0:
-                obj = list(compress(obj, keep))
             gr = [ A[a], R[r] ]
             pr = Project(obj, req, groups = gr)
             for g in gr:
@@ -89,8 +81,7 @@ def loadB(filename, active, keep): # instances with areas, regions; no partial a
     return Portfolio(budget, w, partial, projects, partitions)
 
 # instances with areas, tasks, partial and non-partial objectives
-# equal = True would mean "do NOT use distinct activity weights"
-def loadA(filename, active, keep, equal = False): 
+def loadA(filename, active, epsilon = 1): 
     total = 0
     budget = None
     areas = []
@@ -151,8 +142,6 @@ def loadA(filename, active, keep, equal = False):
                         a = int(d.pop(0)) - 1
                         obj = [ None, float(d.pop(0)) ]
                         total += obj[-1]
-                        if len(keep) > 0:
-                            obj = list(compress(obj, keep))
                         p = Project(obj, maxB, minB, [ A[a] ])
                         A[a].include(p) # include into the area                        
                         projects.append(p)
@@ -173,11 +162,7 @@ def loadA(filename, active, keep, equal = False):
                         d.pop(0) # activity IDs are not used
                         # the first one is a counter with unit impact   
                         obj = [ None, float(d.pop(0)) ]
-                        if equal: # all activities have the same weight
-                            obj[-1] = 1.0 / activityCount 
-                        if len(keep) > 0:
-                            obj = list(compress(obj, keep))
-                        minB = float(d.pop(0))
+                        minB = max(float(d.pop(0)), epsilon) # minimum-budget zero causes problems with gurobi since tasks activate with no funds
                         maxB = float(d.pop(0))
                         pr.tasks.append(Activity(pr, obj, maxB, minB))
                 elif 'Synergies' in header:
@@ -193,7 +178,7 @@ def loadA(filename, active, keep, equal = False):
                          kind = int(f.pop(0)) # UNSURE WHAT THIS IS FOR
                          low = int(f.pop(0))
                          high = int(f.pop(0))
-                         count[label] = int(f.pop(0)) 
+                         count[label] = int(f.pop(0))
                          syn.append(Synergy(value, low, high))
                     for line in data:
                         if '{' in line:
@@ -212,13 +197,13 @@ def loadA(filename, active, keep, equal = False):
                         assert len(syn[s].elements) == count[s]
                 else:
                     print(f'Ignoring line <{header} = {content}>')
-    count = 2 if len(keep) == 0 else sum(keep)
+    count = 2
     fraction = 1 / count 
     w = [ fraction ] * count # equally important objectives
     partial = [ False, True ] # no and yes (partial impact)
-    if len(keep) > 0:
-        partial = list(compress(partial, keep)) # no and yes (partial impact)
     if verbose:
         print(f'Including {len(areas)} areas')
     print(f'Funding all {len(projects)} projects yields benefit {total} for {filename}')
-    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], syn)                    
+    if not active:
+        syn = [] # ignore the synergies when instructed to do so
+    return Portfolio(budget, w, partial, projects, [ list(A.values()) ], syn)
