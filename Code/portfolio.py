@@ -49,17 +49,12 @@ class Activity():
         lvl = random() * span + low
         return round(lvl) if integer else lvl
 
-    def contribution(self, amount, i, alpha = 0.5):
+    # cf. Fig. 1 in https://doi.org/10.1109/TSMCA.2010.2041228        
+    def impact(self, amount, i, alpha = 0.5): # for objective at index i
         span = self.maxBudget - self.minBudget
         excess = amount - self.minBudget
         scaled = (1 - alpha) * (excess / span)
         return self.relativeImportance[i] * (alpha + scaled) 
-    
-    def impact(self, assignment):
-        amount = assignment.get(self, 0)
-        funded = amount >= self.minBudget
-        assert funded or amount == 0 # there should be no funds then
-        return [ r * funded if r is not None else None for r in self.relativeImportance ]
 
     def deactivate(self, assignment):
         if self in assignment:
@@ -162,27 +157,17 @@ class Project():
         if amount < self.minBudget:
             for task in self.tasks:
                 assert task not in assignment
-            return pi # unfunded, no impact
-        for task in self.tasks: # per-task impact
-            ti = task.impact(assignment)
-            if verbose:
-                print('A', ti)
+            return pi # unfunded, no impact, all zeroes
+        for task in self.tasks: # accumulate over tasks
             for i in range(k):
-                if ti[i] is not None:
-                    pi[i] += ti[i] # cumulative
-                else:
-                    pi[i] = max(pi[i], 1) # project counter
-        proportion = 1
-        if self.diff > 0:
-            # Fig. 1 in https://doi.org/10.1109/TSMCA.2010.2041228
-            excess = amount - self.minBudget # how far into the interval
-            level = excess / self.diff # what proportion is this
-            extra = (1 - alpha) * level # how much of the scaled part is achieved
-            proportion = alpha + extra # base part plus the scaled part
-        for i in range(k): 
-            pi[i] = self.socialImpact[i] * pi[i]
-            if partial[i]:
-                pi[i] *= proportion
+                a = assignment.get(task, 0)
+                if a > 0: # if there are funds
+                    assert a >= task.minBudget # make sure it is enough
+                    if self.socialImpact[i] is not None: 
+                        # linear objectives: compute numerical impact
+                        pi[i] += task.impact(a, i)
+                    else: # for counters, just count
+                        pi[i] = max(pi[i], 1) 
         if verbose:
             print('P', pi)
         return pi
@@ -385,7 +370,7 @@ class Portfolio():
         print(f'# funding everything at the lowest level costs {tl:.0f} ->', vl)
         print(f'# funding everything at the highest level costs {th:.0f} ->', vh)
     
-    def ideal(self, alpha = 0.5):
+    def ideal(self, alpha = 0.5): # this computation IGNORES synergies
         print('GUROBI output starts')
         m = gp.Model("MIP model")
         tasks = [ ] # a list of all tasks
@@ -396,9 +381,6 @@ class Portfolio():
         pa = m.addVars(self.projects, name = 'pa') # project-level fund assignment amounts
         pf = m.addVars(self.projects, vtype = GRB.BINARY, name= 'pf') # project-level funded yes/no
         tf = m.addVars(self.projects, tasks, vtype = GRB.BINARY, name= 'tf') # task-level fund yes/no
-        sigma1 = m.addVars(self.synergies, vtype = GRB.BINARY, name = 'sigma1')
-        sigma2 = m.addVars(self.synergies, vtype = GRB.BINARY, name = 'sigma2')
-        sigma = m.addVars(self.synergies, vtype = GRB.BINARY, name = 'sigma')
         m.update() # variables now completed
         initial = Solution(self)
         print(f'{initial.allocation()}/{self.budget} allocated to {initial.count()}/{len(self.projects)} projects')
@@ -427,7 +409,7 @@ class Portfolio():
         obj = [ gp.quicksum(pf[p] for p in self.projects) ]
         for i in range(self.dim):
             if self.impact[i]: # if False, it would be a counter (like the one we already added)
-                obj.append(gp.quicksum(p.socialImpact[i] * gp.quicksum(t.contribution(ta[p, t], i) for t in p.tasks) for p in self.projects))
+                obj.append(gp.quicksum(p.socialImpact[i] * gp.quicksum(t.impact(ta[p, t], i) for t in p.tasks) for p in self.projects))
         for o in obj: # single-objective ideal points
             m.update() # constraints are now complete
             m.presolve()            

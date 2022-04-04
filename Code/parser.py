@@ -149,7 +149,7 @@ def loadA(filename, active, keep, equal = False):
                         minB = float(d.pop(0))
                         maxB = float(d.pop(0))
                         a = int(d.pop(0)) - 1
-                        obj = [ 1, float(d.pop(0)) ]
+                        obj = [ None, float(d.pop(0)) ]
                         total += obj[-1]
                         if len(keep) > 0:
                             obj = list(compress(obj, keep))

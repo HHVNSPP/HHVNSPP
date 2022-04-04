@@ -14,8 +14,9 @@ suffix = '.txt'
 keep = { 'A': [ [] ], # , [ False, True ], [ True, False ] ],
          'B': [ [] ],
          'C': [ [] ] }
-synergies = { 'A': [ True, False ], # with and without for set A (set B has no synergies)
-              'C': [ True, False ] } #  with and without for set C 
+synergies = { 'A': [ False, True ], # without and with for set A 
+              'B': [ False ], # set B has no synergies so without only
+              'C': [ False, True ] } #  without and wit for set C 
 
 for s in 'ABC': 
     directory = r'../Data/' + s + '/'
@@ -29,12 +30,12 @@ for s in 'ABC':
             instance = directory + filename
             for k in keep[s]:
                 ks = ''.join(f'{1 * b}' for b in k) if False in k else ''
-                for act in synergies.get(s, [ True ]): 
+                for act in synergies.get(s):
                     ss = 's_' if act else '_'
                     print(f'Instance {instance} with{"" if act else "out"} synergies')
                     portfolio = load[s](instance, act, k)
-                    portfolio.ideal()
-                    quit() 
+                    if s == 'A' and not act: # only for set A and when there are no synergies active
+                        portfolio.ideal() # compute ideal points optimizing each objective individually
                     n = len(portfolio.projects)
                     for r in range(1, replicas + 1):
                         print(f'Executing replica {r} for {filename} in {directory}', file = stderr)
