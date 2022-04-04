@@ -14,26 +14,29 @@ def differ(one, another, precision):
 
 class Solution():
 
+    def construct(self): # construct a solution at random
+        self.assignment = dict() 
+        for i in self.portfolio.permutation():
+            p = self.portfolio.projects[i]
+            if len(p.groups) > 0:
+                low = [ not g.lowerOK(self.assignment) for g in p.groups ]
+                high = [ not g.upperOK(self.assignment) for g in p.groups ]                    
+                if any(low) and not any(high): 
+                    if self.fits(p.minBudget): # if there are funds
+                        self.activate(p, level = MINIMUM)
+                elif any(high): # too much already
+                    self.deactivate(p)
+    
     def __init__(self, pf, a = None):
         self.portfolio = pf
         self.assignment = a
-        if a is None: # not a clone, but a fresh fund assignment 
-            self.assignment = dict() 
-            for i in self.portfolio.permutation():
-                p = self.portfolio.projects[i]
-                if len(p.groups) > 0:
-                    low = [ not g.lowerOK(self.assignment) for g in p.groups ]
-                    high = [ not g.upperOK(self.assignment) for g in p.groups ]                    
-                    if any(low) and not any(high): 
-                        if self.fits(p.minBudget): # if there are funds
-                            self.activate(p, level = MINIMUM)
-                    elif any(high): # too much already
-                        self.deactivate(p)
-            if not self.fix(): # ensure feasability
-                print('ERROR: unable to create a feasible initial solution')
-                self.bounds() # diagnose
-                quit() # unable to proceed
-
+        if a is None: # not a clone, but a fresh fund assignment
+            self.construct()
+        if not self.fix(): # ensure feasability
+            print('ERROR: unable to create a feasible initial solution')
+            self.bounds() # diagnose
+            quit() # unable to proceed
+            
     def included(self):
         return self.portfolio.included(self.actives())
                 

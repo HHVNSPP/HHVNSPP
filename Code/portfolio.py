@@ -1,5 +1,8 @@
 from random import shuffle, choice, random, sample
-from math import ceil
+from math import ceil, sqrt
+from gurobipy import GRB
+import gurobipy as gp
+from solution import Solution
 
 verbose = False
 
@@ -46,6 +49,12 @@ class Activity():
         lvl = random() * span + low
         return round(lvl) if integer else lvl
 
+    def contribution(self, amount, i, alpha = 0.5):
+        span = self.maxBudget - self.minBudget
+        excess = amount - self.minBudget
+        scaled = (1 - alpha) * (excess / span)
+        return self.relativeImportance[i] * (alpha + scaled) 
+    
     def impact(self, assignment):
         amount = assignment.get(self, 0)
         funded = amount >= self.minBudget
@@ -55,7 +64,7 @@ class Activity():
     def deactivate(self, assignment):
         if self in assignment:
             del assignment[self]
-
+            
     def activate(self, assignment, amount = 0, level = 0):
         current = assignment.get(self, 0)
         if level == 0: # lowest possible funding was requested
@@ -264,6 +273,7 @@ class Portfolio():
             self.groups = [ self.projects ]
             self.partitions = [ self.groups ]
         self.synergies = s
+        self.hypothetical() # print out info on hypothetical objective values 
 
     def included(self, active):
         return ''.join([ str(1 * (p in active)) for p in self.projects ])
@@ -354,3 +364,86 @@ class Portfolio():
         if verbose:
             print('PF', v, self.impact)
         return v
+
+    def hypothetical(self):
+        low = dict() 
+        high = dict()
+        vl = [0] * self.dim
+        vh = [0] * self.dim        
+        for p in self.projects:
+            for t in p.tasks:
+                low[t] = t.minBudget
+                high[t] = t.maxBudget
+        for p in self.projects:        
+            il = p.impact(low, self.impact)
+            ih = p.impact(high, self.impact)
+            for i in range(self.dim):
+                vl[i] += il[i]
+                vh[i] += ih[i]
+        tl = sum(low.values())
+        th = sum(high.values())        
+        print(f'# funding everything at the lowest level costs {tl:.0f} ->', vl)
+        print(f'# funding everything at the highest level costs {th:.0f} ->', vh)
+    
+    def ideal(self, alpha = 0.5):
+        print('GUROBI output starts')
+        m = gp.Model("MIP model")
+        tasks = [ ] # a list of all tasks
+        for p in self.projects:
+            tasks += p.tasks
+        # incorporate variables into the model 
+        ta = m.addVars(self.projects, tasks, name= 'ta') # task-level fund assignment amounts
+        pa = m.addVars(self.projects, name = 'pa') # project-level fund assignment amounts
+        pf = m.addVars(self.projects, vtype = GRB.BINARY, name= 'pf') # project-level funded yes/no
+        tf = m.addVars(self.projects, tasks, vtype = GRB.BINARY, name= 'tf') # task-level fund yes/no
+        sigma1 = m.addVars(self.synergies, vtype = GRB.BINARY, name = 'sigma1')
+        sigma2 = m.addVars(self.synergies, vtype = GRB.BINARY, name = 'sigma2')
+        sigma = m.addVars(self.synergies, vtype = GRB.BINARY, name = 'sigma')
+        m.update() # variables now completed
+        initial = Solution(self)
+        print(f'{initial.allocation()}/{self.budget} allocated to {initial.count()}/{len(self.projects)} projects')
+        print('objectives:', self.evaluate(initial))
+        m.addConstr(gp.quicksum(ta[p, t] for p in self.projects for t in tasks) <= self.budget, 'b') # budget
+        for g in self.groups: # groups = areas and/or regions
+            # lower limit            
+            m.addConstr(g.lower <= gp.quicksum(ta[p, t] for p in g.members for t in p.tasks), 'gl')
+            # upper limit            
+            m.addConstr(g.upper >= gp.quicksum(ta[p, t] for p in g.members for t in p.tasks), 'gh') 
+        for p in self.projects: # consistency between tasks and projects
+            # project-to-task consistency            
+            m.addConstr(pa[p] <= gp.quicksum(ta[p, t] for t in tasks), 'cpt')
+            # task-to-project consistency            
+            m.addConstr(gp.quicksum(tf[p, t] for t in tasks) <= pf[p] * len(p.tasks), 'ctp') 
+            # minimum budget for project
+            m.addConstr(gp.quicksum(ta[p, t] for t in tasks) >= pf[p] * p.minBudget, 'pl')
+            # maximum budget for project            
+            m.addConstr(gp.quicksum(ta[p, t] for t in tasks) <= pf[p] * p.maxBudget, 'ph') 
+            for t in p.tasks: 
+                m.addConstr(ta[p, t] >= tf[p, t] * t.minBudget, 'tl') # minimum budget for task
+                m.addConstr(ta[p, t] <= tf[p, t] * t.maxBudget, 'th') # maximum budget for task
+                # project assignment is equal to the sum of tasks                
+            m.addConstr(pa[p] == gp.quicksum(ta[p, t] for t in tasks), 'pa') 
+        # objectives: first the project count, then the ones in the instance, all treated as partially affected
+        obj = [ gp.quicksum(pf[p] for p in self.projects) ]
+        for i in range(self.dim):
+            if self.impact[i]: # if False, it would be a counter (like the one we already added)
+                obj.append(gp.quicksum(p.socialImpact[i] * gp.quicksum(t.contribution(ta[p, t], i) for t in p.tasks) for p in self.projects))
+        for o in obj: # single-objective ideal points
+            m.update() # constraints are now complete
+            m.presolve()            
+            m.setObjective(o, GRB.MAXIMIZE) # optimize number of projects included
+            m.optimize()
+            if m.status != GRB.OPTIMAL:
+                print(f'ERROR: gurobi exited with status {m.status}')
+            else:
+                print(f'IDEAL POINT: {m.getObjective().getValue()}')
+                print('SELECTION:', ''.join('1' if pf[p].x > 0 else '0' for p in self.projects))
+                spent = sum(ta[p, t].x for p in self.projects for t in tasks)
+                print(f'SPENDING: {spent:.0f} / {self.budget:.0f}')
+            m.reset()
+        print('GUROBI output ends')            
+
+
+
+
+

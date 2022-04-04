@@ -220,5 +220,5 @@ def loadA(filename, active, keep, equal = False):
         partial = list(compress(partial, keep)) # no and yes (partial impact)
     if verbose:
         print(f'Including {len(areas)} areas')
-    print(f'Funding all {len(projects)} projects would yield a total benefit of {total} for {filename}')
+    print(f'Funding all {len(projects)} projects yields benefit {total} for {filename}')
     return Portfolio(budget, w, partial, projects, [ list(A.values()) ], syn)                    

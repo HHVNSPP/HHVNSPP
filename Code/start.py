@@ -14,10 +14,10 @@ suffix = '.txt'
 keep = { 'A': [ [] ], # , [ False, True ], [ True, False ] ],
          'B': [ [] ],
          'C': [ [] ] }
-synergies = { 'A': [ False, True ], # without and then with for set A (set B has no synergies)
-              'C': [ True, False ] } # first with and then without for set C 
+synergies = { 'A': [ True, False ], # with and without for set A (set B has no synergies)
+              'C': [ True, False ] } #  with and without for set C 
 
-for s in 'ABC':
+for s in 'ABC': 
     directory = r'../Data/' + s + '/'
     output = f'../Results/{s}/'
     prefix = prefixes.pop(0)
@@ -33,6 +33,8 @@ for s in 'ABC':
                     ss = 's_' if act else '_'
                     print(f'Instance {instance} with{"" if act else "out"} synergies')
                     portfolio = load[s](instance, act, k)
+                    portfolio.ideal()
+                    quit() 
                     n = len(portfolio.projects)
                     for r in range(1, replicas + 1):
                         print(f'Executing replica {r} for {filename} in {directory}', file = stderr)

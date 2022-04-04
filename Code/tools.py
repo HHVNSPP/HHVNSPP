@@ -1,7 +1,7 @@
 import numpy as np
-from math import sqrt
 from time import time
 from sys import stderr
+from math import sqrt, ceil
 from kmeans import select # for sparsifying
 from electre import electre # for ranking
 from solution import Solution
@@ -381,12 +381,12 @@ def score(alt, orig, big = 4, intermediate = 2, small = 1):
 
 class Adjustment():
     
-    def __init__(self, pf, t, sec = 5, goal = 5, it = 64):
+    def __init__(self, pf, t, sec = 7, goal = 5, it = 64):
         print('Preparing an instance for execution')
         self.portfolio = pf # the problem instance to optimize
         n = len(self.portfolio.projects) # number of projects
         k = len(self.portfolio.weights) # number of objectives
-        self.limit = sec * sqrt(n) * k # maximum permitted runtime
+        self.limit = int(ceil(sec * sqrt(n) * k)) # maximum permitted runtime
         print(f'Executing up to {self.limit} seconds')
         self.goal = 10 # goal for the front size
         self.itershake = it # maximum permitted shake iterations
