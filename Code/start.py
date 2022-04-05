@@ -23,7 +23,8 @@ for s in 'ABC':
             portfolio = load[s](instance)
             if s == 'A': # we only make use of this for Set A in our work
                 # compute ideal points optimizing each objective individually                
-                portfolio.ideal() 
+                print(f'Determining the ideal point for instance {instance} of set A')
+                portfolio.ideal()
             for r in range(1, replicas + 1):
                 print(f'Executing replica {r} for {filename} in {directory}',
                       file = stderr)
