@@ -4,7 +4,7 @@ from itertools import compress
 verbose = False
 
 # instances with synergies, areas, and regions; pure partial assignment
-def loadC(filename, active): 
+def loadC(filename): 
     weights = None
     projects = []
     synergies = []
@@ -36,7 +36,7 @@ def loadC(filename, active):
                 projects.append(p)
                 for g in gr:
                     g.include(p)
-            elif active and element == 'S': # a synergy (unless ignored)
+            elif element == 'S': # a synergy (unless ignored)
                 line.pop(0) # the synergy label
                 technical = int(line.pop(0)) == 1 # false or true
                 value = float(line.pop(0))
@@ -51,7 +51,7 @@ def loadC(filename, active):
     print(f'{len(weights)} objectives and {len(projects)} projects parsed')
     return Portfolio(b, weights, partial, projects, partition, s = synergies) 
 
-def loadB(filename, active = False): # instances with areas, regions; no partial assignment
+def loadB(filename): # instances with areas, regions; no partial assignment
     budget = None
     w = None
     projects = []
@@ -81,7 +81,7 @@ def loadB(filename, active = False): # instances with areas, regions; no partial
     return Portfolio(budget, w, partial, projects, partitions)
 
 # instances with areas, tasks, partial and non-partial objectives
-def loadA(filename, active, epsilon = 1): 
+def loadA(filename): 
     total = 0
     budget = None
     areas = []
@@ -162,7 +162,7 @@ def loadA(filename, active, epsilon = 1):
                         d.pop(0) # activity IDs are not used
                         # the first one is a counter with unit impact   
                         obj = [ None, float(d.pop(0)) ]
-                        minB = max(float(d.pop(0)), epsilon) # minimum-budget zero causes problems with gurobi since tasks activate with no funds
+                        minB = float(d.pop(0))
                         maxB = float(d.pop(0))
                         pr.tasks.append(Activity(pr, obj, maxB, minB))
                 elif 'Synergies' in header:
@@ -204,6 +204,4 @@ def loadA(filename, active, epsilon = 1):
     if verbose:
         print(f'Including {len(areas)} areas')
     print(f'Funding all {len(projects)} projects yields benefit {total} for {filename}')
-    if not active:
-        syn = [] # ignore the synergies when instructed to do so
     return Portfolio(budget, w, partial, projects, [ list(A.values()) ], syn)

@@ -187,8 +187,8 @@ class Project():
             return pi # unfunded, no impact, all zeroes
         for task in self.tasks: # accumulate over tasks
             for i in range(k):
-                a = assignment.get(task, 0)
-                if not zero(a): # if there are funds
+                if task in assignment: # only if it was assigned funds
+                    a = assignment[task]
                     assert above(a, task.minBudget) # make sure it is enough
                     assert below(a, task.maxBudget) # make sure it is not too much
                     if self.socialImpact[i] is not None: 
@@ -445,7 +445,9 @@ class Portfolio():
         obj = list()
         for i in range(self.dim):
             if self.impact[i]: # affected by partial funding
-                obj.append(gp.quicksum(gp.quicksum(t.impact(ti[p, t], ta[p, t], i) for t in p.tasks) for p in self.projects))
+                obj.append(gp.quicksum(gp.quicksum(t.impact(ti[p, t],
+                                                            ta[p, t], i) \
+                                                   for t in p.tasks) for p in self.projects))
             else: # these are counters
                 obj.append(gp.quicksum(pi[p] for p in self.projects)) # count the projects
         for o in obj: # single-objective ideal points
@@ -475,26 +477,30 @@ class Portfolio():
                     c += 1 if total > 0 else 0 # count those ones that have funds
                     found = 0 # count funded tasks
                     for t in tasks: # check ALL tasks
-                        amount = ta[p, t].X # check assigned funds
-                        if amount > 0:
-                            assert t in p.tasks # if there are funds, it must match
+                        if ti[p, t].X > 0: # the task is active
+                            assert t in p.tasks # must match its project
                             assert pi[p].X > 0 # the project must be active
-                            assert amount > 0 # the task is inactive or has funds
-                            assert above(t.maxBudget, amount) # the upper limit is respected
-                            assert above(amount, t.minBudget) # the lower limit is respected             
+                            amount = ta[p, t].X # check assigned funds
+                            # the upper limit is respected
+                            assert above(t.maxBudget, amount)
+                            # the lower limit is respected      
+                            assert above(amount, t.minBudget) 
                             found += 1
-                            assert ti[p, t].X > 0 # this must be marked as funded
+                            # note that at least one task
+                            # (in project 57 of instance 10 of Set A)
+                            # has minimum budget zero(!)
                             a[t] = amount
                         else:
-                            assert ti[p, t].X == 0 # this must not be marked as funded
+                            assert zero(amount) 
                     assert total == 0 or found > 0
                 comp = Solution(self, a)
+                assert comp.feasible()                
                 e = self.evaluate(comp)
                 print('VERIFICATION:', e)
                 r = ''.join(f'{int(pi[p].X)}' for p in self.projects)
-                assert str(comp) == r
                 print('SELECTION:', r)
-                assert comp.feasible()
+                print('SELECTION:', comp)                
+                assert str(comp) == r
             m.reset()
         print('GUROBI output ends')            
 
