@@ -16,41 +16,37 @@ def candlestick(d):
 uses = dict()
 present = { 'shake': set(), 'search': set() }
 maxcount = {'shake': 0, 'search': 0 }
-
-cases = { 'A': [''], 'B': [''], 'C': ['WithSynergies/', 'WithoutSynergies/']}
-
 uses['global'] = defaultdict(list)
 
 for s in 'ABC':
-    base = r'../Results/' + s + '/Replicas/'
-    for c in cases[s]:
-        directory = base + c
-        for filename in os.listdir(directory):
-            if filename.startswith('r') and filename.endswith('.txt'):
-                f = filename.split('_')
-                i = f[1].split('.')[0]
-                dataset = f'Set {s} instance {i}'
-                if 's' in f[0]:
-                    dataset = f'{dataset} with synergies'
-                else:
-                    dataset = f'{dataset} without synergies'
-                if dataset not in uses:
-                    uses[dataset] = defaultdict(list)
-                source = f'{directory}{filename}'
-                print(source)
-                with open(source) as output:
-                    for line in output:
-                        if '#' not in line:
-                            if 'usage' in line:
-                                line = line.split(';')[1:]
-                                stage = line.pop(0)
-                                line = line[0].strip().split('=')
-                                heur = line.pop(0)
-                                count = int(line.pop(0))
-                                maxcount[stage] = max(count, maxcount[stage])
-                                uses[dataset][(stage, heur)].append(count) # combine all replicas of the same instance type
-                                uses['global'][(stage, heur)].append(count) # combine all replicas of the same instance type
-                                present[stage].add(heur)
+    directory = r'../Results/' + s + '/'
+    for filename in os.listdir(directory):
+        if filename.startswith('r') and filename.endswith('.txt'):
+            f = filename.split('-')
+            i = f[-1].split('.')[0]
+            print(s, i)
+            dataset = f'Set {s} instance {i}'
+            if 'original' in f[0]:
+                dataset = f'{dataset} with synergies'
+            else: # reduced
+                dataset = f'{dataset} without synergies'
+            if dataset not in uses:
+                uses[dataset] = defaultdict(list)
+            source = f'{directory}{filename}'
+            print(source)
+            with open(source) as output:
+                for line in output:
+                    if '#' not in line:
+                        if 'usage' in line:
+                            line = line.split(';')[1:]
+                            stage = line.pop(0)
+                            line = line[0].strip().split('=')
+                            heur = line.pop(0)
+                            count = int(line.pop(0))
+                            maxcount[stage] = max(count, maxcount[stage])
+                            uses[dataset][(stage, heur)].append(count) # combine all replicas of the same instance type
+                            uses['global'][(stage, heur)].append(count) # combine all replicas of the same instance type
+                            present[stage].add(heur)
 
 heuristics = dict()
 counter = dict()

@@ -22,7 +22,7 @@ for p in powers:
     n = 2**p
     with open(f'setC{n}.plot', 'w') as combined:
         print(f'set term postscript eps size 24, 12 color\nset output "setC{n}.eps"', file = combined)
-        print('''set logscale x\nset boxwidth 0.06 absolute\nset style fill solid border -1
+        print('''set key inside right bottom\nset logscale x\nset boxwidth 0.1 relative\nset style fill solid border -1
 set xtics 1, 2\nset xlabel "Iteration"''', file = combined)
         print(f'set multiplot layout {instances}, {2 * replicas}', file = combined)
         for i in range(instances):
@@ -79,7 +79,7 @@ set xtics 1, 2\nset xlabel "Iteration"''', file = combined)
                 with open(f'setC{n}_{i + 1}_{r + 1}.plot', 'w') as individual:
                     print(f'set term postscript eps size 4, 4 color\nset output "setC{n}_{i + 1}_{r + 1}.eps"', file = individual)
                     print(f'set xrange [0.6:{1.9 * (maxiter + 0.1)}]\nset multiplot layout 2, 1', file = individual)
-                    print('''set logscale x\nset boxwidth 0.06 absolute\nset style fill solid border -1
+                    print('''set key inside right bottom\nset logscale x\nset boxwidth 0.1 relative\nset style fill solid border -1
                     set xtics 1, 2\nset xlabel "Iteration"''', file = individual)                    
                     plots = [ combined, individual ]
                     for kind in [ 'Front size', 'Budget' ]:

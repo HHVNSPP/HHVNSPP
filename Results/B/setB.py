@@ -17,7 +17,7 @@ def candlestick(d):
 print('''set term postscript eps font ",12" size 32, 24 color
 set key off
 set logscale x
-set boxwidth 0.1 absolute
+set boxwidth 0.5 relative
 set style fill solid border -1
 set xtics 1, 2
 set xlabel "Iteration"''')
@@ -144,7 +144,7 @@ for panel in sets:
                 print(f'set term postscript eps font ",12" size {2 * w}, {2 * h} color', file = individual)
                 print(f'set output "B{k}_{n}_{i + 1}_{r + 1}.eps"', file = individual)
                 print(f'set xrange [0.5 : 1.5 * {maxiter}]', file = individual)    
-                print('set key off\nset logscale x\nset boxwidth 0.1 absolute\nset style fill solid border -1', file = individual)
+                print('set key off\nset logscale x\nset boxwidth 0.5 relative\nset style fill solid border -1', file = individual)
                 print(f'set xtics 1, 2\nset xlabel "Iteration"\nset multiplot layout {h}, {w}', file = individual)
                 print(palette, file = individual)
                 for obj in range(k + 2):
