@@ -10,15 +10,28 @@ prefixes = [ 'P', 'k', 'C' ]
 # parsing routines for instance sets
 load = { 'A': loadA, 'B': loadB, 'C': loadC } 
 suffix = '.txt'
+partial = False
+
+done = set()
+if partial: # in case some experiments have already been ran
+    with open('skip.txt') as listing: 
+        for line in listing:
+            done.add(line.strip())
 
 for s in 'ABC': 
     directory = r'../Data/' + s + '/'
     output = f'../Results/{s}/'
     prefix = prefixes.pop(0)
+    if s in 'AB': # already executed
+        continue
     for filename in os.listdir(directory):
         print(filename)
         if filename.startswith(prefix) and filename.endswith(suffix):
+            # this is the string that MUST be on the skiplist to avoid execution
             instance = directory + filename
+            if instance in done: # already executed 
+                print(f'Skipping {instance} (already done)')                
+                continue # skip
             print(f'Instance {instance}')
             portfolio = load[s](instance)
             if s == 'A': # we only make use of this for Set A in our work

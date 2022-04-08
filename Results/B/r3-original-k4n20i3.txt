@@ -1,0 +1,511 @@
+#clust;conv1;size22;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+0.5463075637817383
+[[135000.  75000. 210000. 165000.]
+ [ 95000. 165000. 240000. 150000.]
+ [165000. 105000.  90000. 225000.]
+ [120000. 180000. 270000.  60000.]
+ [180000. 100000.  90000. 270000.]
+ [115000. 190000. 240000.  90000.]
+ [170000.  70000. 105000. 240000.]
+ [ 55000. 200000.  90000. 255000.]
+ [180000. 125000. 180000. 180000.]
+ [125000. 170000. 165000. 165000.]]
+budget;474500000.00;472250000.00;477000000.00;474250000.00;474000000.00;480500000.00;476750000.00;477750000.00;476250000.00;483500000.00
+size;10;10;10;10;10;10;10;10;10;10
+w;1
+#clust;conv1;size20;goal10
+#clust;conv3;size22;goal10
+#clust;conv2;size23;goal10
+#search;maxiter
+1.252105474472046
+[[190000. 145000. 150000. 210000.]
+ [120000. 120000.  90000. 240000.]
+ [ 95000. 195000. 180000. 165000.]
+ [190000.  80000. 210000. 120000.]
+ [175000. 155000. 210000.  90000.]
+ [125000. 190000. 150000. 120000.]
+ [140000. 145000. 225000. 180000.]
+ [ 55000. 200000.  90000. 255000.]
+ [110000. 165000. 165000. 180000.]
+ [180000. 125000. 180000. 180000.]
+ [170000. 155000. 195000. 150000.]
+ [135000. 150000. 255000.  75000.]
+ [130000. 160000. 240000. 135000.]]
+budget;474250000.00;476250000.00;472250000.00;475500000.00;476750000.00;480000000.00;469000000.00;477750000.00;481750000.00;476250000.00;481000000.00;478750000.00;481750000.00
+size;10;10;10;10;10;10;10;10;10;10;10;10;10
+w;2
+#clust;conv1;size22;goal10
+#clust;conv1;size25;goal10
+#clust;conv1;size23;goal10
+#search;maxiter
+1.9989593029022217
+[[105000. 170000. 150000. 225000.]
+ [ 40000. 185000. 165000. 165000.]
+ [ 90000. 200000. 165000. 150000.]
+ [160000. 135000. 150000. 180000.]
+ [ 35000. 205000. 210000. 105000.]
+ [ 25000. 190000. 240000. 180000.]
+ [155000. 155000.  90000. 180000.]
+ [ 80000. 190000. 180000. 150000.]
+ [155000. 120000. 165000. 180000.]
+ [125000. 190000. 150000. 120000.]
+ [175000. 155000. 210000.  90000.]
+ [220000.  85000. 180000. 165000.]
+ [ 90000. 170000. 180000. 210000.]
+ [140000. 145000. 225000. 180000.]]
+budget;472500000.00;476750000.00;477250000.00;479500000.00;478250000.00;476750000.00;481500000.00;477750000.00;475250000.00;480000000.00;476750000.00;477750000.00;476250000.00;469000000.00
+size;10;10;10;10;10;10;10;10;10;10;10;10;10;10
+#clust;conv3;size22;goal10
+#clust;conv2;size23;goal10
+#clust;conv1;size21;goal10
+#clust;conv1;size24;goal10
+#clust;conv1;size23;goal10
+#search;maxiter
+w;4
+#clust;conv1;size22;goal10
+#clust;conv3;size25;goal10
+#clust;conv2;size20;goal10
+#clust;conv3;size22;goal10
+#search;maxiter
+3.7206850051879883
+[[105000. 215000. 255000.  60000.]
+ [125000. 180000. 120000. 225000.]
+ [ 90000. 130000. 225000. 150000.]
+ [ 20000. 235000. 210000. 135000.]
+ [180000. 120000. 195000. 180000.]
+ [180000. 135000. 255000. 120000.]
+ [ 95000. 140000. 285000.  60000.]
+ [ 90000. 115000. 195000. 195000.]
+ [105000. 165000. 180000. 165000.]
+ [ 55000. 200000. 180000. 180000.]]
+budget;478750000.00;481250000.00;480250000.00;478750000.00;473000000.00;473500000.00;472250000.00;474750000.00;477250000.00;479000000.00
+size;10;10;10;10;10;10;10;10;10;10
+#clust;conv2;size24;goal10
+#clust;conv1;size24;goal10
+#clust;conv1;size25;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+#clust;conv2;size26;goal10
+#clust;conv1;size20;goal10
+#clust;conv3;size21;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+#clust;conv4;size22;goal10
+#clust;conv2;size23;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size20;goal10
+#search;maxiter
+w;8
+#clust;conv1;size21;goal10
+#clust;conv3;size21;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size21;goal10
+#clust;conv1;size23;goal10
+#search;maxiter
+6.631873607635498
+[[145000. 115000. 225000. 105000.]
+ [190000. 100000. 165000. 195000.]
+ [105000. 220000. 270000.  75000.]
+ [130000. 155000. 255000.  90000.]
+ [ 60000. 230000. 165000. 195000.]
+ [ 90000. 195000.  90000. 240000.]
+ [175000.  90000. 225000. 120000.]
+ [205000.  70000. 180000. 135000.]
+ [ 75000. 150000. 180000. 225000.]
+ [125000. 195000. 180000. 165000.]]
+budget;471500000.00;475500000.00;480750000.00;476000000.00;480750000.00;478250000.00;479250000.00;476250000.00;478500000.00;478750000.00
+size;10;10;10;10;10;10;10;10;10;10
+#clust;conv4;size22;goal10
+#clust;conv1;size20;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+#clust;conv3;size21;goal10
+#clust;conv1;size22;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv1;size20;goal10
+#clust;conv2;size22;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+#clust;conv1;size23;goal10
+#clust;conv3;size24;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv1;size20;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size24;goal10
+#clust;conv3;size23;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size20;goal10
+#clust;conv1;size21;goal10
+#clust;conv4;size22;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv1;size22;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+w;16
+#added;1
+#clust;conv1;size20;goal10
+#clust;conv2;size20;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+12.725535154342651
+[[135000. 140000. 195000. 210000.]
+ [130000. 145000. 255000.  90000.]
+ [175000.  90000. 165000. 255000.]
+ [165000. 145000. 150000. 210000.]
+ [110000. 185000. 225000. 210000.]
+ [185000. 110000. 195000. 180000.]
+ [ 80000. 175000. 255000. 105000.]
+ [135000. 165000. 150000. 180000.]
+ [ 80000. 125000. 255000. 120000.]
+ [220000.  60000.  75000. 225000.]
+ [ 80000. 210000. 165000.  75000.]
+ [210000.  85000. 180000. 120000.]
+ [155000. 135000. 225000. 210000.]
+ [135000. 205000. 225000.  90000.]]
+budget;474000000.00;479000000.00;480250000.00;473000000.00;479250000.00;478250000.00;481000000.00;478500000.00;478000000.00;475250000.00;480750000.00;474750000.00;473250000.00;476750000.00
+size;10;10;10;10;10;10;10;10;10;10;10;10;10;10
+#clust;conv1;size21;goal10
+#clust;conv1;size23;goal10
+#clust;conv2;size23;goal10
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv2;size21;goal10
+#clust;conv2;size20;goal10
+#clust;conv3;size20;goal10
+#search;maxiter
+#clust;conv1;size20;goal10
+#clust;conv1;size22;goal10
+#clust;conv4;size22;goal10
+#clust;conv1;size22;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv2;size21;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size24;goal10
+#search;maxiter
+#clust;conv2;size25;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size21;goal10
+#clust;conv3;size21;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv1;size23;goal10
+#clust;conv2;size22;goal10
+#clust;conv3;size20;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv1;size23;goal10
+#clust;conv2;size25;goal10
+#clust;conv2;size20;goal10
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv1;size20;goal10
+#clust;conv2;size23;goal10
+#clust;conv3;size23;goal10
+#search;maxiter
+#clust;conv4;size24;goal10
+#clust;conv2;size23;goal10
+#clust;conv3;size23;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size23;goal10
+#search;maxiter
+#clust;conv2;size23;goal10
+#clust;conv1;size21;goal10
+#clust;conv3;size20;goal10
+#search;maxiter
+#clust;conv1;size25;goal10
+#clust;conv3;size23;goal10
+#clust;conv1;size24;goal10
+#clust;conv1;size23;goal10
+#search;maxiter
+#clust;conv1;size24;goal10
+#clust;conv2;size22;goal10
+#clust;conv4;size20;goal10
+#clust;conv2;size20;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv2;size23;goal10
+#clust;conv3;size25;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size25;goal10
+#search;maxiter
+#clust;conv2;size21;goal10
+#clust;conv1;size21;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#clust;conv1;size23;goal10
+#clust;conv2;size24;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size20;goal10
+#clust;conv1;size22;goal10
+#search;maxiter
+w;32
+#clust;conv4;size25;goal10
+#clust;conv2;size22;goal10
+#clust;conv1;size21;goal10
+#clust;conv1;size22;goal10
+#search;maxiter
+24.93563222885132
+[[ 80000. 205000. 105000. 165000.]
+ [120000. 125000. 195000. 165000.]
+ [ 30000. 200000. 285000.  60000.]
+ [175000. 115000. 165000. 210000.]
+ [210000.  60000. 180000. 165000.]
+ [ 65000. 220000. 255000. 135000.]
+ [190000. 105000. 135000. 195000.]
+ [130000. 205000. 195000. 135000.]
+ [150000. 195000. 240000. 105000.]
+ [ 60000. 230000. 195000. 180000.]
+ [180000.  80000. 210000. 120000.]
+ [105000. 220000. 270000.  75000.]
+ [ 90000. 145000. 165000. 195000.]
+ [160000. 185000. 195000. 150000.]
+ [135000. 200000. 180000. 150000.]
+ [155000. 130000. 240000. 135000.]]
+budget;481250000.00;478750000.00;474000000.00;478000000.00;477000000.00;480250000.00;476250000.00;477000000.00;478000000.00;484000000.00;473500000.00;480750000.00;478500000.00;476000000.00;478500000.00;474000000.00
+size;10;10;10;10;10;10;10;10;10;10;10;10;10;10;10;10
+#clust;conv3;size21;goal10
+#clust;conv4;size20;goal10
+#clust;conv4;size23;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv1;size23;goal10
+#clust;conv2;size23;goal10
+#clust;conv2;size23;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv1;size20;goal10
+#clust;conv3;size20;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size24;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv2;size23;goal10
+#clust;conv1;size21;goal10
+#clust;conv3;size20;goal10
+#search;maxiter
+#clust;conv2;size24;goal10
+#clust;conv2;size22;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv2;size20;goal10
+#clust;conv4;size20;goal10
+#clust;conv3;size21;goal10
+#search;maxiter
+#clust;conv3;size22;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size22;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv2;size26;goal10
+#clust;conv3;size21;goal10
+#clust;conv2;size23;goal10
+#search;maxiter
+#clust;conv2;size23;goal10
+#clust;conv2;size25;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size25;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv2;size20;goal10
+#clust;conv1;size24;goal10
+#clust;conv3;size23;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#clust;conv2;size21;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv1;size23;goal10
+#clust;conv1;size22;goal10
+#clust;conv3;size21;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv2;size21;goal10
+#clust;conv1;size22;goal10
+#clust;conv1;size23;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv1;size22;goal10
+#clust;conv1;size21;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv1;size21;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size20;goal10
+#clust;conv3;size21;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv2;size21;goal10
+#clust;conv1;size22;goal10
+#search;maxiter
+#clust;conv3;size22;goal10
+#clust;conv2;size25;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size20;goal10
+#clust;conv1;size24;goal10
+#clust;conv2;size24;goal10
+#search;maxiter
+#clust;conv2;size22;goal10
+#clust;conv1;size21;goal10
+#clust;conv1;size23;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv2;size24;goal10
+#clust;conv1;size20;goal10
+#clust;conv3;size21;goal10
+#clust;conv2;size23;goal10
+#search;maxiter
+#clust;conv2;size23;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size20;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv2;size23;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv3;size20;goal10
+#clust;conv1;size20;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size24;goal10
+#search;maxiter
+#clust;conv2;size20;goal10
+#clust;conv2;size20;goal10
+#clust;conv3;size24;goal10
+#clust;conv1;size24;goal10
+#search;maxiter
+#clust;conv2;size21;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size22;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#clust;conv1;size24;goal10
+#clust;conv1;size21;goal10
+#clust;conv2;size25;goal10
+#clust;conv4;size21;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv2;size22;goal10
+#clust;conv2;size24;goal10
+#clust;conv2;size22;goal10
+#search;maxiter
+#clust;conv1;size22;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size21;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+#clust;conv1;size21;goal10
+#clust;conv2;size23;goal10
+#clust;conv2;size24;goal10
+#clust;conv2;size23;goal10
+#clust;conv1;size22;goal10
+#search;maxiter
+#clust;conv3;size23;goal10
+#clust;conv1;size20;goal10
+#clust;conv2;size24;goal10
+#search;maxiter
+w;64
+#clust;conv1;size23;goal10
+#clust;conv1;size22;goal10
+#clust;conv1;size22;goal10
+#clust;conv2;size21;goal10
+#search;maxiter
+49.91361689567566
+[[ 90000. 170000. 180000. 210000.]
+ [150000.  85000. 105000. 195000.]
+ [135000. 135000. 120000. 255000.]
+ [150000. 150000. 225000. 135000.]
+ [125000. 160000. 240000. 165000.]
+ [190000. 140000. 195000. 180000.]
+ [195000.  80000. 180000. 180000.]
+ [ 95000. 185000. 180000. 180000.]
+ [ 60000. 200000. 225000. 210000.]
+ [165000. 185000. 225000. 105000.]]
+budget;476250000.00;478500000.00;483750000.00;477750000.00;473000000.00;474750000.00;472500000.00;477750000.00;480000000.00;475750000.00
+size;10;10;10;10;10;10;10;10;10;10
+usage;shake;swapRandom=8
+usage;shake;swapQuarter=12
+usage;shake;swapThird=10
+usage;shake;swapHalf=14
+usage;shake;swapGroup=20
+usage;shake;incrMin=2
+usage;shake;incrMax=4
+usage;shake;incrRnd=7
+usage;shake;rndMin=21
+usage;shake;rndMax=2
+usage;shake;rndRnd=12
+usage;shake;liftIncr=9
+usage;shake;liftRnd=7
+usage;search;swapOne=52
+usage;search;inclRndMin=19
+usage;search;inclRndMax=19
+usage;search;inclRndRnd=25
+usage;search;inclLowMin=37
+usage;search;inclLowMax=29
+usage;search;inclLowRnd=11
+usage;search;inclHighMin=57
+usage;search;inclHighMax=7
+usage;search;inclHighRnd=3
+usage;search;fundAtMin=1
+usage;search;fundAtMax=1
+usage;search;fundAtRnd=1
+usage;search;exclRnd=7
+usage;search;exclLow=4
+usage;search;exclHigh=50
+usage;search;inflGrMin=107
+usage;search;inflGrMax=22
+usage;search;inflGrRnd=51
+usage;search;deflGrMin=1
+usage;search;deflGrMax=15
+usage;search;deflGrRnd=4
+usage;search;exchGrMin=17
+usage;search;exchGrMax=79
+usage;search;exchGrRnd=31
+usage;search;incrMin=1
+usage;search;incrMax=17
+usage;search;incrRnd=1
+usage;search;rndMin=178
+usage;search;rndMax=1
+usage;search;rndRnd=417
+usage;search;liftIncr=1
+usage;search;liftRnd=34
+end;49.915/126;63/64;0/26
+electre;7.0;[[ 90000. 170000. 180000. 210000.]];476250000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;6.0;[[150000.  85000. 105000. 195000.]];478500000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;2.0;[[135000. 135000. 120000. 255000.]];483750000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;-1.0;[[150000. 150000. 225000. 135000.]];477750000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;-4.0;[[125000. 160000. 240000. 165000.]];473000000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;-7.0;[[190000. 140000. 195000. 180000.]];474750000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;-1.0;[[195000.  80000. 180000. 180000.]];472500000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;5.0;[[ 95000. 185000. 180000. 180000.]];477750000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;1.0;[[ 60000. 200000. 225000. 210000.]];480000000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]
+electre;-8.0;[[165000. 185000. 225000. 105000.]];475750000.0;10
+included;[00110011110100101001, 10111000110010110001, 10111011110100010000, 11000011110101001010, 01100001001101111001, 11010001000101011110, 10000001111001111010, 01010110110101010010, 01110011001111010000, 11010100000101111001]

@@ -45,8 +45,10 @@ for panel in sets:
             budget = defaultdict(list)
             size = defaultdict(list)
             combine = None
-            with open(f'Replicas/r{r + 1}_{filename}') as output:
+            with open(f'r{r + 1}-original-{filename}') as output:
                 for line in output:
+                    if 'included;' in line:
+                        continue # not parsed
                     if '#' not in line:
                         if combine is not None:
                             line = combine.strip() + ' ' + line

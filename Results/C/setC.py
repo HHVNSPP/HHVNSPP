@@ -26,10 +26,10 @@ for p in powers:
 set xtics 1, 2\nset xlabel "Iteration"''', file = combined)
         print(f'set multiplot layout {instances}, {2 * replicas}', file = combined)
         for i in range(instances):
-            for syn in [ 's', '' ]: # with, without
+            for syn in [ 'original', 'reduced' ]: # with, without
                 suffix = '' if syn == 's' else 'out'
                 for r in range(replicas):
-                    filename = f'Replicas/With{suffix}Synergies/r{r + 1}{syn}_C{n}_{i + 1}.txt'
+                    filename = f'r{r + 1}-{syn}-C{n}_{i + 1}.txt'
                     iteration = 0
                     budget = defaultdict(list)
                     size = defaultdict(list)
@@ -68,7 +68,7 @@ set xtics 1, 2\nset xlabel "Iteration"''', file = combined)
                                     line = line.split(';')[1:]
                                     values = [ int(f) for f in line ]
                                     size[iteration] += values
-                    filename = f'Parsed/r{r + 1}{syn}_C{n}_{i + 1}.txt'                            
+                    filename = f'Parsed/r{r + 1}-{syn}-C{n}_{i + 1}.txt'                            
                     with open(filename, 'w') as parsed:
                         for iteration in size:
                             b = budget[iteration]
@@ -113,11 +113,11 @@ set xtics 1, 2\nset xlabel "Iteration"''', file = combined)
                         for target in plots:
                             print(f'set ylabel "{kind}"', file = target)
                         cols = f'{med - 1}:{med - 2}:{med + 2}:{med + 1}'
-                        for syn in [ 's', '' ]:
+                        for syn in [ 'original', 'reduced' ]:
                             cont = ''
-                            filename = f'Parsed/r{r + 1}{syn}_C{n}_{i + 1}.txt'
+                            filename = f'Parsed/r{r + 1}-{syn}-C{n}_{i + 1}.txt'
                             mult = 1.2
-                            if syn == 's':
+                            if syn == 'original':
                                 mult = 0.7
                                 c = f'lc rgb "#{red}66{blue}"'
                                 for target in plots:
